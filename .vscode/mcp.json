@@ -1,0 +1,14 @@
+{
+  "servers": {
+    "godot": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@coding-solo/godot-mcp"
+      ],
+      "env": {
+        "GODOT_PATH": "C:\\Users\\Administrator\\AppData\\Local\\Microsoft\\WinGet\\Links\\godot.exe"
+      }
+    }
+  }
+}
