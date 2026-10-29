@@ -35,8 +35,8 @@ var _sprite: Sprite2D
 func _apply_sheet(tex: Texture2D, bottom_row: int) -> void:
 	# สลับชุดสไปรต์ (หน้าตรง/หันข้าง) - ต้องเลื่อนเท้าตามแถวเท้าของชุดนั้นด้วย
 	_sprite.texture = tex
-	if tex != null and tex.get_width() > FRAME_SIZE:
-		_sprite.hframes = tex.get_width() / FRAME_SIZE
+	@warning_ignore("integer_division")
+	_sprite.hframes = tex.get_width() / FRAME_SIZE   # หารแบบ int ตั้งใจ (จำนวนเฟรม)
 	_sprite.offset = Vector2(0, 2.0 / base_scale - (bottom_row - 32))
 
 func _ready() -> void:

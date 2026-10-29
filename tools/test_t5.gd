@@ -19,6 +19,20 @@ func _initialize() -> void:
 	root.add_child(main_scene)
 	_main = main_scene
 
+	# ---- ช่วง 0: คลิกจำลองทั้ง 4 ลานต้องเปิดเมนูครบ (ฟีดแบ็ค T5.1: หาจุดซื้อไม่ได้) ----
+	for i in range(4):
+		var me := InputEventMouseButton.new()
+		me.button_index = MOUSE_BUTTON_LEFT
+		me.pressed = true
+		me.position = _main.TOWER_SPOTS[i]
+		_main._unhandled_input(me)
+		if _main._menu_spot != i or _main._menu_mode != "build":
+			print("TEST_T5 FAIL click spot=%d menu_spot=%s mode=%s" % [i, _main._menu_spot, _main._menu_mode])
+			quit(1)
+			return
+		_main._close_menu()
+	print("TEST_T5 click-4-spots PASS")
+
 	# ---- ช่วง 1: ป้อม สร้าง -> อัปเกรด -> อัปเกรดซ้ำ -> ขาย ----
 	_main._open_menu(0)                      # ลาน 0 = build mode
 	if _main._menu_mode != "build":
@@ -59,7 +73,7 @@ func _initialize() -> void:
 	var frog: Node2D = EnemyScript.new()
 	frog.texture = load("res://assets/art/gen/frog.png")
 	frog.sheet = load("res://assets/art/gen/frog_sheet.png")
-	frog.waypoints = PackedVector2Array([Vector2(830, 400), Vector2(880, 400)])
+	frog.waypoints = PackedVector2Array([Vector2(830, 470), Vector2(880, 470)])
 	frog.speed = 5.0
 	frog.max_hp = 10.0
 	frog.reward = 0
@@ -73,7 +87,7 @@ func _spawn_lizard() -> void:
 	_lizard = EnemyScript.new()
 	_lizard.texture = load("res://assets/art/gen/lizard_front.png")
 	_lizard.sheet = load("res://assets/art/gen/lizard_sheet.png")
-	_lizard.waypoints = PackedVector2Array([Vector2(795, 400), Vector2(745, 400)])
+	_lizard.waypoints = PackedVector2Array([Vector2(800, 470), Vector2(770, 470)])
 	_lizard.speed = 3.0      # เกาะใกล้ตัวไม่ไลหนี
 	_lizard.max_hp = 9999.0
 	_lizard.reward = 0

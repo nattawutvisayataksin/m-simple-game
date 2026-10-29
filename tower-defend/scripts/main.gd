@@ -7,10 +7,11 @@ extends Node2D
 const EnemyScript := preload("res://scripts/enemy.gd")
 const TowerScript := preload("res://scripts/tower.gd")
 const FROG_TEX := preload("res://assets/art/gen/frog.png")
-const LIZARD_TEX := preload("res://assets/art/gen/lizard_front.png")
 const FROG_SHEET := preload("res://assets/art/gen/frog_sheet.png")
+const LIZARD_TEX := preload("res://assets/art/gen/lizard_front.png")
 const LIZARD_SHEET := preload("res://assets/art/gen/lizard_sheet.png")
-# NB: lizard_side_sheet.png (4 ขา) เก็บเป็น stock - ผู้อำนวยการตัดสิน "ใช้สองขาสม่ำเสมอแบบกบ" ดีกว่าสลับ
+const LIZARD_SIDE_SHEET := preload("res://assets/art/gen/lizard_side_sheet.png")  # T5.1 ชุดหันข้าง 8 ช่อง (หัวหันขวาโดยกำเนิด)
+# NB: lizard_side_sheet.png เคยเก็บเป็น stock (ตัดสิน T3.2 ใช้ชุดหน้าตรง) — ฟีดแบ็ค T5.1 สลับกลับมาใช้จริง ช่วงเดินแนวนอน
 const TOWER_ARCHER_TEX := preload("res://assets/art/gen/tower_archer.png")
 const TOWER_CANNON_TEX := preload("res://assets/art/gen/tower_cannon.png")
 const ICON_BOW := preload("res://assets/art/icons/bow.png")
@@ -65,6 +66,8 @@ const TOWER_SPOTS: Array[Vector2] = [
 
 const SPOT_FILL := Color(1.0, 0.79, 0.24, 0.55)
 const SPOT_EDGE := Color(0.16, 0.09, 0.03, 0.9)
+const SPOT_DRAW_R := 28.0   # T5.1 วงทองหนาขึ้นเห็นชัด
+const SPOT_HIT_R := 44.0    # T5.1 คลิกอ้อมเผื่อ (เดิม 32 = ต้องคลิกเป๊ะ ๆ หาจุดไม่เจอ)
 const GATE_COLOR := Color(0.55, 0.25, 0.80, 0.80)
 const CASTLE_COLOR := Color(1.0, 0.35, 0.15, 0.85)
 
@@ -120,13 +123,14 @@ var _wave_btn: Button         # ปุ่มเรียกคลื่นถั
 func _ready() -> void:
 	y_sort_enabled = true  # มอนวาดเรียงตามแนวระดับ (ตัวล่างจอบนตัวบนจอ - แก้ทับซ้อนดูลอย)
 	_build_lives_label()
-	# ฮีโร่ Kubi (T5): เกิดข้างปราสาท คลิกขวาสั่งเดิน ฟาดศัตรูใกล้ตัวเอง
+	# ฮีโร่ Kubi (T5): เกิดตรงประตูปราสาท (ฟีดแบ็ค T5.1) — ยืนตรงนี้ก็ฟาดมอนท้ายเข้าปราสาทให้เห็นตัวต่อ คลิกขวาสั่งเดินได้
 	_hero = HeroScript.new()
-	_hero.position = Vector2(760, 400)
+	_hero.position = Vector2(816, 470)   # ประตูปราสาท (จุดฟื้น = จุดเกิด)
 	add_child(_hero)
 	queue_redraw()
 
 func _process(delta: float) -> void:
+	queue_redraw()   # วงทองลานป้อมเต้นกระพริบทุกเฟรม (T5.1 เห็นจุดซื้อชัด ไม่ต้องคลิกมั่ว)
 	# ตัวรันคลื่น (T4): prep = นับถอยหลังโชว์ปุ่มเรียกก่อน ; wave = เกิดตามคิวกันฉาวจนจบ
 	if _state == "prep":
 		_prep_t -= delta
@@ -180,8 +184,8 @@ func _spawn_kind(kind: String) -> void:
 	if kind == "frog":
 		_spawn_enemy(FROG_TEX, FROG_SHEET, _shift_path(PATH_A, lane), FROG_SPEED * jitter, true, false, 59, null, 43, 26.0 * hp_mult, 15)
 	else:
-		# กิ้งก่า: สองขาหน้าตรงตลอดสาย (sheet สี่ขาเก็บ stock - บันทึก T3.2)
-		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56, null, 43, 42.0 * hp_mult, 25)
+		# กิ้งก่า: ชุดหันข้าง 8 ช่องหัวหันขวาโดยกำเนิด (ฟีดแบ็ค T5.1: เดินขวาต้องเห็นหัวหันขวาจริง ไม่ใช่รูปหน้าตรงส่ายหัว)
+		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56, LIZARD_SIDE_SHEET, 43, 42.0 * hp_mult, 25)
 
 func _spawn_point_clear() -> bool:
 	# เว้นระยะเกิด: มอนหรือศพจางยังจอดปากประตู (< 80px) = ยังไม่เกิด
@@ -435,7 +439,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		for p in candidates:
 			for i in range(TOWER_SPOTS.size()):
 				# T5: ลานที่มีป้อมแล้วก็คลิกได้ -> เมนูอัปเกรด/ขาย (เดิมกรองเฉพาะลานว่าง)
-				if p.distance_to(TOWER_SPOTS[i]) <= 32.0:
+				if p.distance_to(TOWER_SPOTS[i]) <= SPOT_HIT_R:
 					hit = i
 					break
 			if hit >= 0:
@@ -615,12 +619,13 @@ func _draw() -> void:
 	draw_circle(Vector2(261, 250), 14.0, GATE_COLOR)
 	# จุดหมาย (ประตูปราสาท): วงส้มแดง
 	draw_circle(Vector2(816, 495), 12.0, CASTLE_COLOR)
-	# ลานจุดวางป้อม: วงทอง + ขอบเข้ม + เลขปุ่มลัด (ลานที่ปูแล้วไม่วาด)
+	# ลานจุดวางป้อม: วงทอง + ขอบเข้ม + เลขปุ่มลัด (ลานที่ปูแล้วไม่วาด) — เต้นกระพริบให้เห็นชัด (T5.1)
+	var pulse: float = 0.42 + 0.2 * (0.5 + 0.5 * sin(Time.get_ticks_msec() / 1000.0 * 4.5))
 	for i in range(TOWER_SPOTS.size()):
 		if _towers[i] != null:
 			continue
-		draw_circle(TOWER_SPOTS[i], 26.0, SPOT_FILL)
-		draw_arc(TOWER_SPOTS[i], 26.0, 0.0, TAU, 32, SPOT_EDGE, 2.0, true)
+		draw_circle(TOWER_SPOTS[i], SPOT_DRAW_R, Color(1.0, 0.79, 0.24, pulse))
+		draw_arc(TOWER_SPOTS[i], SPOT_DRAW_R, 0.0, TAU, 32, SPOT_EDGE, 2.5, true)
 		var font := ThemeDB.fallback_font
 		draw_string(font, TOWER_SPOTS[i] + Vector2(-10.0, 5.0), str(i + 1),
 			HORIZONTAL_ALIGNMENT_CENTER, 20, 13, Color(0.2, 0.12, 0.02))
