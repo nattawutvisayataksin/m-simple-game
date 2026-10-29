@@ -90,19 +90,17 @@ godot --path games/game3_car/starter-kit-racing
 
 ```powershell
 godot --headless --path games/game3_car/starter-kit-racing `
-  --script res://tests/test_game3.gd
+  --scene res://tests/test_game3_runner.tscn
 ```
 
-ผลที่บันทึกจากการตรวจครั้งก่อน: **53 PASS / 0 FAIL**, exit code 0. ครอบคลุมฉาก/เมือง, ถนนเมืองต่อถึงกัน,
+ผลตรวจรอบนี้: **53 PASS / 0 FAIL**, exit code 0. ครอบคลุมฉาก/เมือง, ถนนเมืองต่อถึงกัน,
 ขอบกำแพงโค้งทั้งสี่ไม่กินเข้าเลน, ระยะออกตัว, AI, การเก็บเหรียญ/ไอเท็ม, การควบคุม,
 รถชนรถจริง, ชนกำแพงตรงและโค้งจริง, ผ่าน Gate ตามลำดับ และนับรอบจบเกม
 
 หมายเหตุ: test runner ใช้ Jolt และ collider จริงแบบ headless; ยังไม่ใช่การทดสอบด้วยคน
 ในหน้าต่างเกม จึงยังต้องตรวจความรู้สึกการชน การมองเห็น และการขับครบสนามด้วยมือ
-Godot แจ้ง ObjectDB/resource ค้างบางรายการตอน teardown ของ runner แม้ exit code เป็น 0
-ระหว่างตรวจเอกสารรอบนี้ การเรียก runner ซ้ำแสดงเพียง `boot` แล้ว process จบด้วย exit code 0
-โดยไม่มีรายงาน PASS/FAIL จึงยังยืนยันผล regression รอบใหม่ไม่ได้ และไม่ควรใช้ exit code
-ครั้งนี้เป็นหลักฐานว่าเทสผ่าน
+Godot แจ้ง ObjectDB 20 รายการและ resource 4 รายการยังถูกใช้อยู่ตอน teardown แม้เทสผ่าน;
+ควรติดตาม cleanup ของ test runner ในรอบถัดไป
 
 ## Starter Kit และ asset ที่มี
 
@@ -126,7 +124,7 @@ Godot แจ้ง ObjectDB/resource ค้างบางรายการต�
 | Launcher/placeholder เดิม | `games/game3_car/project.godot`, `scenes/main.tscn`, `scripts/main.gd`; เป็นฉาก 2D ตั้งต้น ไม่ใช่เกมแข่งรถปัจจุบัน |
 | โปรเจกต์เกมจริง | `games/game3_car/starter-kit-racing/`; viewport 1280×720, Forward+, Jolt |
 | ทางเข้าเกม | `games/game3_car/play.bat` เปิดโปรเจกต์เกมจริง; หรือใช้คำสั่ง Godot ด้านบน |
-| แผนเทส | เก็บเทสไว้ใน `tests/` และรันด้วย Godot `--headless --script` |
+| แผนเทส | เก็บ test runner scene ไว้ใน `tests/` และรันด้วย Godot `--headless --scene` |
 
 ## ประวัติงาน (ใหม่ล่าสุดอยู่บนสุด)
 

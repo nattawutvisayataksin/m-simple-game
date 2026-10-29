@@ -1,6 +1,6 @@
-extends SceneTree
+extends Node
 ## Test runner: Kubi Grand Prix (Game 3) - รัน headless:
-## godot --headless --path . --script res://tests/test_game3.gd
+## godot --headless --path . --scene res://tests/test_game3_runner.tscn
 ## ครอบคลุม: โครงสนาม, เก็บเหรียญ, นับรอบ, respawn, ขับได้จริง
 
 var frames := 0
@@ -22,21 +22,24 @@ var pending_motion_velocities: Array[Vector3] = []
 var gate_approach_hit := ""
 
 
-func _initialize() -> void:
+func _ready() -> void:
+	await _run_tests()
+
+
+func _run_tests() -> void:
 	print("=== KubiGP test: boot")
-	var packed: PackedScene = load("res://scenes/main.tscn")
-	if packed == null:
-		_check("main.tscn โหลดได้", false, "load fail")
-		quit(1)
-		return
-	var scene := packed.instantiate()
-	root.add_child(scene)
-	game = root.get_node("Main")
+	game = get_node_or_null("Main")
 	if game == null:
-		_check("หาโหนด Main ได้", false, "null")
-		quit(1)
+		_check("runner scene มีโหนด Main", false, "node not found")
+		get_tree().quit(1)
 		return
-	physics_frame.connect(_on_physics_frame)
+	get_tree().physics_frame.connect(_on_physics_frame)
+	for _frame in 1400:
+		await get_tree().physics_frame
+		if stage == 18:
+			return
+	_check("runner ทำงานครบทุก stage", false, "timed out at stage=%d frames=%d" % [stage, frames])
+	_finish()
 
 
 func _check(name: String, condition: bool, detail: String = "") -> void:
@@ -467,7 +470,7 @@ func _stage_laps() -> void:
 
 func _stage_respawn_setup() -> void:
 	print("[4] ระบบ respawn (ตั้ง: โยนรถลงเหว)")
-	paused = false                   # เทสรอบก่อนหน้าชนะแล้ว pause เพื่อเล่นต่อต้องปลด
+	get_tree().paused = false         # เทสรอบก่อนหน้าชนะแล้ว pause เพื่อเล่นต่อต้องปลด
 	game.set("race_finished", false)
 	var sphere := game.get_node("Vehicle/Sphere")
 	sphere.global_transform = Transform3D(Basis(), sphere.global_position + Vector3(0, -30, 0))
@@ -521,7 +524,7 @@ func _stage_drive_check() -> void:
 
 func _stage_vehicle_collision_setup() -> void:
 	print("[6] ชนรถจริงด้วย Jolt Physics")
-	paused = false
+	get_tree().paused = false
 	game.set("race_finished", false)
 	game.set("race_started", true)
 	collision_player = game.get_node("Vehicle") as Vehicle
@@ -648,7 +651,7 @@ func _stage_clear_gate_overlap() -> void:
 
 
 func _stage_gate_crossing_setup(index: int, final_lap := false) -> void:
-	paused = false
+	get_tree().paused = false
 	game.set("race_finished", false)
 	game.set("race_started", true)
 	for i in game.get("_ai_racers").size():
@@ -681,7 +684,7 @@ func _finish() -> void:
 	if failures.size() > 0:
 		for f in failures:
 			print("  FAILED: ", f)
-		quit(1)
+		get_tree().quit(1)
 	else:
 		print("ALL PASS - KubiGP core systems")
-		quit(0)
+		get_tree().quit(0)

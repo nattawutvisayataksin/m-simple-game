@@ -17,12 +17,11 @@
 
   ```powershell
   godot --headless --path games/game3_car/starter-kit-racing `
-    --script res://tests/test_game3.gd
+    --scene res://tests/test_game3_runner.tscn
   ```
 
-  ผลที่บันทึกจากการตรวจครั้งก่อนคือ `53 PASS / 0 FAIL`; จำนวน assertions อาจเปลี่ยนเมื่อเพิ่ม coverage
-  หมายเหตุ: การ rerun ระหว่างตรวจเอกสารรอบนี้จบหลังพิมพ์ `boot` โดยไม่มีผล PASS/FAIL
-  แม้ exit code เป็น `0`; ต้องวินิจฉัย runner ก่อนนับการรันครั้งนั้นเป็นผลผ่าน
+  ผลตรวจรอบนี้คือ `53 PASS / 0 FAIL` และ exit code `0`; Godot ยังรายงาน ObjectDB 20 รายการ
+  และ resource 4 รายการค้างตอน teardown
 
 ## โครงสร้างฉากและหน้าที่ของสคริปต์
 
@@ -34,7 +33,7 @@
 | `scenes/vehicle.tscn` + `scripts/vehicle.gd` | รถแบบ arcade; RigidBody3D เป็นตัวชน/เคลื่อนที่ ส่วนโมเดลและล้อเป็นภาพประกอบที่ตามตัวฟิสิกส์ |
 | `scripts/racer_ai.gd` | ติดตาม waypoint บนสนาม, เลือกเลน, นับความคืบหน้า และใช้ไอเท็มตามสถานการณ์ |
 | `scripts/view.gd` | กล้อง third-person ตามรถและปรับระยะตามความเร็ว |
-| `tests/test_game3.gd` | SceneTree runner สำหรับตรวจระบบและจำลองฟิสิกส์ของรถ กำแพง และประตู |
+| `tests/test_game3_runner.tscn` + `tests/test_game3.gd` | ฉาก runner สำหรับตรวจระบบและจำลองฟิสิกส์ของรถ กำแพง และประตู |
 
 `Town` สร้างจุดกึ่งกลางถนน 42 จุด จากนั้น `game.gd` เรียงจุดตามมุมรอบ centroid
 เพื่อใช้เป็นเส้นทางเดียวกันสำหรับการวางรถ, 21 เหรียญ, กล่องไอเท็ม, 3 ประตู และ AI
@@ -76,7 +75,7 @@ Gate เป็น Area3D แบบ trigger; collider ปัจจุบันก
 
 ## ขอบเขตการทดสอบ
 
-`tests/test_game3.gd` ครอบคลุมการโหลดฉาก, ระยะห่างจุดเกิดรถ, AI, ไอเท็ม, เหรียญ,
+`tests/test_game3.gd` ครอบคลุม scene structure, ระยะห่างจุดเกิดรถ, AI, ไอเท็ม, เหรียญ,
 ลำดับประตู, การขับ, ถนนเมืองที่ต่อถึงกัน, แนวกำแพงทั้งสี่โค้งไม่ล้ำเลน,
 การชนรถสองคันและกำแพงจริงด้วย Jolt และการผ่านประตูตามลำดับรวมการนับรอบ
 

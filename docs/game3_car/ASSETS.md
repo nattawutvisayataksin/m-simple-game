@@ -51,5 +51,5 @@
    ```powershell
    godot --headless --path games/game3_car/starter-kit-racing --import
    godot --headless --path games/game3_car/starter-kit-racing `
-     --script res://tests/test_game3.gd
+     --scene res://tests/test_game3_runner.tscn
    ```
