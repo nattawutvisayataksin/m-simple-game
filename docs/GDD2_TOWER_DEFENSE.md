@@ -80,3 +80,4 @@ m-simple-game/
 | 2026-10-29 | เริ่มเกมที่ 2: GDD2 เวอร์ชันออกแบบ (Kingdom Rush style TD, ภาพใหญ่, ฉากเขียนมือ / เจนวาด) — รออนุมัติ Game Director |
 | 2026-10-29 | ผู้อำนวยการอนุมัติ 3 คำตัดสิน: gen วันนี้ด้วย Key B / ฮีโร่อัตโนมัติระยะแรก / ป้อมเริ่ม 2 สาย |
 | 2026-10-29 | **T1 กองพลศิลป์ครบ อนุมัติทั้งชุด**: พื้นหลัง 1152×648 + ฮีโร่ 64px เดิน 8 เฟรม + กบ/กิ้งก่า + ป้อมนักธนู/ปืนใหญ่ (Key B 7 gen, เหลือ 28/40) — สร้างโครง tower-defend/ (project.godot GL compat + main.tscn + main.gd: เส้นทาง 3 จาก Intel แผนที่จริง — จุดเกิด 3 (ประตูม่วง/ขอบล่างอ้าง/บันไดปราสาท), ลานจุดวาง 5 วงทอง) — headless import + 90 เฟรมผ่าน exit 0 |
+| 2026-10-29 | **T2 มอนเดินจริง อนุมัติรูปแบบ**: `scripts/enemy.gd` waypoint walker (carry leftover distance ข้ามจุด, scale-pulse เด้งแทนเฟรมจริง, flip_h ตามทิศ, signal reached_castle) + main.gd spawner 1.6 วิ สลับ 3 เส้น × กบ(60px/s)/กิ้งก่า(110px/s) + HUD "ชีวิต: N" (เริ่ม 20, leak -1) — เทส headless: leak ถูกนับ 20→18 จริง ผ่าน exit 0 |
