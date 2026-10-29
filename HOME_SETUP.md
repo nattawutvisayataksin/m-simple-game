@@ -1,15 +1,14 @@
 # คู่มือทำงานต่อบนคอมพิวเตอร์ที่บ้าน
 
-เอกสารนี้ใช้สำหรับเตรียมเครื่องที่บ้านและนำโปรเจกต์ `m-sample-game` ไปพัฒนาต่อ
+เอกสารนี้ใช้สำหรับเตรียมเครื่องที่บ้านและนำโปรเจกต์ `m-sample-game` (2 เกม + เครื่องมือใช้ร่วม) ไปพัฒนาต่อ
+รายละเอียด MCP ทั้งหมด (เซิร์ฟเวอร์ไหน ตั้งค่าอยู่ไหน บทเรียน 401/422) อยู่ที่ [`docs/MCP_SETUP.md`](docs/MCP_SETUP.md) — เอกสารนี้สรุปขั้นที่ต้องติดตั้งตามลำดับ
 
 ## 1. โปรแกรมที่ต้องติดตั้ง
 
-ติดตั้งโปรแกรมต่อไปนี้บนคอมพิวเตอร์ที่บ้าน:
-
-- Godot Engine รุ่น 4.x
+- Godot Engine 4.x (โปรเจกต์ทั้ง 2 เกมเทสกับ **4.7.2**)
 - Git
-- Visual Studio Code
-- Node.js รุ่น 18 ขึ้นไป หากต้องการใช้ Godot MCP
+- Visual Studio Code (ตัวเลือก — ใช้แก้โค้ด/รับ MCP จาก VS Code)
+- Node.js 18 ขึ้นไป (ใช้ MCP `godot-mcp` ผ่าน `npx`)
 
 ตรวจสอบการติดตั้งบน Windows ด้วย PowerShell:
 
@@ -22,109 +21,109 @@ npm --version
 
 ## 2. ดาวน์โหลดโปรเจกต์
 
-เปิด PowerShell หรือ Terminal แล้วรัน:
-
 ```powershell
 git clone https://github.com/nattawutvisayataksin/m-simple-game.git
 Set-Location m-simple-game
 ```
 
-## 3. เปิดโปรเจกต์ Godot
+จะได้โครงแบบนี้: `games/game1_coin_rush/` (ชิงเหรียญทอง) · `games/game2_tower_defense/` (หอคอยคู่ฟ้า) · `shared/` (เครื่องมือภาพ) · `docs/` (แยกต่อเกม)
 
-เปิดโปรเจกต์ด้วยคำสั่ง:
+## 3. เปิด/เล่นเกม (สำคัญ: เปิดที่ "โฟลเดอร์เกม" ไม่ใช่ราก repo)
 
 ```powershell
-godot --editor --path .
+# เล่น
+godot --path games/game1_coin_rush
+godot --path games/game2_tower_defense
+
+# เปิดตัวแก้ไข
+godot --editor --path games/game1_coin_rush
+godot --editor --path games/game2_tower_defense
 ```
 
-หรือเปิดโฟลเดอร์ `m-simple-game` ด้วย VS Code แล้วเปิดไฟล์ `project.godot` ผ่าน Godot Project Manager
+หรือเปิดไฟล์ `games/game1_coin_rush/project.godot` ผ่าน Godot Project Manager — และเกมทั้งสองมี `play.bat` ดับเบิลคลิกได้
+นี้คือจุดเตือน: **ราก repo ไม่มี `project.godot`** — เปิดผิดที่จะเจอข้อว่า "ไม่พบ project.godot"; ต้องเปิดที่โฟลเดอร์เกมแต่ละตัว)
 
-## 4. ตั้งค่า Godot MCP (ถ้าต้องการใช้ AI ช่วยพัฒนา)
+**หลัง clone ครั้งแรก รัน import ให้ Godot สร้างแคช: **
 
-โปรเจกต์มีไฟล์ตั้งค่าอยู่ที่ `.vscode/mcp.json` แล้ว แต่ค่า `GODOT_PATH` ต้องตรงกับตำแหน่งติดตั้ง Godot บนเครื่องบ้าน
+```powershell
+godot --headless --path games/game1_coin_rush --import
+godot --headless --path games/game2_tower_defense --import
+```
 
-ตรวจสอบตำแหน่ง Godot:
+## 4. ตั้งค่า MCP ที่บ้าน (ถ้าต้องการใช้ AI ช่วยพัฒนา)
+
+จุดตรวจหลัก **2 ไฟล์** (รายละเอียดครบที่ [`docs/MCP_SETUP.md`](docs/MCP_SETUP.md)):
+
+### 4.1 godot-mcp — อยู่ใน repo: `opencode.json` + `.vscode/mcp.json`
+
+แก้ `GODOT_PATH` ให้ชี้ตำแหน่ง Godot ติดตั้งจริงบนเครื่อง ตรวจตำแหน่งด้วย:
 
 ```powershell
 (Get-Command godot).Source
 ```
 
-จากนั้นแก้ค่า `GODOT_PATH` ใน `.vscode/mcp.json` ให้เป็น path ที่ตรวจสอบได้ เช่น:
+ค่าแนะนำคือเป็น **ชุดตัวคอนโซล** (จับ stdout ได้):
 
-```json
-{
-  "servers": {
-    "godot": {
-      "command": "npx",
-      "args": ["-y", "@coding-solo/godot-mcp"],
-      "env": {
-        "GODOT_PATH": "C:\\Path\\To\\Godot.exe"
-      }
-    }
-  }
-}
+```text
+C:\Users\<ชื่อผู้ใช้>\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.2-stable_win64_console.exe
 ```
 
-หลังแก้ไข ให้ Reload Window หรือเปิด VS Code ใหม่
+### 4.2 pixellab-a/b/c — อยู่ **global config นอก repo**: `~/.config/opencode/opencode.json`
+
+- เครื่องตัวอย่างที่รันได้แล้ว: คัดลอกไฟล์ `C:\Users\Administrator\Desktop\opencode\opencode_global_for_other_pc.json` (สำเนาจากเครื่องหลัก) ไปเป็น `~/.config/opencode/opencode.json` แล้วแก้ path/ชื่อผู้ใช้ให้ตรงเครื่อง
+- **ห้ามฝัง key ในไฟล์ที่ commit** — key ควรอยู่นอก repo เท่านั้น
+- ข้อควรรู้: `{env:...}` ใน headers ของ config **ไม่ถูกแทนค่า** — สาเหตุ 401 ของ pixellab (อ่านพิสูจน์ที่ `docs/MCP_SETUP.md` §2)
+- สถานะ key ล่าสุด/ลำดับการใช้: `docs/ASSET_MANIFEST.md`
 
 ## 5. โครงสร้างไฟล์หลัก
 
 ```text
 m-simple-game/
-├─ .vscode/mcp.json   # การตั้งค่า Godot MCP
-├─ addons/            # Godot addons
-├─ docs/GDD.md        # Game Design Document
-├─ scenes/            # ฉาก Godot เช่น player.tscn
-├─ scripts/           # สคริปต์ GDScript
-├─ project.godot      # การตั้งค่าโปรเจกต์
-├─ readme.md          # ข้อมูลทั่วไป
-└─ HOME_SETUP.md      # คู่มือการทำงานต่อที่บ้าน
+├─ games/
+│  ├─ game1_coin_rush/        # เกม 1: ชิงเหรียญทอง (scenes/scripts/assets/tools + play.bat)
+│  └─ game2_tower_defense/    # เกม 2: หอคอยคู่ฟ้า (โครงเดียวกัน + สูทเทสใน tools/)
+├─ shared/                    # เครื่องมือภาพใช้ร่วม (gen_pixen.ps1, pixellab_anim*.ps1, ...)
+├─ docs/
+│  ├─ game1_coin_rush/        # GDD · ART_DIRECTION · ARCHITECTURE · ASSETS (เกม 1)
+│  ├─ game2_tower_defense/    # GDD · ARCHITECTURE · ASSETS (เกม 2)
+│  ├─ ASSET_MANIFEST.md       # สมุดบัญชี asset + โควตา key (รวมทุกเกม)
+│  └─ MCP_SETUP.md            # MCP: ใครอยู่ไหน + บทเรียน
+├─ opencode.json              # godot-mcp (โปรเจกต์นี้)
+├─ HOME_SETUP.md              # ไฟล์นี้
+└─ README.md                  # ภาพรวม + เรียงเอกสาร
 ```
 
-## 6. ไฟล์ Player ที่มีอยู่
+## 6. เทสอัตโนมัติ (เกม 2) — รันหลังแก้โค้ดเกม 2
 
-ฉาก `scenes/player.tscn` มีโครงสร้างดังนี้:
-
-```text
-Player (CharacterBody2D)
-├─ Sprite2D
-└─ CollisionShape2D
-   └─ CircleShape2D
+```powershell
+$godot = "C:\Users\Administrator\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.2-stable_win64_console.exe"
+foreach ($t in @('test_t3','test_t4','test_keys','test_t5')) {
+  & $godot --headless --path games/game2_tower_defense --script (Join-Path (Resolve-Path .) "games\game2_tower_defense\tools\$t.gd")
+}
 ```
+
+ผ่าน = `ALL PASS` + exit 0 — ลดโอกาสแก้พังที่โหนดสายเกม
 
 ## 7. ขั้นตอนการทำงานประจำวัน
 
-ก่อนเริ่มทำงาน ให้ดึงการเปลี่ยนแปลงล่าสุด:
-
 ```powershell
 git pull origin main
-```
-
-หลังแก้ไขงานเสร็จ ให้บันทึกและส่งขึ้น GitHub:
-
-```powershell
+# แก้โค้ด + เทส
 git add .
 git commit -m "อธิบายสิ่งที่แก้ไข"
 git push origin main
+
+git status   # ก่อนปิดงาน — ต้องแสดง working tree clean
 ```
-
-ก่อนปิดงานควรตรวจสอบสถานะ:
-
-```powershell
-git status
-```
-
-ถ้าเห็น `working tree clean` แสดงว่าไม่มีไฟล์ที่ยังไม่ได้ commit
 
 ## 8. การแก้ปัญหาเบื้องต้น
 
-- หากเปิดโปรเจกต์ไม่ได้ ให้ตรวจสอบว่าเปิดจากโฟลเดอร์ที่มี `project.godot`
-- หาก Godot MCP หา Godot ไม่พบ ให้ตรวจสอบค่า `GODOT_PATH`
-- หาก `git push` ขอรหัสผ่าน ให้ใช้ GitHub Personal Access Token แทนรหัสผ่านบัญชี
-- หากมี conflict หลัง `git pull` ให้หยุดแก้ไขอย่างระมัดระวัง และตรวจสอบไฟล์ที่ Git แจ้ง
+- เปิดเกมไม่ได้: ตรวจว่ารันจาก **โฟลเดอร์ที่มี `project.godot`** (games/game1_coin_rush หรือ games/game2_tower_defense) ไม่ใช่ราก repo
+- Godot MCP หา Godot ไม่พบ: แก้ `GODOT_PATH` ใน `opencode.json` / `.vscode/mcp.json`
+- pixellab ตอบ 401: ไม่ใช่ key หมด — ปัญหา `{env:...}` ไม่เผยแร้งค่า; ใช้ global config + Bearer เต็ม ๆ (`docs/MCP_SETUP.md`)
+- `git push` ขอรหัสผ่าน: ใช้ GitHub Personal Access Token (PAT) แทนรหัสผ่านบัญชี
+- มี conflict หลัง `git pull`: หยุดแก้อย่างระมัดระวัง ตรวจไฟล์สีแดง/ús ที่ Git ตกลงแก้ไข
 
 ## 9. Repository
-
-โปรเจกต์นี้ใช้ repository:
 
 `https://github.com/nattawutvisayataksin/m-simple-game.git`

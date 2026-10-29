@@ -79,7 +79,7 @@
 ## 7. งานศิลป์และเสียง
 
 - **ธีมภาพ: ชิงเหรียญทอง — ธีม KUB** (Kub Chain / Kub Coin / Bitkub) ส้ม-ทอง-ครีม เส้นขอบเข้ม
-  ดูแลด้วย `docs/ART_DIRECTION.md` + `docs/ASSET_MANIFEST.md`
+  ดูแลด้วย `docs/game1_coin_rush/ART_DIRECTION.md` + `docs/ASSET_MANIFEST.md` (key ผู้ใช้ร่วมดู `docs/MCP_SETUP.md`)
 - สปรไตต์จริง (อนุมัติและใช้ในฉากแล้ว 2026-10-29):
   - Player "Kubi" หุ่นยนต์ส้ม — `assets/art/sprites/player_kubi.png`
   - Coin เหรียญ K — `assets/art/sprites/coin_kub.png`
@@ -89,17 +89,17 @@
     - เหรียญหมุน: สร็จสปรีตชีต 9 เฟรม `assets/art/gen/coin_sheet.png` ผูก `Sprite2D.hframes=9`+เลื่อนเฟรมใน coin.gd
     - Kubi เดิน: เสร็จ `assets/art/gen/player_sheet.png` (เฟรม 0 = ยืน, 1-8 = เดิน) ผูกแล้วใน player.gd
     - ไวรัส pulsate: เสร็จ `assets/art/gen/enemy_sheet.png` ผูกแล้วใน enemy.gd
-    - สคริปต์ผลิต: `tools/pixellab_anim_resume.ps1` (อ่าน key จาก `.mcp.json`) + `tools/build_sprite_sheet.ps1`
+    - สคริปต์ผลิต: `shared/pixellab_anim_resume.ps1` (อ่าน key จาก global config) + `games/game1_coin_rush/tools/build_sprite_sheet.ps1`
 - เพลงประกอบ: ยังไม่มี
 - เสียงเอฟเฟกต์: มี 3 เสียง (`assets/audio/`) — pickup เก็บเหรียญ, win ชนะ, lose แพ้
-  สร้างด้วยสคริปต์ `tools/generate_sfx.ps1` (สังเคราะห์คลื่น sine, แก้โน้ต/ความยาวได้ในไฟล์เดียว)
+  สร้างด้วยสคริปต์ `games/game1_coin_rush/tools/generate_sfx.ps1` (สังเคราะห์คลื่น sine, แก้โน้ต/ความยาวได้ในไฟล์เดียว)
 
 ## 8. โครงสร้างโปรเจกต์
 
 ```text
-m-sample-game/
+games/game1_coin_rush/        # โปรเจกต์ Godot เกมนี้ (รวม project.godot)
 ├─ project.godot      # ตั้งค่าเอนจิน + Input Map
-├─ docs/GDD.md
+├─ play.bat           # ดับเบิลคลิกเล่นได้ทันที
 ├─ scenes/
 │  ├─ main.tscn       # สนาม + กำแพง + Player + HUD
 │  ├─ player.tscn
@@ -108,9 +108,11 @@ m-sample-game/
 │  ├─ main.gd
 │  ├─ player.gd
 │  └─ coin.gd
-├─ readme.md
-└─ HOME_SETUP.md
+├─ tools/             # generate_music / generate_sfx / build_sprite_sheet
+└─ docs/game1_coin_rush/   # GDD + ART_DIRECTION + ARCHITECTURE + ASSETS
 ```
+
+> เครื่องมือใช้ร่วมกับทุกเกมอยู่ที่ `shared/` รายละเอียดใน `README.md`
 
 ## 9. แผนการพัฒนา (ดีไซน์ระยะถัดไป)
 

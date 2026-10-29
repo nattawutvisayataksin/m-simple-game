@@ -58,18 +58,19 @@
 - งบประมาณ T1 คาดหมาย: ~12–16 gen (พื้นหลัง 1-2 + มอนสเตอร์ 3-4 + ฮีโร่ 1-2 (64px) + ป้อม 4-6 + เฟรมเอนิเมชันเสริมภายหลัง)
 - **เครื่องมือฟรีให้จัดเต็ม (เครื่องมือก้าวกระโดด):** `pixelart_workbench` (แก้ไข px เองได้แน่), `vfx_workbench` (สร้าง VFX ต่าง ๆ ฟรี), composer เพลงตัวเอง, ตัดพื้นหลัง make_transparent, build sheet — ลดการกินเครดิตให้เหลือเฉพาะ "ภาพสำคัญที่อยากสุด"? ภาพหลักใช้ pixellab AI ทำ
 
-## 7. โครงสร้างโปรเจกต์ (ตัดสินใจให้แล้ว)
+## 7. โครงสร้างโปรเจกต์ (รึปรับปรุงตามโครงสร้างใหม่ 2026-10-29)
 
-เกม 1 คงอยู่เล่นได้ตามเดิม (ไม่แตะ) → เกมที่ 2 อยู่ในโฟลเดอร์ย่อย `tower-defend/` มี `project.godot` ตัวเอง (Godot โหลดแยก) แชร์ repo เดียว
+เกม 1 และเกม 2 แยกโฟลเดอร์เกมของตนเองใน `games/` — เกม 2 ใช้พาธใหม่ `games/game2_tower_defense/` (เดิม `tower-defend/`) มี `project.godot` ตัวเอง (Godot โหลดแยก) แชร์ repo เดียว
 
 ```text
 m-simple-game/
-├─ scenes/, scripts/, assets/     # Coin Rush (คุณเคยรู้ ไม่แตะ)
-├─ tower-defend/
+├─ games/game1_coin_rush/    # Coin Rush (project.godot ของตัวเอง)
+├─ games/game2_tower_defense/  # เกมนี้ (project.godot + tools/ + play.bat)
 │  ├─ project.godot
 │  ├─ scenes/  scripts/  assets/
-│  ├─ docs/ GDD2 เล่นที่นี่ (หรือ root เดียวพร้อม link)
-└─ docs/GDD2_TOWER_DEFENSE.md   (ไฟล์นี้)
+│  └─ tools/                  # เครื่องมือ + เทสของเกมนี้ (test_t3/test_t4/test_t5/...)
+├─ shared/                    # เครื่องมือใช้ร่วม 2 เกม (gen_pixen, pixellab_anim, ...)
+└─ docs/game2_tower_defense/  # ย้อมที่นี่ + ทั้ง ARCHITECTURE/ASSETS ของเกมนี้ ; GDD เกม 2 คือไฟล์นี้
 ```
 
 ## 8. บันทึกการเปลี่ยนแปลง

@@ -3,7 +3,7 @@
 ```json
 {
   "project": "m-sample-game (Ching Lian Thong / Coin Rush)",
-  "notes": "Pixellab: 3 keys ให้ใช้อิสระเมื่อต้องการ (Key A หมด 50/40 รอ bonus รื้นรายวัน, Key B เหลือ 16/40, Key C เต็ม 40 + bonus 5) — key ฝังใน global config ~/.config/opencode/opencode.json นอก repo — รายละเอียด docs/ART_DIRECTION.md §3",
+  "notes": "Pixellab: 3 keys ให้ใช้อิสระเมื่อต้องการ (Key A หมด 50/40 รอ bonus รื้นรายวัน, Key B เหลือ 16/40, Key C เต็ม 40 + bonus 5) — key ฝังใน global config ~/.config/opencode/opencode.json นอก repo (รายละเอียดเชื่อมโยง docs/MCP_SETUP.md) — รายละเอียด docs/game1_coin_rush/ART_DIRECTION.md §3",
   "anim_cost_record": "2026-10-29: coin 8f + player 8f + enemy 8f = 3 gen (Key B ok, เหลือ 37/40) — เฟรมจริง 9 ไฟล์/ชุด + spritesheet ผูกในฉากแล้ว",
   "tileset_cost_record": "2026-10-29: kub_arena_sheet (16 tiles 32×32) = 1 gen (Key A daily bonus, available-เหลือ 4 วันนี้) — ผูกใน main.tscn (พื้น + กำแพง 4 ด้าน, กำแพง เข้าตา 40→32px ยึด grid) ทดสอบ headless ผ่าน",
   "music_record": "2026-10-29: music.wav chiptune loop 13.7s สังเคราะห์เองใน tools/generate_music.ps1 (ฟรี ไม่ใช้ gen) + bus Music/SFX (default_bus_layout.tres) + HUD icon ใช้ coin_kub.png ซ้ำ — ฟอนต์จริง process: หยุด (create_font Latin-only, ใช้ LabelSettings)",
@@ -26,7 +26,7 @@
     "resource เกม 2 เพิ่มเติม (ไม่กิน gen): lizard_side_sheet.png รีคัดจากฟรีมเก่า job 51facc93 — ใช้ช่วงเดินแนวนอน (แถวเท้า 43 หน้าตรง 56)",
     "ระวัง: ห้ามฝัง key ในไฟล์ commit — key อ่านจาก global config ~/.config/opencode/opencode.json (นอก repo) เท่านั้น"
   ],
-  "art_direction_doc": "docs/ART_DIRECTION.md",
+  "art_direction_doc": "docs/game1_coin_rush/ART_DIRECTION.md",
   "engine": "godot-4.7",
   "created": "2026-10-29",
   "assets": [
