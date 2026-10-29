@@ -78,14 +78,15 @@ func respawn() -> void:
 # Track building
 
 func _build_track_and_spawnables() -> void:
-	var cells: Array[Vector3i] = []
-	for c in _grid.get_used_cells():
-		var item := _grid.get_cell_item(c)
-		if item < 0:
-			continue
-		if _grid.mesh_library.get_item_name(item).begins_with("track"):
-			cells.append(c)
-	if cells.is_empty():
+	_path_points.clear()
+	# หลัก: อ่านจุดเซลล์ถนนจากเมือง (Town วาดเอง ไม่พึ่ง GridMap)
+	var town := get_node_or_null("Town")
+	if town != null and town.has_method("get_track_points"):
+		for tp in town.get_track_points():
+			_path_points.append(tp)
+	if _path_points.is_empty():
+		_grid_path_fallback()
+	if _path_points.is_empty():
 		push_warning("KubiGP: not found track pieces in GridMap")
 		return
 
@@ -93,20 +94,21 @@ func _build_track_and_spawnables() -> void:
 	_props_root.name = "Props"
 	add_child(_props_root)
 
+	# เรียงจุดตามมุมรอบจุดศูนย์กลาง (กันเหรียญซ้อนวงขนานด้วยมุมขั้นต่ำ)
 	var centroid := Vector2.ZERO
-	for c in cells:
-		centroid += Vector2(c.x, c.z)
-	centroid /= cells.size()
-
-	cells.sort_custom(func(a, b):
-		var aa := _cell_angle(a, centroid)
-		var bb := _cell_angle(b, centroid)
-		return aa < bb)
+	for p in _path_points:
+		centroid += Vector2(p.x, p.z)
+	centroid /= _path_points.size()
 
 	var points: Array[Vector3] = []
 	var used_angles: Array[float] = []
-	for c in cells:
-		var ang := _cell_angle(c, centroid)
+	var ordered := _path_points.duplicate()
+	ordered.sort_custom(func(a, b):
+		var aa := _point_angle(a, centroid)
+		var bb := _point_angle(b, centroid)
+		return aa < bb)
+	for q in ordered:
+		var ang := _point_angle(q, centroid)
 		var dup := false
 		for ua in used_angles:
 			if absf(_angle_diff(ang, ua)) < COIN_DUP_ANGLE:
@@ -115,34 +117,27 @@ func _build_track_and_spawnables() -> void:
 		if dup:
 			continue
 		used_angles.append(ang)
-		points.append(_grid.to_global(_grid.map_to_local(c)))
+		points.append(q)
 	_path_points = points
 
 	var coins := Node3D.new()
 	coins.name = "Coins"
 	coins.position = Vector3.ZERO
 	add_child(coins)
-	var gold := StandardMaterial3D.new()
-	gold.albedo_color = Color(1.0, 0.85, 0.2)
-	gold.emission_enabled = true
-	gold.emission = Color(1.0, 0.7, 0.1)
-	gold.emission_energy_multiplier = 0.8
-	var coin_mesh := CylinderMesh.new()
-	coin_mesh.top_radius = 0.55
-	coin_mesh.bottom_radius = 0.55
-	coin_mesh.height = 0.12
-	coin_mesh.material = gold
+	var coin_scene: PackedScene = load("res://models/town/deco/coin-gold.glb")
 	var coin_shape := SphereShape3D.new()
 	coin_shape.radius = 1.8
 	for i in range(0, _path_points.size(), COIN_STEP):
 		var area := Area3D.new()
 		area.name = "Coin%d" % i
 		area.collision_mask = 8          # เจอ sphere ของรถ (layer 8) เท่านั้น
-		area.position = _path_points[i] + Vector3(0, 1.4, 0)
-		var mi := MeshInstance3D.new()
-		mi.mesh = coin_mesh
-		mi.rotation.x = PI / 2           # ยาบเหรียญให้ตั้งตึงแล้วหมุนแบบเหรียญ
-		area.add_child(mi)
+		area.position = _path_points[i] + Vector3(0, 1.1, 0)
+		if coin_scene != null:
+			var coin: Node3D = coin_scene.instantiate()
+			var s := 1.0 / 0.4           # เหรียญวัดได้ 0.4 ม. -> ยืดเป็น ~1 ม.
+			coin.scale = Vector3(s, s, s)
+			coin.rotation.x = PI / 2     # ตั้งเหรียญแนวตั้งแล้วหมุนรอบแกน Y
+			area.add_child(coin)
 		var cs := CollisionShape3D.new()
 		cs.shape = coin_shape
 		area.add_child(cs)
@@ -321,8 +316,23 @@ func _tangent_at(p: Vector3) -> Vector3:
 
 # Helpers
 
-func _cell_angle(c: Vector3i, center: Vector2) -> float:
-	return atan2(c.z - center.y, c.x - center.x)
+func _point_angle(p: Vector3, center: Vector2) -> float:
+	return atan2(p.z - center.y, p.x - center.x)
+
+
+## ทางเลือกเมืองไม่มี (เลิกใช้ GridMap เป็นหลักแล้ว): อ่านจากเซลล์ road-* ใน GridMap
+func _grid_path_fallback() -> void:
+	var cells: Array[Vector3i] = []
+	for c in _grid.get_used_cells():
+		var item := _grid.get_cell_item(c)
+		if item < 0:
+			continue
+		if _grid.mesh_library.get_item_name(item).begins_with("road"):
+			cells.append(c)
+	if cells.is_empty():
+		return
+	for c in cells:
+		_path_points.append(_grid.to_global(_grid.map_to_local(c)))
 
 
 func _angle_diff(a: float, b: float) -> float:

@@ -14,13 +14,13 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 [application]
 
-config/name="Starter Kit Racing"
+config/name="Kubi Grand Prix - ราชวงศ์ทอง"
 config/tags=PackedStringArray("starterkit")
 run/main_scene="res://scenes/main.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
-boot_splash/bg_color=Color(0.921875, 0.921875, 0.957031, 1)
-boot_splash/image="res://splash-screen.png"
-config/icon="res://icon.png"
+boot_splash/bg_color=Color(0.121569, 0.0901961, 0.0313726, 1)
+boot_splash/show_image=false
+config/icon="res://icon-kubi.png"
 
 [display]
 

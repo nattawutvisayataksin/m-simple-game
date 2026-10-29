@@ -1,0 +1,16 @@
+extends SceneTree
+func _initialize() -> void:
+	var lib := MeshLibrary.new()
+	var pm := PlaneMesh.new()
+	pm.size = Vector2(1, 1)
+	var id: int = lib.get_last_unused_item_id()
+	lib.create_item(id)
+	lib.set_item_name(id, "probe")
+	lib.set_item_mesh(id, pm)
+	var bs := BoxShape3D.new()
+	bs.size = Vector3(1, 0.05, 1)
+	var xf := Transform3D(Basis(), Vector3(0, 0.01, 0))
+	lib.set_item_shapes(id, [[xf, bs]])
+	var okname: String = lib.get_item_name(0)
+	print("RESULT count=", lib.get_item_count(), " name=", okname, " found=", lib.find_item_by_name("probe"), " shapes=", lib.get_item_shapes(id))
+	quit()
