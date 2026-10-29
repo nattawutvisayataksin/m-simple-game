@@ -118,10 +118,11 @@ func _process(delta: float) -> void:
 		_sprite.flip_h = nxt.x > position.x and faces_left  # native หัวซ้าย -> เดินขวาต้องกลับ
 		animing = side_sheet.get_width() > FRAME_SIZE
 	else:
-		# ช่วงเดินตรงเข้าหาเรา (แนวตั้ง/ทแยง): ชุดหน้าตรง ไม่ flip
+		# ชุดหน้าตรง (ก้บ/กิ้งก่าไม่มีชุดข้าง): ยังหันหัวตามทิศถนน - เดินขวา = หันขวา (ฟีดแบ็ค T4.1)
 		if _sprite.texture != front:
 			_apply_sheet(front, body_bottom_row)
-		_sprite.flip_h = false
+		if absf(d.x) > 0.05:
+			_sprite.flip_h = d.x > 0.0   # ต้นฉบับ (ไม่ flip) หันซ้ายอยู่แล้ว -> เดินขวาต้องกลับ
 		animing = front != null and front.get_width() > FRAME_SIZE
 	if animing:
 		_anim_t += delta * ANIM_FPS
