@@ -2,8 +2,8 @@ extends Node2D
 # มอนสเตอร์เดินตามถนน - หอคอยคู่ฟ้า (T2 + แอนิเมชันเดินลื่น)
 # เดินตาม waypoint อย่างมี carry leftover distance (ระยะ step ค้างข้ามจุด -
 # กันมอนเร็ว "หยุดหายใจ" ที่จุดกำหนดเพราะเดินเลยหัวไปแล้วใน 1 เฟรม)
-# T2.5: ถ้าให้ sheet (hframes จาก sheet_size.x / 64) จะเล่นเฟรมเดินจริง
-# แทน scale-pulse; ถ้าได้ภาพนิ่งยัง fallback ด้วยการเด้งเดิม
+# T2.6: วางเท้าที่ position (sprite offset -22) ให้ y-sort จัดลำดับถูกตามระดับจอ
+# และวาดเงาวงรีใต้เท้า ยึดตัวมอนกับพื้น (แก้ภาพ "ลอย ๆ" เมื่อตัวทับกัน)
 
 signal reached_castle
 
@@ -14,7 +14,7 @@ var waypoints: PackedVector2Array = []
 var speed := 60.0
 var base_scale := 1.5
 var no_flip := false
-var faces_left := false   # สไปรต์หันข้างแนวหัวไปทางไหน (กิ้งก่า = หันซ้าย)
+var faces_left := false   # สไปรต์หันข้างเกิดหัวไปทางไหน (กิ้งก่า = ซ้าย)
 var texture: Texture2D        # ภาพนิ่ง (fallback)
 var sheet: Texture2D          # spritesheet แถวเดียว (เลือกใช้ถ้ามี)
 
@@ -30,10 +30,18 @@ func _ready() -> void:
 	if sheet != null and sheet.get_width() > FRAME_SIZE:
 		_sprite.hframes = sheet.get_width() / FRAME_SIZE
 	_sprite.scale = Vector2(base_scale, base_scale)
+	_sprite.offset = Vector2(0, -22)  # จุด reference อยู่เท้า ไม่ใช่กึ่งกลางตัว
 	add_child(_sprite)
 	# ยืนจุดแรกของเส้นทาง
 	if waypoints.size() > 0:
 		position = waypoints[0]
+	queue_redraw()
+
+func _draw() -> void:
+	# เงาใต้เท้า (วงรีโปร่งแสง) - วาดที่ position (เท้า)
+	draw_set_transform(Vector2(0, 4), 0.0, Vector2(1.0, 0.42))
+	draw_circle(Vector2.ZERO, 17.0, Color(0.05, 0.09, 0.04, 0.35))
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
 func _process(delta: float) -> void:
 	if _wp_index >= waypoints.size() - 1:

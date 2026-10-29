@@ -49,6 +49,7 @@ var _lives_label: Label
 var _hud: CanvasLayer
 
 func _ready() -> void:
+	y_sort_enabled = true  # มอนวาดเรียงตามแนวระดับ (ตัวล่างจอบนตัวบนจอ - แก้ทับซ้อนดูลอย)
 	_build_lives_label()
 	queue_redraw()
 
@@ -56,7 +57,19 @@ func _process(delta: float) -> void:
 	_spawn_timer += delta
 	if _spawn_timer >= SPAWN_INTERVAL:
 		_spawn_timer = 0.0
-		_spawn_next()
+		if _spawn_point_clear():
+			_spawn_next()
+
+func _spawn_point_clear() -> bool:
+	# เว้นระยะเกิด: ถ้ามีมอนยังจอดแถวปากประตู (< 80px) เลื่อนเกิดไปก่อน 0.45 วิ
+	var gate := PATH_A[0]
+	for child in get_children():
+		if child is Node2D and child != _hud:
+			var v: Node2D = child
+			if v.position.distance_to(gate) < 80.0 and v.has_method("_process") and v.get_script() == EnemyScript:
+				_spawn_timer = SPAWN_INTERVAL - 0.45
+				return false
+	return true
 
 func _spawn_next() -> void:
 	# สลับชนิดวน: กบ / กิ้งก่า + ไลน์เลื่อนข้างสลับซ้าย/ขวา กันเดินซ้อน
