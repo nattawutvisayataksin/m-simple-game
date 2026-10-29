@@ -133,6 +133,7 @@ m-sample-game/
 ### ระยะ C: ตัวจริงและศิลป์ แทน Polygon2D
 - [x] วาด sprite ตัวละคร/เหรียญ/ศัตรู 3 ตัว ธีม KUB — ⭐ ผู้ใช้อนุมัติ 2026-10-29 (แทนที่ในฉากแล้ว)
 - [x] แอนิเมชันเฟรมจริง — เหรียญ: chatsheet 9 เฟรม ผูกในฉากแล้ว; Kubi เดิน / ไวรัส pulsate กำลังผลิตผ่าน REST `animate-pixminimax` (Pixellab 2 key, ใช้ได้อิสระเมื่อต้องการ)
+- [x] tileset กำแพง/พื้น ธีม KUB — gen ด้วย Key A daily bonus (job `d54165fd`) ผูกใน main.tscn แล้ว (พื้น Sprite2D tile + กำแพง 4 ด้าน Sprite2D tile 32px grid, Polygon2D หมดจากฉาก) — ทดสอบ headless 4.7.2 ผ่าน 2026-10-29
 - [ ] เพลงประกอบ + แยก bus เสียง (ตอนนี้มีเพียง SFX 3 เสียง)
 
 ### ระยะ D: ปิดหลังบ้านเกม
@@ -157,4 +158,5 @@ m-sample-game/
 | 2026-10-29 | ระยะ C เริ่ม: ธีมภาพ KUB, สปรไตต์ 3 ตัว (Kubi / เหรียญ K / ไวรัส) ผ่านการอนุมัติและแทนสายในฉาก, แอนิเมชัน free-juice ในโค้ด + ผลิตเฟรมจริงผ่าน REST pixminimax |
 | 2026-10-29 | เหรียญหมุนเฟรมจริงเสร็จ (spritesheet 9f → Sprite2D.hframes) + เพิ่ม Pixellab 2 key (REST v2 ใช้ได้อิสระ) — อัปเดต ART_DIRECTION §3, ASSET_MANIFEST; push ชุด sprite เดิมแล้ว, ชุดแอนิเมชันรอ commit ต่อ |
 | 2026-10-29 | **แอนิเมชัน 3 ชุดเสร็จสมบูรณ์**: coin/player/enemy spritesheet 9f ผูกในฉากครบ (commit `aefa239` push GitHub แล้ว) + แก้ bugs ที่ Godot 4.7.2 พบ (คอมเมนต์ใน .tscn ไม่รองรับ → ลบ, coin.gd ประกาศซ้ำ → แก้, enemy.tscn texture เก่า → ชี้ sheet) — **ทดสอบรันจริงบนเครื่องผู้ใช้ผ่าน ไม่มี error** (Godot 4.7.2 จาก winget ติดตั้งแล้ว; GODOT_PATH ใน .mcp.json แก้สมบูรณ์) |
-| 2026-10-29 | **สถานะสำหรับเซสชันถัดไป**: ระยะ A+B ค้างเท่าไหร่ไม่มีแล้วเริ่มจากตรงนี้ — ✅ เกมเล่นได้จริงบนเครื่องผู้ใช้ / 🔄 ถัดไป: commit+push ไฟล์ที่แก้ในรอบนี้ (.tscn/.gd) → ระยะ C ท้าย (tileset กำแพง/พื้น KUB ใน main.tscn ยัง Polygon2D, HUD icon+ฟอนต์, เพลง bus) → ระยะ B ตามแผนด้านล่าง (ไวรัสเพิ่มตามเวลา, เหรียญทอง 3pts) — โควตา Key B เหลือ 37/40 ใช้ได้อิสระ, Key A ใช้หมดรอ daily bonus |
+| 2026-10-29 | **tileset กำแพง/พื้น KUB เสร็จ** (ระยะ C ข้อ 3): gen 1 ครั้งด้วย **Key A daily bonus** (bonus ใช้ได้จริง 5→4, job `d54165fd`, 16 tiles 32×32) → `assets/art/gen/kub_arena_sheet.png` + เจอ metadata .json (bbox พื้น 64,32 / กำแพง 0,96) แทนที่ใน main.tscn: พื้น ColorRect → Sprite2D tile + กำแพง 4 ด้าน Polygon2D 40px → Sprite2D tile 32px ยึด grid (collision 1152×32 / 32×648) — headless import + รัน 30f ผ่าน ไม่มี error |
+| 2026-10-29 | **สถานะสำหรับเซสชันถัดไป**: ระยะ C เหลือ HUD icon+ฟอนต์, เพลง bus — ระยะ A (เหรียญทอง 3pts, เวลา ≤10 วิ ตัวเลขแดง, ปิดเหรียญหลังจบรอบ) แล้วระยะ B (ไวรัสเพิ่มตามเวลา) — โควตา: Key A bonus เหลือ 4 +5/คืน, Key B เหลือ 37/40 ใช้ได้อิสระ (ผู้ใช้ตัดสินใจแล้ว: ยังไม่สลับ Key B เป็น MCP — ใช้ daily bonus ของ Key A ให้หมดก่อน) |

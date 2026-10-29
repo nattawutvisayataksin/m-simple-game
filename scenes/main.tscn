@@ -1,4 +1,4 @@
-[gd_scene load_steps=9 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="PackedScene" path="res://scenes/player.tscn" id="2_player"]
@@ -6,59 +6,78 @@
 [ext_resource type="AudioStream" path="res://assets/audio/pickup.wav" id="4_pickup"]
 [ext_resource type="AudioStream" path="res://assets/audio/win.wav" id="5_win"]
 [ext_resource type="AudioStream" path="res://assets/audio/lose.wav" id="6_lose"]
+[ext_resource type="Texture2D" path="res://assets/art/gen/kub_arena_sheet.png" id="7_tileset"]
 
 [sub_resource type="RectangleShape2D" id="1_wall_flat"]
-size = Vector2(1152, 40)
+size = Vector2(1152, 32)
 
 [sub_resource type="RectangleShape2D" id="1_wall_side"]
-size = Vector2(40, 648)
+size = Vector2(32, 648)
 
 [node name="Main" type="Node2D"]
 script = ExtResource("1_main")
 
-[node name="Background" type="ColorRect" parent="."]
-offset_right = 1152.0
-offset_bottom = 648.0
-color = Color(0.13, 0.15, 0.2, 1)
+[node name="BackgroundFloor" type="Sprite2D" parent="."]
+position = Vector2(576, 324)
+texture = ExtResource("7_tileset")
+texture_repeat = 2
+region_enabled = true
+region_rect = Rect2(64, 32, 1152, 648)
 
 [node name="Walls" type="Node2D" parent="."]
 
 [node name="WallTop" type="StaticBody2D" parent="Walls"]
-position = Vector2(576, 20)
+position = Vector2(576, 16)
 
-[node name="Visual" type="Polygon2D" parent="Walls/WallTop"]
-color = Color(0.35, 0.38, 0.45, 1)
-polygon = PackedVector2Array(-576, -20, 576, -20, 576, 20, -576, 20)
+[node name="Visual" type="Sprite2D" parent="Walls/WallTop"]
+position = Vector2(-576, -16)
+texture = ExtResource("7_tileset")
+texture_repeat = 2
+region_enabled = true
+region_rect = Rect2(0, 96, 1152, 32)
+centered = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/WallTop"]
 shape = SubResource("1_wall_flat")
 
 [node name="WallBottom" type="StaticBody2D" parent="Walls"]
-position = Vector2(576, 628)
+position = Vector2(576, 632)
 
-[node name="Visual" type="Polygon2D" parent="Walls/WallBottom"]
-color = Color(0.35, 0.38, 0.45, 1)
-polygon = PackedVector2Array(-576, -20, 576, -20, 576, 20, -576, 20)
+[node name="Visual" type="Sprite2D" parent="Walls/WallBottom"]
+position = Vector2(-576, -16)
+texture = ExtResource("7_tileset")
+texture_repeat = 2
+region_enabled = true
+region_rect = Rect2(0, 96, 1152, 32)
+centered = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/WallBottom"]
 shape = SubResource("1_wall_flat")
 
 [node name="WallLeft" type="StaticBody2D" parent="Walls"]
-position = Vector2(20, 324)
+position = Vector2(16, 324)
 
-[node name="Visual" type="Polygon2D" parent="Walls/WallLeft"]
-color = Color(0.3, 0.33, 0.4, 1)
-polygon = PackedVector2Array(-20, -324, 20, -324, 20, 324, -20, 324)
+[node name="Visual" type="Sprite2D" parent="Walls/WallLeft"]
+position = Vector2(-16, -324)
+texture = ExtResource("7_tileset")
+texture_repeat = 2
+region_enabled = true
+region_rect = Rect2(0, 96, 32, 648)
+centered = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/WallLeft"]
 shape = SubResource("1_wall_side")
 
 [node name="WallRight" type="StaticBody2D" parent="Walls"]
-position = Vector2(1132, 324)
+position = Vector2(1136, 324)
 
-[node name="Visual" type="Polygon2D" parent="Walls/WallRight"]
-color = Color(0.3, 0.33, 0.4, 1)
-polygon = PackedVector2Array(-20, -324, 20, -324, 20, 324, -20, 324)
+[node name="Visual" type="Sprite2D" parent="Walls/WallRight"]
+position = Vector2(-16, -324)
+texture = ExtResource("7_tileset")
+texture_repeat = 2
+region_enabled = true
+region_rect = Rect2(0, 96, 32, 648)
+centered = false
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Walls/WallRight"]
 shape = SubResource("1_wall_side")

@@ -3,13 +3,14 @@
 ```json
 {
   "project": "m-sample-game (Ching Lian Thong / Coin Rush)",
-  "notes": "Pixellab: 2 keys ให้ใช้อิสระเมื่อต้องการ (Key A = session MCP; Key B = .mcp.json, REST v2 มี 40 gen ว่าง) — รายละเอียด docs/ART_DIRECTION.md §3",
+  "notes": "Pixellab: 2 keys ให้ใช้อิสระเมื่อต้องการ (Key A = session MCP, หลักหมดแต่ daily bonus ใช้ได้จริง; Key B = .mcp.json เหลือ 37/40) — รายละเอียด docs/ART_DIRECTION.md §3",
   "anim_cost_record": "2026-10-29: coin 8f + player 8f + enemy 8f = 3 gen (Key B ok, เหลือ 37/40) — เฟรมจริง 9 ไฟล์/ชุด + spritesheet ผูกในฉากแล้ว",
-  "session_handoff": "2026-10-29: ทดสอบเกมบนเครื่องผู้ใช้ผ่าน (Godot 4.7.2 ติดตั้งแล้ว, path ใน .mcp.json GODOT_PATH แก้เรียบร้อย — ต่อเครื่องใหม่อ่าน HOME_SETUP ข้อ 3-4) ถัดไป: ระยะ C ชุดท้าย (tileset กำแพง/พื้น, HUD icon+ฟอนต์, เพลง) → ระยะ B",
+  "tileset_cost_record": "2026-10-29: kub_arena_sheet (16 tiles 32×32) = 1 gen (Key A daily bonus, available-เหลือ 4 วันนี้) — ผูกใน main.tscn (พื้น + กำแพง 4 ด้าน, กำแพง เข้าตา 40→32px ยึด grid) ทดสอบ headless ผ่าน",
+  "session_handoff": "2026-10-29: ระยะ C tileset เสร็จ (headless ผ่าน) ถัดไป: HUD icon+ฟอนต์ → เพลง bus → ระยะ A (เหรียญทอง 3pts ฯลฯ) → ระยะ B",
   "next_steps": [
-    "Phase C ท้าย: tileset กำแพง/พื้น ธีม KUB (main.tscn ยังใช้ Polygon2D สีล้วนอยู่) — ใช้โควตา Key B ได้",
     "Phase C ท้าย: HUD icon เหรียญ + ฟอนต์, เพลงประกอบ + audio bus",
-    "Phase B: ความยาก เพิ่มไวรัสตามเวลา, เหรียญทอง 3 คะแนน (coin_kub_gold) ตาม manifest นี้",
+    "Phase A: ระยะ A polish — เหรียญทอง 3 คะแนน (edit coin image ลด gen), เวลา ≤10 วิ ตัวเลขแดง, ปิดเหรียญหลังจบรอบ",
+    "Phase B: ความยาก เพิ่มไวรัสตามเวลา",
     "ระวัง: ห้ามฝัง key ในไฟล์ commit — key อ่านจาก .mcp.json (gitignored) เท่านั้น"
   ],
   "art_direction_doc": "docs/ART_DIRECTION.md",
@@ -53,6 +54,17 @@
       "approval": "approved-by-user 2026-10-29 (visual check)"
     },
     {
+      "id": "kub_arena_tileset",
+      "role": "tileset-walls-floor",
+      "size": "16 tiles 32x32 (sheet 128x128)",
+      "pivot": "tiled (Sprite2D region + texture_repeat)",
+      "tiles_used": "พื้นล้วน bbox(64,32), กำแพงล้วน bbox(0,96) — ต่อนาย metadata ใน .json ใช้ต่อ autotile ได้",
+      "source": "pixellab topdown tileset (Key A daily bonus) · job d54165fd-d47f-4653-bfb3-74e500386934",
+      "path": "assets/art/gen/kub_arena_sheet.png",
+      "license": "self-generated (pixellab subscription)",
+      "approval": "approved-by-user 2026-10-29 (เห็นภาพตัวอย่างแผนที่)"
+    },
+    {
       "id": "coin_kub_gold",
       "role": "pickup-special",
       "size": "32x32",
@@ -66,10 +78,8 @@
     }
   ],
   "placeholders_in_scenes": [
-    "player.tscn: Polygon2D -> replace with Sprite2D after approval",
-    "coin.tscn: Polygon2D -> replace with Sprite2D + AnimatedSprite2D",
-    "enemy.tscn: Polygon2D -> replace with Sprite2D",
-    "main.tscn: wall Polygon2D -> keep or wall tileset (later)"
+    "main.tscn: wall Polygon2D -> DONE (Sprite2D tileset 32px grid + collision 1152x32/32x648; พื้น ColorRect -> Sprite2D tile)",
+    "player.tscn / coin.tscn / enemy.tscn: เสร็จแล้วทั้งหมด — ปัจจุบันไม่มี placeholder ในฉาก"
   ]
 }
 ```

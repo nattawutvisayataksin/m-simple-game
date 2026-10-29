@@ -45,7 +45,7 @@
 
 | Key | ที่เก็บ | สถานะโควตา (trial) | วิธีใช้ |
 |---|---|---|---|
-| Key A | session MCP ของ OpenCode (ภายนอก repo) | ใช้แล้ว ~45/40 ต้องรอ daily bonus | ผ่าน `tools.pixellab.*` ตรง ๆ |
+| Key A | session MCP ของ OpenCode (ภายนอก repo) | หลักหมด (46/40) — **daily bonus ทดสอบแล้วใช้ได้จริง** (2026-10-29: แตก bonus gen tileset 1 ครั้ง, ยอด today 5→4) | ผ่าน `tools.pixellab.*` ตรง ๆ — เหตุการณ์: ถ้า remaining=0 จะกิน bonus อัตโนมัติ (+5/คืน สูงสุด 20) |
 | Key B | `.mcp.json` (ถูก gitignore, Bearer header ของ pixellab) | **ใช้แล้ว 3/40 → เหลือ 37** | REST v2 ตรง ๆ (`https://api.pixellab.ai/v2`) — หรือผู้ใช้รีสตาร์ท OpenCode แล้ว MCP ของ pixellab จะผูก key B ให้ใช้ผ่าน `tools.pixellab.*` ได้ด้วย |
 
 **กติกาใชญาโควตา:**
@@ -75,6 +75,7 @@
 | Coin K | `assets/art/sprites/coin_kub.png` | pixflux gen #1 (2026-10-29), gallery id `5d62a5a3-...-eba6f` | ✅ อนุมัติ + ใช้ในฉากแล้ว (Sprite2D) |
 | Player | `assets/art/sprites/player_kubi.png` | pixflux gen #2 (2026-10-29), gallery id `46c1a8be-...-419f` | ✅ อนุมัติ + ใช้ในฉากแล้ว |
 | Enemy | `assets/art/sprites/enemy_glitch.png` | pixflux gen #4 (2026-10-29), gallery id `e2302782-...-1c3d` | ✅ อนุมัติ + ใช้ในฉากแล้ว |
+| Arena tileset | `assets/art/gen/kub_arena_sheet.png` (+`.json` metadata) | topdown tileset gen เดียว (2026-10-29, **daily bonus ของ Key A**) job `d54165fd-...`, 16 tiles 32×32, bbox: พื้น=(64,32) กำแพง=(0,96) | ✅ ผู้ใช้เห็นภาพอนุมัติ + ผูกใน main.tscn แล้ว (create_topdown_tileset standard) |
 | Coin anim | `assets/art/gen/coin_frames_*.png` | animate-pixminimax (REST, 8 เฟรม) | 🔄 กำลัง gen |
 | Player anim | `assets/art/gen/player_frames_*.png` | animate-pixminimax (REST, 6 เฟรม) | 🔄 กำลัง gen |
 | Enemy anim | `assets/art/gen/enemy_frames_*.png` | animate-pixminimax (REST, 6 เฟรม) | 🔄 กำลัง gen |
