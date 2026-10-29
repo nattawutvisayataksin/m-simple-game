@@ -1,27 +1,46 @@
 # GDD — เกมที่ 3: เกมรถ "Kubi Grand Prix ราชวงศ์ทอง"
 
-> สถานะ: **T1.5 — แก้กำแพงโค้งและรอยขาดถนนเมือง; ยังต้อง playtest ควบคุมด้วยคน** — คงมุมกล้องติดตามเดิม
+> สถานะ: **T1.5 — แก้กำแพงโค้งและรอยต่อถนนเมืองแล้ว; regression ผ่าน 53/53; ยังต้อง playtest ควบคุมด้วยคน**
 
 เอกสารประกอบ: [Architecture](./ARCHITECTURE.md) · [Art Direction](./ART_DIRECTION.md) · [Assets](./ASSETS.md)
 
 ## ตัวตนของเกม (ดีไซน์ที่ตัดสินใจแล้ว)
 
-- **โลก Kubi ย้ายมา 3D**: ธีมเหรียญทอง-ราชวงศ์ทองจากเกม 1/2 ยังอยู่ — เหรียญทองเรืองแสงเรียงตามเลน, HUD ภาษาไทย, การ์ตตัว Kubi จอดต้อนรับแถวเส้นชัย
-- **เกมเล่นจริง (loop ครบ)**: เลือกรถ 5 แบบ → แข่งกับ AI 3 คัน → ขับ WASD, เก็บเหรียญและไอเท็ม → ใช้บูสต์/คราบน้ำมันด้วย Q → ผ่านประตู 3 จุดตามลำดับ (0→1→2→กลับ 0 = เส้นชัย) → นับรอบ 3/3 → จอชนะแสดงเวลาสุดท้าย + เหรียญทองที่เก็บได้
+- **โลก Kubi ย้ายมา 3D**: ธีมเหรียญทอง-ราชวงศ์ทองจากเกม 1/2 ยังอยู่ — เหรียญทองวางตามเลน, HUD ภาษาไทย, kart ตัวละคร Kubi จอดต้อนรับแถวเส้นชัย
+- **เกมเล่นจริง (loop ครบ)**: เลือกรถ 5 แบบ → แข่งกับ AI 3 คัน → ขับด้วย WASD/ลูกศร หรือ gamepad → เก็บเหรียญและไอเท็ม → ใช้ไอเท็มด้วย Q → ผ่านประตู 3 จุดตามลำดับ (0→1→2→กลับ 0 = 1 รอบ) → ครบ 3 รอบจึงจบเกม
 - **กันพลาด**: ตกสนาม (y < -8) respawn กลับเส้นชัยทันที คงผลความคืบหน้า
-- **Asset ฟรี CC0 ทั้งหมด** (Kenney car-kit, city-kit และ asset เสริม) — ไม่เสียโควตา Pixellab รายละเอียดที่มาใน `ASSETS.md`
+- **Asset และ license**: โมเดล Kenney ที่ใช้ระบุ CC0; โค้ด Starter Kit ใช้ MIT และเสียงมีที่มา/เงื่อนไขแยกตามรายการใน [ASSETS.md](./ASSETS.md)
+
+## โครงโปรเจกต์และวิธีเปิด
+
+มี Godot project สองชั้น อย่าสับสนระหว่างโปรเจกต์ placeholder เก่ากับเกมที่เล่นได้:
+
+| จุดเข้า | หน้าที่ |
+|---|---|
+| `games/game3_car/starter-kit-racing/project.godot` | **โปรเจกต์เกมจริง**: ฉาก 3D, ระบบแข่ง, เมือง, รถ และ regression tests |
+| `games/game3_car/play.bat` | Launcher สำหรับ Windows ที่ส่ง `--path` ไปยังโปรเจกต์เกมจริงด้านบน; ไฟล์นี้คาดว่า Godot 4.7.2 อยู่ใน WinGet path ของ Windows user ปัจจุบัน |
+| `games/game3_car/project.godot` | **โปรเจกต์ placeholder เดิม**: เปิดแล้วได้ฉาก 2D สีเทา ไม่ใช่ Kubi Grand Prix; คงไว้เป็นโครงตั้งต้น |
+
+วิธีเปิดจากราก repo:
+
+```powershell
+godot --path games/game3_car/starter-kit-racing
+```
+
+โปรเจกต์เกมจริงตั้ง viewport 1280×720, Forward+ และ Jolt Physics; `project.godot`
+ระบุ compatibility feature `4.6` และชุดที่ตรวจล่าสุดคือ Godot 4.7.2
 
 ## สถานะงาน T1.0 (ทำแล้ว)
 
 | ระบบ | รายละเอียด |
 |---|---|
 | ระบบเกม | `scripts/game.gd` ผูกบน root ของ `scenes/main.tscn` — อ่านเส้นทางจาก `Town` และยังมี fallback ไปยัง GridMap สำหรับสนามเดิม |
-| เหรียญทอง | CylinderMesh ทองเรืองแสง + หมุนเอง, เก็บด้วย Area3D (collision_mask=8 เจอพาหะ sphere ของรถ) เรียงทุก 2 จุดบนเส้นทางพร้อมกรองมุมซ้ำ (กันเหรียญซ้อนวงขนาน) |
+| เหรียญทอง | ใช้โมเดล `coin-gold.glb` ใน Area3D (collision_mask=8); วางทุก 2 waypoint จากเส้นทาง 42 จุด รวม 21 จุด |
 | ประตูนับรอบ | Area3D 3 ประตูที่ 0 / 1/3 / 2/3 ของเส้นทาง, ลำดับที่ไม่ตรงไม่นับ, รอบสมบูรณ์ = กลับมาแตะเส้นชัยหลังครบ 0→1→2 |
 | HUD ไทย | CanvasLayer: รอบ / เหรียญทอง / เวลา / คำใบ้วิธีเล่น + จอชนะ (หยุดเกม + แสดงเวลาสุดท้าย) |
 | respawn | ร่วงสนาม → กลับเส้นชัย (รีเซ็ต root รถ + sphere + ความเร็ว + หันตามแนวเส้นทาง) |
 | รถผู้เล่น | สลับจาก truck เป็น **race-future** (Kenney car-kit) — โหนด `body`/`wheel-*` ชื่อตรง kit ล้อยังหมุน ตัวถังยังเอียงตาม |
-| ตกแต่งสนาม | เหล่า kart Kubi 3 คันแถวเส้นชัย + ป้าย/กรวยที่ประตูสนาม |
+| ตกแต่งสนาม | kart Kubi 3 คันเป็นพร็อพ; ซุ้มและป้าย Gate สร้างจาก mesh/Label3D ใน GDScript |
 | จุดเกิดรถ | วางรถที่เส้นชัย (จุดแรกของเส้นทาง) หันตามแนวเลน — ไม่ผูกพิกัดตายตัว |
 
 ## สถานะงาน T1.1 (เสร็จแล้ว)
@@ -74,35 +93,39 @@ godot --headless --path games/game3_car/starter-kit-racing `
   --script res://tests/test_game3.gd
 ```
 
-ผลล่าสุด: **53 PASS / 0 FAIL**, exit code 0. ครอบคลุมฉาก/เมือง, ถนนเมืองต่อถึงกัน,
+ผลที่บันทึกจากการตรวจครั้งก่อน: **53 PASS / 0 FAIL**, exit code 0. ครอบคลุมฉาก/เมือง, ถนนเมืองต่อถึงกัน,
 ขอบกำแพงโค้งทั้งสี่ไม่กินเข้าเลน, ระยะออกตัว, AI, การเก็บเหรียญ/ไอเท็ม, การควบคุม,
 รถชนรถจริง, ชนกำแพงตรงและโค้งจริง, ผ่าน Gate ตามลำดับ และนับรอบจบเกม
 
 หมายเหตุ: test runner ใช้ Jolt และ collider จริงแบบ headless; ยังไม่ใช่การทดสอบด้วยคน
 ในหน้าต่างเกม จึงยังต้องตรวจความรู้สึกการชน การมองเห็น และการขับครบสนามด้วยมือ
 Godot แจ้ง ObjectDB/resource ค้างบางรายการตอน teardown ของ runner แม้ exit code เป็น 0
+ระหว่างตรวจเอกสารรอบนี้ การเรียก runner ซ้ำแสดงเพียง `boot` แล้ว process จบด้วย exit code 0
+โดยไม่มีรายงาน PASS/FAIL จึงยังยืนยันผล regression รอบใหม่ไม่ได้ และไม่ควรใช้ exit code
+ครั้งนี้เป็นหลักฐานว่าเทสผ่าน
 
-## ของที่มาพร้อมแล้ว (Starter Kit Racing — Kenney NL, MIT/CC0)
+## Starter Kit และ asset ที่มี
 
-ที่อยู่: `games/game3_car/starter-kit-racing/` (commit `3c3e434`) — เปิดเองด้วย `godot --path games/game3_car/starter-kit-racing`
+ที่อยู่: `games/game3_car/starter-kit-racing/` — โฟลเดอร์นี้เป็นทั้งโปรเจกต์เกมจริงและที่เก็บ Starter Kit ที่นำมาต่อยอด
 
 | ของ | ที่เก็บ |
 |---|---|
-| ระบบรถขับได้จริง (arcade) — เร่ง/เบรก/เลี้ยว/Skid + เสียง | `scripts/vehicle.gd`, `vehicle-motorcycle.gd`, `scenes/vehicle*.tscn` |
-| สนามแข่งตัวอย่างสร้างจาก **GridMap** (ต่อแผ่น-เลี้ยว-หิมเส้นชัย-เต็นទ์) | `scenes/main.tscn` + `models/*.glb`, `collision-*.fbx` |
-| รถ 5 สี (truck yellow/red/purple/green + motorcycle) | `models/vehicle-*.glb` |
+| ระบบรถ arcade ที่นำมาต่อยอด | `scripts/vehicle.gd`, `vehicle-motorcycle.gd`, `scenes/vehicle*.tscn` |
+| ฉากหลักปัจจุบันเป็นเมือง/สนามที่สร้างจากสคริปต์; GridMap เดิมเหลือเป็น fallback | `scenes/main.tscn`, `scripts/town.gd`, `scripts/game.gd`, `models/*.glb` |
+| รถที่เลือกได้ 5 แบบ: race-future และ truck 4 สี | `scripts/game.gd` (`CAR_OPTIONS`), `models/race-future.glb`, `models/vehicle-truck-*.glb` |
+| มอเตอร์ไซค์จากชุดต้นฉบับ | `vehicle-motorcycle.gd`, `scenes/vehicle-motorcycle.tscn`; มีไฟล์อยู่แต่ไม่ใช่ตัวเลือกเมนูปัจจุบัน |
 | เอฟเฟกต์ควันบุหรี่ท้าย + impact | `sprites/smoke.png`, `audio/*.ogg` |
-| เรนเดอร์ Forward+ + **Jolt Physics** + MSAA | ตั้งไว้ใน `project.godot` ตามแผงสายพันธุ์ 4.6 (พิสูจน์แล้วรันได้บน Godot 4.7.2) |
+| เรนเดอร์ Forward+ + **Jolt Physics** + MSAA | ตั้งไว้ใน `project.godot`; compatibility feature 4.6, ตรวจรันด้วย Godot 4.7.2 |
 
-แนวที่เลือกคือ **เกมแข่งรถ 3D** โดยต่อยอดระบบขับจาก Starter Kit Racing และใช้เฉพาะ asset เมือง CC0 ที่จำเป็น ไม่คัดลอกโปรเจกต์ City Builder ทั้งชุด
+แนวที่เลือกคือ **เกมแข่งรถ 3D** โดยต่อยอดระบบขับจาก Starter Kit Racing และใช้เฉพาะ asset เมืองที่จำเป็น ไม่คัดลอกโปรเจกต์ City Builder ทั้งชุด
 
 ## โครงที่วางไว้แล้ว (สืบทอดบทเรียนเกม 2)
 
-| ลำบอก | ของแล้ว |
+| จุดเข้า | สถานะ |
 |---|---|
-| โครง repo | `games/game3_car/` (project.godot อิสระ + scenes/ + scripts/ + assets/) |
-| ฉากตั้งต้น | จอ 1152×648 เดียว ยืดหลักเดิม `(stretch canvas_items + aspect keep)` — กันบั๊กคลิก DPI ตั้งแต่กาบแรก |
-| ทางเข้าเกม | `play.bat` ดับเบิลคลิก |
+| Launcher/placeholder เดิม | `games/game3_car/project.godot`, `scenes/main.tscn`, `scripts/main.gd`; เป็นฉาก 2D ตั้งต้น ไม่ใช่เกมแข่งรถปัจจุบัน |
+| โปรเจกต์เกมจริง | `games/game3_car/starter-kit-racing/`; viewport 1280×720, Forward+, Jolt |
+| ทางเข้าเกม | `games/game3_car/play.bat` เปิดโปรเจกต์เกมจริง; หรือใช้คำสั่ง Godot ด้านบน |
 | แผนเทส | เก็บเทสไว้ใน `tests/` และรันด้วย Godot `--headless --script` |
 
 ## ประวัติงาน (ใหม่ล่าสุดอยู่บนสุด)
@@ -112,6 +135,6 @@ Godot แจ้ง ObjectDB/resource ค้างบางรายการต�
 | 2026-10-29 | **ปรับสเกลและองค์ประกอบเมือง** หลังตรวจภาพจริงพบอาคารใหญ่และบังมุมมอง: ลดอาคาร 11–15 ม. เป็น 4.7–6 ม., ย้ายป้าย checkpoint พ้นถนน/ลดขนาด, เพิ่มถนนย่านเมืองเป็นกรอบ และจัดต้นไม้เป็นแนว landscape แทนการสุ่มกระจาย |
 | 2026-10-29 | **ปรับผังเมืองตามผลลองเล่น** ย้ายตึกออกจากกลางสนาม ทำเป็นสวนสาธารณะพร้อมลาน/น้ำพุ, เปลี่ยนพื้นสีเขียวสดเป็นโทนหิน, เพิ่มทางเท้า และถอดเสาไฟฟ้า/ของกีดขวางออกจากขอบถนน |
 | 2026-10-29 | **T1.1 ต่อ WIP เมือง Kubi** ขยายถนนให้ตรง collider, เพิ่มแอสฟัลต์/เส้นประและอาคารขอบสนาม ปรับกล้องให้เห็นบริบทเมือง ย้ายของตกแต่งออกจากเลน และเพิ่มเทส — ใช้เฉพาะ asset CC0 จาก Kenney ไม่ได้นำโปรเจกต์ City Builder ทั้งชุดเข้ามา |
-| 2026-10-29 | **T1.0 ระบบเกมครบ (3D)** คำสั่งผู้อำนวยการ "เป็น 3D + ให้มีเอกลักษณ์ของตัวเอง + ใช้ Skill/เครื่องมือเต็มที่": โยนตัวตนโลก Kubi ขึ้น 3D — เหรียญทองเรืองแสงตามเลน, ประตูนับรอบ 3 จุด (0→1→2→เส้นชัย = +1 รอบ, ข้ามลำดับไม่นับ), HUD ไทย, respawn ตกสนาม, จอชนะ 3 รอบ — รถผู้เล่นสลับเป็น **race-future** + การ์ต Kubi 3 คันตกแต่งเส้นชัย + เสาไฟ/ป้าย/กรวย/แบร์ริเออร์ขอบสนาม (จาก **kenney car-kit + city-kit-roads** ผู้อำนวยการหย่อน asset มาให้, CC0 ครบ, สเกลอัตโนมัติที่รันไทม์ด้วยการวัด AABB) — เทส headless `tests/test_game3.gd` **14 ชุด ALL PASS** — เปิดเกมให้ผู้อำนวยการเห็นจริงแล้ว (ภาพ `screenshots/kubigp-t1-workshop.png`) — **ไม่เสียโควตา Pixellab** (ยัง B 4/40, C เต็ม) |
-| 2026-10-29 | **T0.5 ลง Starter Kit Racing (KenneyNL, MIT/CC0)** ตามคำสั่ง "ลง kit ช่วยให้ไวขึ้น": vendor ไป `games/game3_car/starter-kit-racing/` (ตัด nested .git) — ประกอบระบบพร้อมขับได้ทันที: arcade vehicle (WASD + skid เสียง), สนามสร้างมาจาก GridMap (ต่อแผ่น/โค้ง/เส้นชัย/เต็นท์), รถ 5 สี + มอเตอร์ไซค์, ควันท้าย, Forward+ Jolt — พิสูจน์ headless import+run exit 0 บน Godot 4.7.2 — ประเด็นที่ต้องตัดสิน: kit นี้ = **3D** (ขั้นตอนแนว 2D เดิมสองเกม) ผู้อำนวยการต้องตรวจ "เป็น 3D แบบนี้ไหม" ก่อนลุยต่อ |
-| 2026-10-29 | **T0 โครงตั้งต้น**: สร้างโฟลเดอร์ `games/game3_car/` + project.godot (ยืดพิกัด stretch canvas_items ติดตั้งตั้งแต่แรก ตามบทเรียน DPI 125% เกม 2) + ฉาก stub พร้อมรัน (จอเทา + ป้ายสถานะ) + play.bat + GDD.md — headless import รันสะอาด exit 0 — รอคำสั่งกำหนดแนวเกมรถ |
+| 2026-10-29 | **T1.0 ระบบเกม 3D**: เพิ่มเหรียญ, Gate, HUD ไทย, respawn และจอชนะ; เปลี่ยนรถผู้เล่นเป็น race-future พร้อม kart ตกแต่งเส้นชัย และเริ่มใช้ asset เมือง — headless tests เริ่มต้น 14 assertions |
+| 2026-10-29 | **T0.5 ลง Starter Kit Racing**: vendor ชุด KenneyNL (โค้ด MIT, asset ตาม license ต้นทาง); ต่อมาเลือกโปรเจกต์ 3D นี้เป็นฐานและย้ายระบบเกมจริงไปอยู่ในโฟลเดอร์นี้ |
+| 2026-10-29 | **T0 โครงตั้งต้น**: สร้าง root `games/game3_car/` พร้อม project 2D placeholder และ launcher; โปรเจกต์เกมจริงถูกเพิ่มภายหลังใน `starter-kit-racing/` |

@@ -8,7 +8,7 @@
 
 | ชุดไฟล์ในโปรเจกต์ | ที่มา | สถานะในฉากแข่งปัจจุบัน |
 |---|---|---|
-| `models/race-future.glb`, `models/vehicle-*.glb`, `models/kart-*.glb` | Kenney Car Kit | รถ 5 แบบและ kart ตกแต่งเส้นชัยถูกใช้ |
+| `models/race-future.glb`, `models/vehicle-*.glb`, `models/kart-*.glb` | Kenney Car Kit | เมนูเลือก race-future และ truck 4 สี; kart 3 คันตกแต่งเส้นชัย |
 | `models/props/*.glb` และ `Textures/colormap.png` | Kenney City Kit (Roads) | เก็บไว้เป็น vendor files; ไม่ได้วางในเลนแข่ง |
 | `models/town/roads/*.glb` และ `Textures/colormap.png` | [City Kit (Roads)](https://kenney.nl/assets/city-kit-roads) | ใช้ถนนตรงและโค้ง |
 | `models/town/industrial/*.glb` และ `Textures/colormap.png` | [City Kit (Industrial)](https://kenney.nl/assets/city-kit-industrial) | ใช้อาคารบางแบบรอบนอกสนาม |

@@ -6,8 +6,11 @@
 
 ## สถานะและการรัน
 
-- Engine: Godot 4.7.2; โปรเจกต์ระบุ Forward+ และ Jolt Physics 3D
-- โฟลเดอร์เกม: `games/game3_car/starter-kit-racing/`
+- โปรเจกต์เกมจริง: `games/game3_car/starter-kit-racing/`
+- Launcher: `games/game3_car/play.bat` เรียกโปรเจกต์เกมจริง; ต้องมี Godot 4.7.2 ที่ WinGet path ซึ่งระบุในไฟล์
+- `games/game3_car/project.godot` เป็นโปรเจกต์ placeholder 2D เก่า เปิดแล้วไม่ใช่ตัวเกม Kubi Grand Prix
+- Godot compatibility feature ที่ประกาศ: 4.6; runtime ที่ใช้ตรวจล่าสุด: Godot 4.7.2
+- Renderer: Forward+; physics: Jolt 3D
 - ฉากหลัก: `scenes/main.tscn`
 - เปิดเกมจากราก repo: `godot --path games/game3_car/starter-kit-racing`
 - รัน regression suite จากราก repo:
@@ -17,13 +20,15 @@
     --script res://tests/test_game3.gd
   ```
 
-  เกณฑ์ผ่านคือ `50 PASS / 0 FAIL` และ exit code `0` (จำนวนเทสอาจเปลี่ยนเมื่อเพิ่ม coverage)
+  ผลที่บันทึกจากการตรวจครั้งก่อนคือ `53 PASS / 0 FAIL`; จำนวน assertions อาจเปลี่ยนเมื่อเพิ่ม coverage
+  หมายเหตุ: การ rerun ระหว่างตรวจเอกสารรอบนี้จบหลังพิมพ์ `boot` โดยไม่มีผล PASS/FAIL
+  แม้ exit code เป็น `0`; ต้องวินิจฉัย runner ก่อนนับการรันครั้งนั้นเป็นผลผ่าน
 
 ## โครงสร้างฉากและหน้าที่ของสคริปต์
 
 | ไฟล์ | หน้าที่ |
 |---|---|
-| `scenes/main.tscn` | ประกอบ Main, Town, รถผู้เล่น, กล้องตามรถ, WorldEnvironment และ GridMap เดิม |
+| `scenes/main.tscn` | ประกอบ Main, Town, รถผู้เล่น, กล้องตามรถ, WorldEnvironment และ GridMap เดิมซึ่งใช้เป็น fallback |
 | `scripts/game.gd` | วงจรแข่ง, เรียง waypoint, สร้างเหรียญ/ประตู/ไอเท็ม/กำแพง, รถ AI, HUD, เมนูเลือกรถ, นับรอบ และ respawn |
 | `scripts/town.gd` | ล้าง GridMap สนามเดิม แล้วสร้างถนนวงรอบ เมือง สวน และ collider ของถนน |
 | `scenes/vehicle.tscn` + `scripts/vehicle.gd` | รถแบบ arcade; RigidBody3D เป็นตัวชน/เคลื่อนที่ ส่วนโมเดลและล้อเป็นภาพประกอบที่ตามตัวฟิสิกส์ |
@@ -31,8 +36,8 @@
 | `scripts/view.gd` | กล้อง third-person ตามรถและปรับระยะตามความเร็ว |
 | `tests/test_game3.gd` | SceneTree runner สำหรับตรวจระบบและจำลองฟิสิกส์ของรถ กำแพง และประตู |
 
-`Town` สร้างจุดกึ่งกลางถนน 42 จุด จากนั้น `game.gd` เรียงจุดวนสนามรอบ centroid
-เพื่อใช้เป็นเส้นทางเดียวกันสำหรับการวางรถ เหรียญ กล่องไอเท็ม ประตู และ AI
+`Town` สร้างจุดกึ่งกลางถนน 42 จุด จากนั้น `game.gd` เรียงจุดตามมุมรอบ centroid
+เพื่อใช้เป็นเส้นทางเดียวกันสำหรับการวางรถ, 21 เหรียญ, กล่องไอเท็ม, 3 ประตู และ AI
 ถ้า Town ไม่มีจุดถนน จึงค่อยใช้ GridMap เดิมเป็น fallback
 
 ## ลำดับการเริ่มเกม
@@ -60,11 +65,14 @@ Gate เป็น Area3D แบบ trigger; collider ปัจจุบันก
 ## การขับและ AI
 
 - `vehicle.gd` อ่าน Input Map: W เร่ง, S เบรก/ถอย, A/D เลี้ยว, Q ใช้ไอเท็ม
+- ลูกศรและ gamepad axes ถูก map ให้ขับรถได้เช่นกัน; Q เป็นคีย์บอร์ดอย่างเดียวสำหรับใช้ไอเท็ม
+- มี Input Map action `bounce` ผูกกับ Space จากชุดต้นฉบับ แต่ไม่พบโค้ดเกมที่อ่าน action นี้ จึงยังไม่มีผลในเกม
 - AI ใช้ waypoint แบบวนรอบ เลื่อนไปจุดถัดไปเมื่ออยู่ใกล้เป้าหมาย และปรับ steering
   จากมุมรถถึงจุดหมาย ไม่ได้ใช้ navigation mesh หรือ pathfinding
 - รถแต่ละคันมี lane offset และ profile ความเร็ว/การควบคุม เพื่อแยกตำแหน่งออกตัว
 - Boost เพิ่มความเร็วชั่วคราว; oil slick ลดความเร็วรถฝ่ายตรงข้ามที่ขับผ่าน
 - ถนนเมืองรอบนอกต่อผิวถนนให้ทับเชื่อมตรงสี่แยก ไม่เว้นปลายถนนเป็นช่องว่าง
+- AI ขับเฉพาะ waypoint ของสนามหลัก; ยังไม่มี traffic AI, pathfinding หรือการแข่งขันบนถนนเมืองรอบนอก
 
 ## ขอบเขตการทดสอบ
 
@@ -72,6 +80,7 @@ Gate เป็น Area3D แบบ trigger; collider ปัจจุบันก
 ลำดับประตู, การขับ, ถนนเมืองที่ต่อถึงกัน, แนวกำแพงทั้งสี่โค้งไม่ล้ำเลน,
 การชนรถสองคันและกำแพงจริงด้วย Jolt และการผ่านประตูตามลำดับรวมการนับรอบ
 
-ข้อจำกัด: การทดสอบฟิสิกส์ใน runner ใช้ scene และ physics engine จริงแบบ headless
+ข้อจำกัดและสิ่งที่ยังต้องตรวจ: การทดสอบฟิสิกส์ใน runner ใช้ scene และ physics engine จริงแบบ headless
 แต่ยังไม่แทนการ playtest ด้วยคนในหน้าต่างเกมเพื่อประเมินการควบคุม ความรู้สึกชน
-การมองเห็นป้าย และการผ่านสนามครบ 3 รอบด้วยมือ
+การมองเห็นป้าย และการผ่านสนามครบ 3 รอบด้วยมือ; ยังไม่ได้ยืนยันการนำทางเมนูด้วย gamepad
+นอกจากนี้ `games/game3_car/project.godot` ชั้นนอกยังเปิดฉาก placeholder ไม่ใช่ฉากเกมจริง

@@ -8,7 +8,7 @@
 
 | สิ่งที่เห็น/ใช้ | ไฟล์หรือแหล่งในโปรเจกต์ | ต้นทาง / License |
 |---|---|---|
-| รถผู้เล่นและรถคู่แข่ง | `models/race-future.glb`, `models/vehicle-truck-{yellow,red,purple,green}.glb` | Kenney Car Kit; โมเดล CC0 |
+| รถผู้เล่นที่เลือกได้ 5 แบบ | `models/race-future.glb`, `models/vehicle-truck-{yellow,red,purple,green}.glb` | Kenney Car Kit; โมเดล CC0 |
 | Kubi kart ตกแต่งเส้นชัย | `models/kart-oobi.glb`, `kart-oodi.glb`, `kart-oozi.glb` | Kenney Car Kit; โมเดล CC0 |
 | ถนนตรง/ถนนโค้ง | `models/town/roads/road-straight.glb`, `road-bend.glb` และ texture ของชุด | Kenney City Kit (Roads); CC0 |
 | อาคารรอบเมือง | `models/town/industrial/building-{g,j,l,n,q}.glb` และ texture ของชุด | Kenney City Kit (Industrial); CC0 |
@@ -29,6 +29,9 @@
   [Platformer Kit](https://kenney.nl/assets/platformer-kit)
 - รวม attribution ของ Landeplage สำหรับ skid sound ตาม README ต้นฉบับ
 - ไม่ฝัง API key หรือ credentials ไว้ในทะเบียน asset หรือในเกม
+
+ไฟล์มอเตอร์ไซค์จาก Starter Kit ยังคงอยู่ แต่ไม่ได้อยู่ในตัวเลือกเมนูของเกมปัจจุบัน;
+รถที่เลือกได้จริงคือ race-future และ truck 4 สีตามตารางด้านบน
 
 ## Vendor files ที่ไม่ได้ใช้งานในฉากแข่งปัจจุบัน
 
