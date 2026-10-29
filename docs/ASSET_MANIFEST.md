@@ -8,11 +8,14 @@
   "tileset_cost_record": "2026-10-29: kub_arena_sheet (16 tiles 32×32) = 1 gen (Key A daily bonus, available-เหลือ 4 วันนี้) — ผูกใน main.tscn (พื้น + กำแพง 4 ด้าน, กำแพง เข้าตา 40→32px ยึด grid) ทดสอบ headless ผ่าน",
   "music_record": "2026-10-29: music.wav chiptune loop 13.7s สังเคราะห์เองใน tools/generate_music.ps1 (ฟรี ไม่ใช้ gen) + bus Music/SFX (default_bus_layout.tres) + HUD icon ใช้ coin_kub.png ซ้ำ — ฟอนต์จริง process: หยุด (create_font Latin-only, ใช้ LabelSettings)",
   "gold_record": "2026-10-29: coin_gold (edit 1 gen) + goldcoin_sheet 9f (anim 1 gen) + ไวรัสเขียว/น้ำเงิน (edit ตัวละ 1 gen) = 4 gen รวม — หมด daily bonus Key A วันนี้ (used 50/40; ยืนยันด้วยการยิงจริงคืน error 'no generations or credits') ; ไวรัส 2 สีเก็บไว้ใช้ระยะ B",
-  "keyb_record": "2026-10-29: MCP `pixellab-b` (Key B) ทำงานใน session ได้โดยไม่ต้องรีสตาร์ท — ใช้แล้ว 1 gen (burst_gold sparkle เอฟเฟกต์เก็บเหรียญ) เหลือ 36/40 + bonus 2; burst พื้นหลังดำตัดโปร่งเองด้วย tools/make_transparent.ps1 (ฟรี)",
+  "keyb_record": "2026-10-29: MCP `pixellab-b` (Key B) ใช้ไปแล้ววันนี้ 7 gen (เกม 2 T1: พื้นหลัง ecb637c9 + ฮีโร่ 27d41df4 + anim เดิน e285f2e8 + กบ ddf520f0 + กิ้งก่า 56d4f5e0 + ป้อมนักธนู 5801ea35 + ป้อมปืนใหญ่ faf8a0e4) — balance จริง: used 12 remaining 28 (40 รวม) ; ท่องไว้: free tier อนุญาต 1 job ต่อ key ช่วงเวลาเดียว (พบ rate-limit ตติดชั่ว ~45 วิ หลังจบ job)",
+  "game2_record": "2026-10-29: T1 กองพลศิลป์เกมที่ 2 (หอคอยคู่ฟ้า) อนุมัติครบ 6 ชิ้น — ไฟล์ทั้งหมดใน tower-defend/assets/art/ (พื้นหลัง kub_kingdom_map.png 1152×648 ขยาย nearest 3× จาก gen 384×216; gen/* 64px; แผนที่ gen พื้นขาวตัดโปร่งด้วย tools/cut_white_bg.ps1 ใหม่) + mockup_field_v2.png ประกอบตำแหน่งจริง",
   "session_handoff": "2026-10-29: แผน 4 ระยะครบ + **ผู้เล่นยืนยันเซฟได้จริงบนเครื่อง (เทสบนเครื่องจริงผ่าน)** — จบ normal ของโปรเจกต์; ทางต่อยอดเลือกได้: (1) ผูก Input Map sprint (2) จูนค่าไวรัสหลังเล่นเยอะ (3) export build Windows แจกเพื่อน (4) เอาลง itch.io; พรุ่งนี้: Key A bonus +5 ใช้ให้หมดก่อน จึง Key B",
   "next_steps": [
-    "ทางต่อยอด (เลือกสั่งได้): ผูก Input Map action \"sprint\", จูนไวรัส, export Windows build, ปูทาง itch-publish",
-    "พรุ่งนี้: กลับมาใช้ Key A (daily bonus +5) ให้หมดก่อน จึงใช้ Key B",
+    "เกมที่ 2 T2: มอนสเตอร์เดินตาม waypoint 3 เส้น (จุดเกิด 3: ประตูม่วง/ขอบล่างซ้าย/บันไดปราสาท) — carry leftover distance across waypoints",
+    "เกมที่ 2 T3-4: ป้อม 2 สายยิงได้ + waves + economy + lives ให้เล่นได้จบ",
+    "เกม 1 ทางต่อยอด (เลือกสั่งได้): ผูก Input Map action \"sprint\", จูนไวรัส, export Windows build, ปูทาง itch-publish",
+    "พรุ่งนี้: กลับมาใช้ Key A (daily bonus +5) ให้หมดก่อน จึงใช้ Key B (วันนี้ Key B เหลือ 28/40)",
     "ระวัง: ห้ามฝัง key ในไฟล์ commit — key อ่านจาก .mcp.json (gitignored) เท่านั้น"
   ],
   "art_direction_doc": "docs/ART_DIRECTION.md",

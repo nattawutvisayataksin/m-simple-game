@@ -1,0 +1,19 @@
+; Engine configuration file.
+; หอคอยคู่ฟ้า (Kub Kingdom Rush) — เกมที่ 2: Tower Defense
+; โครงตามเกม 1 (Coin Rush) แต่แยกโปรเจกต์น้องอยู่โฟลเดอร์ tower-defend/
+
+[application]
+
+config/name="หอคอยคู่ฟ้า (Kub Kingdom Rush)"
+run/main_scene="res://scenes/main.tscn"
+
+[display]
+
+window/size/viewport_width=1152
+window/size/viewport_height=648
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0

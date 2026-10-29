@@ -82,8 +82,23 @@
 | เอฟเฟกต์เก็บเหรียญ | `assets/art/gen/burst_gold.png` | pixflux **Key B** (1 gen) + ตัดพื้นหลังมืดด้วย `tools/make_transparent.ps1` (ฟรี) | ✅ ในฉากแล้ว (coin.gd tween scale+fade) |
 | ไวรัสสีต่าง (ระยะ B) | `assets/art/sprites/enemy_glitch_green.png` / `enemy_glitch_blue.png` | recolor จาก enemy_glitch ผ่าน `edit_image_pixen` ตัวละ 1 gen (2026-10-29), job `8f1a2e57` / `288e6dbe` — ✅ **ผูกฉากแล้ว 2026-10-29**: `enemy_green.tscn` (เด้งบ้าคลั่ง, 330px/s + jitter 1.2 วิ) โผล่ 10 วิ / `enemy_blue.tscn` (ไล่ตาม, 210px/s chase 1.6) โผล่ 20 วิ — ภาพนิ่ง 1 เฟรม เต้นหายใจด้วย scale ใน enemy.gd แทนเฟรมจริง | ✅ ใช้ในฉากแล้ว (enemy.tscn แดงคงเดิม) |
 | ฟอนต์ HUD | — (ไม่ผลิต) | pixellab `create_font` รองรับเฉพาะ Latin 80 glyph ไม่มีไทย → เลือกใช้ LabelSettings (สีทอง KUB + outline เข้ม) กับ default font แทน | ✅ ตัดสินใจแล้ว สามารถเปลี่ยน font จริงภายหลังถ้าต้องจ่าย gen |
-| Coin anim | `assets/art/gen/coin_frames_*.png` | animate-pixminimax (REST, 8 เฟรม) | 🔄 กำลัง gen |
-| Player anim | `assets/art/gen/player_frames_*.png` | animate-pixminimax (REST, 6 เฟรม) | 🔄 กำลัง gen |
-| Enemy anim | `assets/art/gen/enemy_frames_*.png` | animate-pixminimax (REST, 6 เฟรม) | 🔄 กำลัง gen |
+| Coin anim | `assets/art/gen/coin_sheet.png` | animate-pixminimax (8 เฟรม) | ✅ เสร็จ — เหรียญหมุนในฉากแล้ว |
+| Player anim | `assets/art/gen/player_sheet.png` | animate-pixminimax (8 เฟรม) | ✅ เสร็จ — เดิน 1-8 + ยืนเฟรม 0 |
+| Enemy anim | `assets/art/gen/enemy_frames_*.png` | animate-pixminimax (REST, 8 เฟรม) | ✅ เสร็จ (enemy_sheet.png ในฉากแล้ว) — 3 ชุดด้านบนอยู่ใน commit เดียวกัน |
+
+## เกมที่ 2 — หอคอยคู่ฟ้า (Kub Kingdom Rush) — provenance
+
+สไปรต์ขยายเป็น **64px ฐาน + ขยาดตอนวาง 1.5× = 96px บนจอ** (แก้โจทย์ "เดิม 32px มองไม่เห็น")
+
+| Asset | ไฟล์ (tower-defend/assets/) | ที่มา | สถานะ |
+|---|---|---|---|
+| พื้นหลังฉาก | `art/kub_kingdom_map.png` | pixflux 384×216 job `ecb637c9` (1 gen) → upscale nearest 3× ด้วย `tools/upscale_nearest.ps1` | ✅ ผู้ใช้อนุมัติ (เห็นใน Photos) + ผูกใน scenes/main.tscn แล้ว |
+| ฮีโร่ Kubi 64px | `art/gen/kubi_hero_neutral.png` | pixflux job `27d41df4` (1 gen) | ✅ อนุมัติ (ตัวเฟรม 0 ของ anim ใช้เป็นท่ายืนแทน — ต้นฉบับพื้นขาวตัดแล้ว) |
+| แอนิชันเดิน 8 เฟรม | `art/gen/kubi_hero_sheet.png` (512×64) | animate_image_pixminimax job `e285f2e8` (1 gen) เฟรม 1-8 (ตัดเฟรมท่ายืน index 0) → `tools/build_sprite_sheet.ps1` | ✅ อนุมัติ |
+| กบยักษ์เขียว | `art/gen/frog.png` | pixflux job `ddf520f0` (1 gen) + ตัดพื้นขาว `tools/cut_white_bg.ps1` | ✅ อนุมัติ |
+| กิ้งก่าน้ำเงินวิ่งเร็ว | `art/gen/lizard.png` | pixflux job `56d4f5e0` (1 gen) + ตัดพื้นขาว | ✅ อนุมัติ |
+| ป้อมนักธนู | `art/gen/tower_archer.png` | pixflux job `5801ea35` (1 gen) + ตัดพื้นขาว | ✅ อนุมัติ |
+| ป้อมปืนใหญ่ | `art/gen/tower_cannon.png` | pixflux job `faf8a0e4` (1 gen) + ตัดพื้นขาว | ✅ อนุมัติ |
+| Mockup สนามจริง | `mockup_field_v2.png` | ประกอบด้วย `tools/compose_mockup.ps1` — จุดเกิด 3, ลานจุดวาง 5, ตำแหน่งบนถนนจริงของภาพ | ✅ ผู้ใช้เห็น + อนุมัติ (ต่อ T2) |
 
 --- 
