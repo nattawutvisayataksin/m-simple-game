@@ -5,8 +5,8 @@ extends Node2D
 ##  3) รับ signal จากศัตรูลูกเหล็ก โดน = แพ้
 ##  4) เล่นเสียงเอฟเฟกต์ (เก็บเหรียญ / ชนะ / แพ้)
 ## โจทย์ฝึกหัดต่อไป:
-##  - เก็บเวลาที่ใช้ไปสร้าง hi-score ด้วยไฟล์ user:// (ระยะ D)
-##  - ตั้ง Input Map "sprint" ให้ผูก Shift สวยกว่า is_key_pressed
+##  - ผูก Input Map "sprint" ให้ผู้เล่นกด Shift ถูกจับแบบ action ชัด ๆ
+##  - ช่องว่างหลังกำแพง 32px ล่างซ้าย/ขวา (มุมสนาม) — ไวรัสเด้งมุมตัวเห็นชัด
 
 ## จำนวนเหรียญทั้งหมดที่ต้องเก็บให้ครบ
 const COIN_COUNT := 10
@@ -31,6 +31,20 @@ const VIRUS_SPAWN_DIST := 280.0
 
 var _virus_spawn_done := 0
 
+
+## ---- ระยะ D: สถิติ hi-score (บันทึกลง user:// โดยจบรอบ = จุดเซฟที่ปลอดภัย) ----
+## schema: {"version": 1, "hi_score", "best_win_time" (0 = ยังไม่ชนะ), "wins", "plays"}
+const SAVE_VERSION := 1
+const SAVE_PATH := "user://coin_rush_save.json"
+const DEFAULT_STATS: Dictionary = {
+	"hi_score": 0,
+	"best_win_time": 0.0,
+	"wins": 0,
+	"plays": 0,
+}
+var stats: Dictionary = DEFAULT_STATS.duplicate(true)
+var gameover_reason := ""
+
 ## สถานะเกม ใช้สอยเทียบใน _process และ _on_* ต่าง ๆ
 enum GameState { PLAYING, WON, LOST }
 
@@ -43,6 +57,7 @@ var state := GameState.PLAYING
 @onready var enemies_container: Node2D = $Enemies
 @onready var score_label: Label = $HUD/ScoreLabel
 @onready var time_label: Label = $HUD/TimeLabel
+@onready var stats_label: Label = $HUD/BestLabel
 @onready var win_label: Label = $HUD/WinLabel
 @onready var gameover_label: Label = $HUD/GameoverLabel
 @onready var coin_scene: PackedScene = preload("res://scenes/coin.tscn")
@@ -59,6 +74,8 @@ func _ready() -> void:
 	state = GameState.PLAYING
 	win_label.visible = false
 	gameover_label.visible = false
+	_load_stats()
+	_update_stats_label()
 	_update_score_label()
 	_update_time_label()
 	_spawn_coins()
@@ -187,8 +204,88 @@ func _on_player_caught() -> void:
 		_lose("โดนลูกเหล็กชน!")
 
 
+## โหลดสถิติจาก user:// — ตรวจซ้ำไฟล์ .bak เมื่อไฟล์หลักพัง, ตัวเลขจาก JSON คืน int/float ให้ตรง schema
+func _load_stats() -> void:
+	for path in [SAVE_PATH, SAVE_PATH + ".bak"]:
+		if not FileAccess.file_exists(path):
+			continue
+		var data = JSON.parse_string(FileAccess.get_file_as_string(path))
+		if data is Dictionary and data.has("version") and int(data["version"]) <= SAVE_VERSION:
+			stats["hi_score"] = int(data["hi_score"])
+			stats["best_win_time"] = float(data["best_win_time"])
+			stats["wins"] = int(data["wins"])
+			stats["plays"] = int(data["plays"])
+			return
+	# ถึงจุดนี้แปลว่า: (a) ยังไม่เคยเล่นมาก่อน (ข้ามเงียบ ๆ = ปกติครั้งแรก) หรือ
+	# (b) มีไฟล์แต่อ่านไม่ได้ทั้งหลักและ .bak → เตือนชัดเจนว่าสถิติหายและเริ่มนับใหม่
+	if FileAccess.file_exists(SAVE_PATH) or FileAccess.file_exists(SAVE_PATH + ".bak"):
+		push_warning("ไฟล์สถิติพังหรือจากเวอร์ชันใหม่กว่านี้ — hi-score เริ่มนับใหม่")
+
+
+## เขียนไฟล์แบบ atomic: เขียน .tmp → เก็บไฟล์เดิมเป็น .bak → rename ทับ
+## ถ้าเครื่องแครกหรือดับกลางทาง จะเหลือ "ไฟล์เก่าฉบับสมบูรณ์" อยู่ตลอด ไม่มีไฟล์ครึ่ง ๆ กลาง ๆ
+func _save_stats() -> void:
+	var payload: Dictionary = stats.duplicate(true)
+	payload["version"] = SAVE_VERSION
+	var tmp := SAVE_PATH + ".tmp"
+	var f := FileAccess.open(tmp, FileAccess.WRITE)
+	if f == null:
+		push_warning("เซฟสถิติไม่สำเร็จ (เปิดไฟล์ไม่ได้): %d" % FileAccess.get_open_error())
+		return
+	if not f.store_string(JSON.stringify(payload)):
+		f.close()
+		push_warning("เซฟสถิติไม่สำเร็จ (เขียนไฟล์ไม่ได้)")
+		return
+	f.close()  # flush บัฟเฟอร์ลงดิสก์ก่อน rename
+	if FileAccess.file_exists(SAVE_PATH):
+		DirAccess.rename_absolute(SAVE_PATH, SAVE_PATH + ".bak")
+	var err := DirAccess.rename_absolute(tmp, SAVE_PATH)
+	if err != OK:
+		push_warning("เซฟสถิติไม่สำเร็จ (rename): %d" % err)
+
+
+func _update_stats_label() -> void:
+	var fastest_text := "%.1f วิ" % float(stats["best_win_time"]) if float(stats["best_win_time"]) > 0.0 else "—"
+	stats_label.text = "สถิติ %d · ชนะ %d/%d · เร็วสุด %s" % [
+		int(stats["hi_score"]), int(stats["wins"]), int(stats["plays"]), fastest_text
+	]
+
+
+## จบรอบด้วยชนะ: อัปเดตสถิติ (คะแนนสูงสุด / เวลาเร็วสุด) เซฟ แล้วแจ้งบนจอ
+func _record_win(time_used: float) -> void:
+	var notes: Array[String] = []
+	stats["plays"] = int(stats["plays"]) + 1
+	stats["wins"] = int(stats["wins"]) + 1
+	if score > int(stats["hi_score"]):
+		stats["hi_score"] = score
+		notes.append("สถิติคะแนนใหม่!")
+	var best := float(stats["best_win_time"])
+	if best <= 0.0 or time_used < best:
+		stats["best_win_time"] = time_used
+		notes.append("เร็วที่สุดเท่าที่เคยเป็นมา (%.1f วิ)" % time_used)
+	_save_stats()
+	_update_stats_label()
+	var summary := " · ".join(PackedStringArray(notes))
+	win_label.text = "คุณชนะ! เก็บเหรียญครบแล้ว (%.1f วิ)%s\nกด R เพื่อเริ่มเกมใหม่" % [
+		time_used, "\n" + summary if summary != "" else ""
+	]
+
+
+## จบรอบด้วยแพ้: นับรอบ + อัปเดต hi-score (ถ้าเก็บได้มากกว่าเดิมก่อนแพ้)
+func _record_loss() -> void:
+	stats["plays"] = int(stats["plays"]) + 1
+	if score > int(stats["hi_score"]):
+		stats["hi_score"] = score
+	_save_stats()
+	_update_stats_label()
+	gameover_label.text = "เกมจบแล้ว! %s\nสถิติส่วนตัว: %d คะแนน · ชนะมาแล้ว %d รอบ\nกด R เพื่อเริ่มเกมใหม่" % [
+		gameover_reason, int(stats["hi_score"]), int(stats["wins"])
+	]
+
+
 func _win() -> void:
 	state = GameState.WON
+	_record_win(TIME_LIMIT - time_left)
 	_end_round()
 	win_label.visible = true
 	sfx_win.play()
@@ -196,8 +293,9 @@ func _win() -> void:
 
 func _lose(reason: String) -> void:
 	state = GameState.LOST
+	gameover_reason = reason
+	_record_loss()
 	_end_round()
-	gameover_label.text = "เกมจบแล้ว! %s\nกด R เพื่อเริ่มเกมใหม่" % reason
 	gameover_label.visible = true
 	sfx_lose.play()
 

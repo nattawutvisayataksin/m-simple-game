@@ -139,8 +139,11 @@ m-sample-game/
 - [x] HUD icon จากของเดิม (เหรียญ K ข้าง ScoreLabel) + LabelSettings สีทอง KUB / outline เข้ม — ฟอนต์จริงไม่ทำ (create_font ได้แค่ Latin 80 ไม่มีไทย — บันทึกไว้ ART_DIRECTION สถานะการเก็บภาพ)
 - [ ] เพลงประกอบ + แยก bus เสียง (ตอนนี้มีเพียง SFX 3 เสียง)
 
-### ระยะ D: ปิดหลังบ้านเกม
-- [ ] hi-score + save/load ลง user:// (save-systems) — เก็บว่า "ติดด่านไหน / ใช้กี่วินาที"
+### ระยะ D: ปิดหลังบ้านเกม ✅ เสร็จ 2026-10-29 (โจทย์ hi-score ครบ)
+- [x] hi-score + save/load ลง user:// — schema v1: `hi_score / best_win_time (0 = ยังไม่ชนะ) / wins / plays` + เวอร์ชันฝังไฟล์ (JSON `version`, โหลดขึ้นโค้ด int() ทุกตัวตามข้อควรระวัง Godot JSON float) — save ณ จบรอบ (_win/_lose) ซึ่งเป็นจุดเซฟปลอดภัยตามหลัก save-systems
+- [x] เขียนไฟล์แบบ atomic: `.tmp` → เก็บไฟล์เดิมเป็น `.bak` → rename ทับ; โหลดซ้ำ fallback `.bak` เมื่อไฟล์หลักพัง (main.gd `_save_stats` / `_load_stats`)
+- [x] HUD เพิ่ม `BestLabel` มุมซ้ายล่าง: "สถิติ N · ชนะ W/P · เร็วสุด X.X วิ" — จอชนะโชว์เวลาที่ใช้ + จอแพ้โชว์ hi-score ปัจจุบัน
+- [x] ทดสอบ headless รอบเทส (เวลาย่ด 0.3 วิ 3 รอบต่อเนื่อง): plays 1→2→3 ผ่านไฟล์ user:// จริง + ล้างไฟล์เทสให้เริ่มนับใหม่; ครั้งแรกที่ไม่มีไฟล์ = เงียบ (ปกติ), ไฟล์พัง = push_warning ต่างหาก
 - [ ] ทดสอบบนเครื่องจริง (ที่บ้าน) เก็บบั๊กก่อนแชร์ต่อ
 
 ### เกณฑ์ตัดสินระหว่างทาง
@@ -165,4 +168,6 @@ m-sample-game/
 | 2026-10-29 | **ระยะ C ครบทุกข้อ**: (1) เพลง chiptune loop สังเคราะห์ PowerShell เอง `tools/generate_music.ps1` → music.wav 13.7s seamless (loop_mode ใน .import, autoplay, bus Music) + bus SFX เก็บ SFX 3 เสียง (2) HUD เหรียญ icon ใช้ coin_kub.png ซ้ำ + LabelSettings ทอง KUB/outline (ไม่ทำฟอนต์จริง — create_font Latin-only จนไม่มีไทย) (3) ⚠️ known-benign: quit ระหว่างเพลงเล่น → ObjectDB leak warning (AudioServer teardown, ไม่มีผล) — ทั้งหมดทดสอบ headless ผ่าน |
 | 2026-10-29 | **ระยะ C ครบ + ระยะ A ผ่าน 3/4 ข้อ**: (1) เหรียญทองจาก `edit_image_pixen` (1 gen, ใช้ bonus Key A) + sheet หมุน 9f (1 gen) → coin_gold.tscn ให้ value=3, วาบแสง, สุ่ม 1 อันต่อรอบ / (2) หลังจบรอบปิดเหรียญ `coin.disable()` / (3) เวลา ≤10 วิ ตัวเลขแดงกระพริบ — + gen ไวรัสสีเขียว/น้ำเงิน (2 gen) เก็บไว้ระยะ B — ข้อค้าง: ผู้เล่นยังไม่ได้ทดสอบมือจริง (ค้างตาม GDD นี้), โบนัส เหลือ 0 จนรุ่งรัตติกาล |
 | 2026-10-29 | **ระยะ B เสร็จ — ไวรัสเพิ่มตามเวลา**: จัด tier สี (แดง = เด้งปกติ 260 / เขียว = บ้าคลั่ง 330 + สุ่มกลับทิศทุก 1.2 วิ โผล่ 10 วิ / น้ำเงิน = ไล่ตามผู้เล่น 210 chase 1.6 โผล่ 20 วิ) — enemy.gd เพิ่ม `_steer()` (chase_strength / jitter_interval) + เต้นหายใจด้วย scale สำหรับภาพนิ่ง, ฉากใหม่ enemy_green/enemy_blue.tscn, main.gd จัดคิว VIRUS_SPAWN_SCHEDULE + spawn ห่างผู้เล่น ≥280px + เฟดอิน 0.5 วิ ก่อนเปิดกล่องชน — headless (import + รันทะลุ 30 วิ) ผ่าน ไม่มี error ใหม่ (เฉพาะ known-benign ObjectDB) — ใช้โควตา 0 gen (ภาพ 2 สี gen ไว้แล้วเมื่อเช้าตาม bonus Key A) |
+| 2026-10-29 | **ผู้เล่นอนุมัติ ระยะ B ("ไวรัส ก็โอเค กำลังดี") — ต่อ ระยะ D จบทันที** |
+| 2026-10-29 | **ระยะ D เสร็จ — hi-score save user://** (skill save-systems): schema v1 + `version` ฝัง (หัวใจกันอนาคต patch), เขียน atomic `.tmp→.bak→rename`, โหลด defensive ลองไฟล์หลักก่อนแล้วค่อย `.bak`, ตัวเลข JSON คืน int()/float() ให้ตรงชนิด, เซฟที่จุดปลอดภัย = จบรอบ (ชนะ: คะแนนสูงสุด + เวลาเร็วสุด + นับ wins/plays, แพ้: นับ plays + hi-score ถ้าเก็บมากกว่าเดิม), HUD `BestLabel` มุมซ้ายล่าง + จอจบแสดงสถิติ — ทดสอบห่วงโซ่ 3 รอบต่อเนื่อง headless: plays 1→2→3 ล้างไฟล์เทสแล้ว; เหลือเฉพาะข้อ "เทสบนเครื่องจริง" ซึ่งผู้ใช้แต่งอย่างเดียว |
 | 2026-10-29 | **สถานะสำหรับเซสชันถัดไป**: ระยะ C ครบ 100%, ระยะ A ครบโจทย์ code (เหลือเฉพาะ: ผู้เล่นเทสรจริง, วิ่งเร็วด้วย Shift ยังไม่ทำ) — ถัดไป: ระยะ B (ไวรัส 2 สีพร้อมใช้) → ระยะ D (hi-score) — โควตา: Key A plan หมด+bonus วันนี้หมด (used 50/40, รอ +5 คืนถัดไป) **Key B เหลือ 37/40 ยังใช้อิสระผ่าน REST**; ผู้ใช้อนุมัติเพิ่ม MCP `pixellab-b` (Key B) ใน config ส่วน global → อนาคตหลังรีสตาร์ท จะเรียก pixellab แบบ 2 คีย์คู่ได้ทันที |

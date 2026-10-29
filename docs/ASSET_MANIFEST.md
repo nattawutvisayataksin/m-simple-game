@@ -9,10 +9,10 @@
   "music_record": "2026-10-29: music.wav chiptune loop 13.7s สังเคราะห์เองใน tools/generate_music.ps1 (ฟรี ไม่ใช้ gen) + bus Music/SFX (default_bus_layout.tres) + HUD icon ใช้ coin_kub.png ซ้ำ — ฟอนต์จริง process: หยุด (create_font Latin-only, ใช้ LabelSettings)",
   "gold_record": "2026-10-29: coin_gold (edit 1 gen) + goldcoin_sheet 9f (anim 1 gen) + ไวรัสเขียว/น้ำเงิน (edit ตัวละ 1 gen) = 4 gen รวม — หมด daily bonus Key A วันนี้ (used 50/40; ยืนยันด้วยการยิงจริงคืน error 'no generations or credits') ; ไวรัส 2 สีเก็บไว้ใช้ระยะ B",
   "keyb_record": "2026-10-29: MCP `pixellab-b` (Key B) ทำงานใน session ได้โดยไม่ต้องรีสตาร์ท — ใช้แล้ว 1 gen (burst_gold sparkle เอฟเฟกต์เก็บเหรียญ) เหลือ 36/40 + bonus 2; burst พื้นหลังดำตัดโปร่งเองด้วย tools/make_transparent.ps1 (ฟรี)",
-  "session_handoff": "2026-10-29: ระยะ C ครบ + ระยะ A ครบ 4/4 + ระยะ B ครบ (ไวรัสเพิ่มตามเวลา: เขียว 10 วิ บ้าคลั่ง / น้ำเงิน 20 วิ ไล่ตาม — enemy_green/enemy_blue.tscn) — ท้ายโจทย์ระยะ D save ตามลำดับ; ถัดไป: ระยะ D (hi-score user://, ระบบใช้ save-systems skill) และอาจปรับจูนค่าความยากตาม feedback ผู้เล่นจริง",
+  "session_handoff": "2026-10-29: ระยะ C + A + B + D ครบทั้งแผน 4 ระยะ (D: hi-score user:// schema v1 atomic .bak — main.gd _save_stats/_load_stats + HUD BestLabel) — เหลือเฉพาะ: เทสเครื่องจริงโดยผู้เล่น, ปรับจูนค่าความยาก, โจทย์เล็ก Input Map sprint; พรุ่งนี้: Key A bonus +5 ใช้ให้หมดก่อน จึง Key B",
   "next_steps": [
-    "Phase D: hi-score save user:// (เก็บด่านสุดท้าย/เวลาที่ใช้) — ใช้ save-systems skill",
-    "ปรับจูนความยาก (สเต็ปเขียว/น้ำเงิน) หลังผู้เล่นทดสอบจริง",
+    "เทสบนเครื่องจริง: hi-score บันทึกถูกต้อง (ชนะ→คะแนนสูงสุด/เร็วสุด, ปิดเกมเปิดใหม่→สถิติอยู่ต่อ)",
+    "ปรับจูนความยาก (สเต็ปเขียว/น้ำเงิน) หลังผู้เล่นทดสอบจริงเพิ่มอีก",
     "โจทย์ค้างเล็ก: ผูก Input Map action \"sprint\" แทน is_key_pressed(KEY_SHIFT)",
     "พรุ่งนี้: กลับมาใช้ Key A (daily bonus +5) ให้หมดก่อน จึงใช้ Key B",
     "ระวัง: ห้ามฝัง key ในไฟล์ commit — key อ่านจาก .mcp.json (gitignored) เท่านั้น"
