@@ -2,7 +2,8 @@
 
 เอกสารนี้อธิบายโครงระบบที่มีอยู่จริงใน Game 3 แยกจากกติกาและขอบเขตเกมใน
 [GDD.md](./GDD.md), แนวภาพใน [ART_DIRECTION.md](./ART_DIRECTION.md) และทะเบียน asset
-ใน [ASSETS.md](./ASSETS.md)
+ใน [ASSETS.md](./ASSETS.md); สถานะส่งต่องานและ checklist สำหรับ playtest อยู่ที่
+[HANDOFF.md](./HANDOFF.md)
 
 ## สถานะและการรัน
 

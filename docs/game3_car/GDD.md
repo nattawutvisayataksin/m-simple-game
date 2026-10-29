@@ -2,7 +2,7 @@
 
 > สถานะ: **T1.5 — แก้กำแพงโค้งและรอยต่อถนนเมืองแล้ว; regression ผ่าน 53/53; ยังต้อง playtest ควบคุมด้วยคน**
 
-เอกสารประกอบ: [Architecture](./ARCHITECTURE.md) · [Art Direction](./ART_DIRECTION.md) · [Assets](./ASSETS.md)
+เอกสารประกอบ: [Architecture](./ARCHITECTURE.md) · [Art Direction](./ART_DIRECTION.md) · [Assets](./ASSETS.md) · [Handoff](./HANDOFF.md)
 
 ## ตัวตนของเกม (ดีไซน์ที่ตัดสินใจแล้ว)
 
