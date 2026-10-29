@@ -11,6 +11,13 @@ var stage := 0
 var drive_start := Vector3.ZERO
 var ai_start_positions: Array[Vector3] = []
 var ai_progress_start_values: Array[float] = []
+var collision_pair_hits := 0
+var collision_player: Vehicle
+var collision_opponent: Vehicle
+var barrier_test_start_z := 0.0
+var pending_motion_bodies: Array[RigidBody3D] = []
+var pending_motion_velocities: Array[Vector3] = []
+var gate_approach_hit := ""
 
 
 func _initialize() -> void:
@@ -26,6 +33,8 @@ func _initialize() -> void:
 	if game == null:
 		_check("หาโหนด Main ได้", false, "null")
 		quit(1)
+		return
+	physics_frame.connect(_on_physics_frame)
 
 
 func _check(name: String, condition: bool, detail: String = "") -> void:
@@ -37,8 +46,13 @@ func _check(name: String, condition: bool, detail: String = "") -> void:
 		print("  FAIL: ", name, " ", detail)
 
 
-func _process(_delta: float) -> bool:
+func _on_physics_frame() -> void:
 	frames += 1
+	for i in pending_motion_bodies.size():
+		pending_motion_bodies[i].freeze = false
+		pending_motion_bodies[i].linear_velocity = pending_motion_velocities[i]
+	pending_motion_bodies.clear()
+	pending_motion_velocities.clear()
 	if stage == 0 and frames >= 5:
 		stage = 1
 		_stage_structure()
@@ -60,8 +74,46 @@ func _process(_delta: float) -> bool:
 	elif stage == 6 and frames > 1000:
 		stage = 7
 		_stage_drive_check()
+		_stage_vehicle_collision_setup()
+	elif stage == 7 and frames > 1060:
+		stage = 8
+		_stage_vehicle_collision_check()
+		_stage_barrier_collision_setup()
+	elif stage == 8 and frames > 1100:
+		stage = 9
+		_stage_barrier_collision_check()
+		var sphere := collision_player.sphere
+		sphere.freeze = true
+		sphere.global_position = Vector3(250.0, 20.0, 250.0)
+		_schedule_motion(sphere, Vector3.ZERO)
+	elif stage == 9 and frames > 1120:
+		stage = 10
+		_stage_gate_crossing_setup(0)
+	elif stage == 10 and frames > 1140:
+		stage = 11
+		_stage_gate_crossing_check(0)
+		_stage_clear_gate_overlap()
+	elif stage == 11 and frames > 1160:
+		stage = 12
+		_stage_gate_crossing_setup(1)
+	elif stage == 12 and frames > 1180:
+		stage = 13
+		_stage_gate_crossing_check(1)
+		_stage_clear_gate_overlap()
+	elif stage == 13 and frames > 1200:
+		stage = 14
+		_stage_gate_crossing_setup(2)
+	elif stage == 14 and frames > 1220:
+		stage = 15
+		_stage_gate_crossing_check(2)
+		_stage_clear_gate_overlap()
+	elif stage == 15 and frames > 1240:
+		stage = 16
+		_stage_gate_crossing_setup(0, true)
+	elif stage == 16 and frames > 1260:
+		stage = 17
+		_stage_gate_crossing_check(0, true)
 		_finish()
-	return false
 
 
 # 1) โครงสร้างที่สร้างโดย game.gd
@@ -276,7 +328,7 @@ func _stage_structure() -> void:
 	var gate_shape := gates.get_node("Gate0/CollisionShape3D").shape as BoxShape3D \
 		if gates != null else null
 	_check("เส้นตรวจนับรอบเป็นแถบขวางถนน ไม่ใช่พื้นที่กว้าง",
-		gate_shape != null and gate_shape.size.is_equal_approx(Vector3(7, 3.6, 1.8)))
+		gate_shape != null and gate_shape.size.is_equal_approx(Vector3(7, 3.6, 2.8)))
 	if coins != null and coins.get_child_count() > 0:
 		var coin: Area3D = coins.get_child(0)
 		_check("เหรียญ set collision_mask=8", coin.collision_mask == 8)
@@ -391,6 +443,141 @@ func _stage_drive_check() -> void:
 		"; ".join(ai_details))
 	_check("AI ทุกคันเคลื่อนที่จริงระหว่างแข่ง", all_ai_moved,
 		"; ".join(ai_details))
+
+
+func _stage_vehicle_collision_setup() -> void:
+	print("[6] ชนรถจริงด้วย Jolt Physics")
+	paused = false
+	game.set("race_finished", false)
+	game.set("race_started", true)
+	collision_player = game.get_node("Vehicle") as Vehicle
+	collision_opponent = game.get("_ai_racers")[0] as Vehicle
+	collision_player.set_race_enabled(false)
+	collision_opponent.set_race_enabled(false)
+	for racer in game.get("_ai_racers"):
+		racer.set_race_enabled(false)
+		racer.get_node("RacerAI").set("laps", 0)
+	collision_pair_hits = 0
+	collision_player.sphere.body_entered.connect(
+		_on_test_collision_body_entered.bind(collision_opponent.sphere))
+	collision_opponent.sphere.body_entered.connect(
+		_on_test_collision_body_entered.bind(collision_player.sphere))
+
+	var points: Array = game.get("_path_points")
+	var contact_point: Vector3 = points[5]
+	var tangent: Vector3 = game.call("_tangent_at", contact_point)
+	var spawn_height := contact_point.y + 1.5
+	collision_player.sphere.global_position = Vector3(
+		contact_point.x - tangent.x * 2.5, spawn_height,
+		contact_point.z - tangent.z * 2.5)
+	collision_opponent.sphere.global_position = Vector3(
+		contact_point.x + tangent.x * 2.5, spawn_height,
+		contact_point.z + tangent.z * 2.5)
+	_schedule_motion(collision_player.sphere, tangent * 8.0)
+	_schedule_motion(collision_opponent.sphere, -tangent * 8.0)
+
+
+func _schedule_motion(body: RigidBody3D, velocity: Vector3) -> void:
+	body.freeze = true
+	body.linear_velocity = Vector3.ZERO
+	body.angular_velocity = Vector3.ZERO
+	pending_motion_bodies.append(body)
+	pending_motion_velocities.append(velocity)
+
+
+func _on_test_collision_body_entered(body: Node3D, expected: Node3D) -> void:
+	if body == expected:
+		collision_pair_hits += 1
+
+
+func _stage_vehicle_collision_check() -> void:
+	var distance := collision_player.sphere.global_position.distance_to(
+		collision_opponent.sphere.global_position)
+	var player_shape := collision_player.sphere.get_node("CollisionShape").shape as SphereShape3D
+	var opponent_shape := collision_opponent.sphere.get_node("CollisionShape").shape as SphereShape3D
+	var minimum_separation := (player_shape.radius + opponent_shape.radius) * 0.9
+	_check("รถสองคันชนกันจริงและ physics รายงาน contact",
+		collision_pair_hits > 0 and distance >= minimum_separation,
+		"contacts=%d separation=%.2f minimum=%.2f" % [
+			collision_pair_hits, distance, minimum_separation])
+
+
+func _stage_barrier_collision_setup() -> void:
+	collision_opponent.set_race_enabled(false)
+	var sphere := collision_player.sphere
+	sphere.freeze = true
+	sphere.global_position = Vector3(49.0, 1.5, 3.5)
+	barrier_test_start_z = sphere.global_position.z
+	_schedule_motion(sphere, Vector3(0, 0, -8.0))
+
+
+func _stage_barrier_collision_check() -> void:
+	var sphere := collision_player.sphere
+	_check("รถชนกำแพงขอบนอกจริงและไม่ทะลุออกนอกสนาม",
+		sphere.global_position.z > 0.45
+		and sphere.global_position.z < barrier_test_start_z - 1.0,
+		"start_z=%.2f end_z=%.2f" % [barrier_test_start_z, sphere.global_position.z])
+
+
+func _stage_gate_crossing_check(index: int, final_lap := false) -> void:
+	var expected_next := (index + 1) % 3
+	var gate_progress_valid := int(game.get("next_gate")) == expected_next
+	var gate := game.get_node("Gates/Gate%d" % index) as Area3D
+	if index == 0 and final_lap:
+		gate_progress_valid = gate_progress_valid and int(game.get("laps")) == 1 \
+			and not bool(game.get("_passed_full_lap"))
+	elif index == 0:
+		gate_progress_valid = gate_progress_valid and int(game.get("laps")) == 0
+	elif index == 2:
+		gate_progress_valid = gate_progress_valid and int(game.get("laps")) == 0 \
+			and bool(game.get("_passed_full_lap"))
+	else:
+		gate_progress_valid = gate_progress_valid and int(game.get("laps")) == 0
+	var detail := ("next=%s laps=%s full_lap=%s finished=%s pos=%s gate=%s " \
+	+ "normal=%s mask=%d layer=%d monitoring=%s overlaps=%s blocker=%s velocity=%s") % [
+			game.get("next_gate"), game.get("laps"), game.get("_passed_full_lap"),
+			game.get("race_finished"), collision_player.sphere.global_position,
+			gate.global_position, gate.global_basis.z,
+			gate.collision_mask, collision_player.sphere.collision_layer,
+			gate.monitoring, gate.get_overlapping_bodies().has(collision_player.sphere),
+			gate_approach_hit, collision_player.sphere.linear_velocity]
+	_check("รถขับผ่าน Gate%d จริงตามลำดับ" % index, gate_progress_valid, detail)
+
+
+func _stage_clear_gate_overlap() -> void:
+	var sphere := collision_player.sphere
+	sphere.freeze = true
+	sphere.global_position = Vector3(250.0, 20.0, 250.0)
+	_schedule_motion(sphere, Vector3.ZERO)
+
+
+func _stage_gate_crossing_setup(index: int, final_lap := false) -> void:
+	paused = false
+	game.set("race_finished", false)
+	game.set("race_started", true)
+	for i in game.get("_ai_racers").size():
+		var racer: Vehicle = game.get("_ai_racers")[i]
+		racer.get_node("RacerAI").set("laps", 0)
+		racer.sphere.freeze = true
+		racer.sphere.global_position = Vector3(500.0 + i * 5.0, 50.0, 500.0)
+	if index == 0 and not final_lap:
+		game.set("laps", 0)
+		game.set("_passed_full_lap", false)
+	game.set("next_gate", index)
+	var gate := game.get_node("Gates/Gate%d" % index) as Area3D
+	var sphere := collision_player.sphere
+	sphere.freeze = true
+	var forward: Vector3 = gate.global_basis.z.normalized()
+	var approach := gate.global_position - forward * 3.0
+	var query := PhysicsRayQueryParameters3D.create(approach, gate.global_position, 1)
+	query.exclude = [sphere.get_rid()]
+	query.collide_with_areas = false
+	var hit := game.get_world_3d().direct_space_state.intersect_ray(query)
+	gate_approach_hit = str(hit.get("collider", "none"))
+	sphere.global_position = approach
+	sphere.linear_velocity = Vector3.ZERO
+	sphere.angular_velocity = Vector3.ZERO
+	_schedule_motion(sphere, forward * 12.0)
 
 
 func _finish() -> void:

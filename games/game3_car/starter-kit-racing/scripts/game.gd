@@ -370,7 +370,7 @@ func _build_track_and_spawnables() -> void:
 		if tangent.length() > 0.01:
 			area.rotation.y = _yaw_for_direction(tangent)
 		var shape := BoxShape3D.new()
-		shape.size = Vector3(7, 3.6, 1.8)
+		shape.size = Vector3(7, 3.6, 2.8)
 		var cs := CollisionShape3D.new()
 		cs.name = "CollisionShape3D"
 		cs.shape = shape
