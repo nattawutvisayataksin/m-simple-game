@@ -117,8 +117,30 @@ var _menu: Control            # แผงเลือกป้อม (เปิ�
 var _menu_spot := -1          # ลานที่เมนูกำลังเปิด (สำหรับปุ่ม 1/2 เลือกป้อม)
 var _menu_mode := ""          # T5: "build" = เลือกสร้าง / "built" = อัปเกรด-ขาย
 var _hero                     # T5: ฮีโร่ Kubi (คลิกขวาสั่งเดิน)
+var _spots_layer: SpotsOverlay  # T5.1: ชั้นวาดวงทองลานป้อม (z 30 เหนือพื้นหลัง)
 var _wave_label: Label        # แถวข้อมูลคลื่นบน HUD (T4)
 var _wave_btn: Button         # ปุ่มเรียกคลื่นถัดไปก่อนพร้อมโบนัส (T4)
+
+class SpotsOverlay:
+	extends Node2D
+	# T5.1 แก้บั๊กร้ายแก้ไม่จบ: แต่เดิมวาดวงทองใน main._draw() — ลูกโหนด (Background) วาด "หลัง" แม่
+	# จึงทับวงทองหมดสี = ผู้เล่นเห็นลานเปล่าว่างเปล่า เลยต้อง "คลิกมั่วที่พื้น" หาจุดซื้อ
+	# ยกไปเป็นโหนดลูก z_index 30 สูงกว่าแผนที่/มอน/ป้อม (แต่ต่ำกว่าเมนู 100) วงจึงแสดงเสมอ
+	var spots: Array[Vector2] = []
+	var busy: Array = []        # ผูกอ้างอิงสดกับ main._towers (ลานที่มีป้อมไม่วาดวง)
+
+	func _draw() -> void:
+		var pulse := 0.42 + 0.2 * (0.5 + 0.5 * sin(Time.get_ticks_msec() / 1000.0 * 4.5))
+		# จุดเกิดมอน (วงม่วง) + ประตูปราสาท (วงแดงส้ม) — เดิมถูกพื้นหลังบดบังด้วยแล้วแก้ไปด้วยกัน
+		draw_circle(Vector2(261, 250), 14.0, Color(0.55, 0.25, 0.80, 0.80))
+		draw_circle(Vector2(816, 495), 12.0, Color(1.0, 0.35, 0.15, 0.85))
+		for i in range(spots.size()):
+			if busy[i] != null:
+				continue
+			draw_circle(spots[i], 28.0, Color(1.0, 0.79, 0.24, pulse))
+			draw_arc(spots[i], 28.0, 0.0, TAU, 32, Color(0.16, 0.09, 0.03, 0.9), 2.5, true)
+			draw_string(ThemeDB.fallback_font, spots[i] + Vector2(-10.0, 5.0), str(i + 1),
+				HORIZONTAL_ALIGNMENT_CENTER, 20, 14, Color(0.2, 0.12, 0.02))
 
 func _ready() -> void:
 	y_sort_enabled = true  # มอนวาดเรียงตามแนวระดับ (ตัวล่างจอบนตัวบนจอ - แก้ทับซ้อนดูลอย)
@@ -127,10 +149,17 @@ func _ready() -> void:
 	_hero = HeroScript.new()
 	_hero.position = Vector2(816, 470)   # ประตูปราสาท (จุดฟื้น = จุดเกิด)
 	add_child(_hero)
+	# ชั้นวาดวงทอง (T5.1 fix): ประกาศใน SpotsOverlay การันตีวาดเหนือพื้นหลัง (สาเหตุรายแก้ไม่จบ: วงถูก Background ทับ)
+	_spots_layer = SpotsOverlay.new()
+	_spots_layer.z_index = 30
+	_spots_layer.spots = TOWER_SPOTS
+	_spots_layer.busy = _towers   # อ้างอิงสด — สร้างป้อมที่ลานไหน วงลานนั้นเงียบ
+	add_child(_spots_layer)
 	queue_redraw()
 
 func _process(delta: float) -> void:
-	queue_redraw()   # วงทองลานป้อมเต้นกระพริบทุกเฟรม (T5.1 เห็นจุดซื้อชัด ไม่ต้องคลิกมั่ว)
+	if _spots_layer:
+		_spots_layer.queue_redraw()   # วงทองลานป้อมเต้นกระพริบทุกเฟรม (T5.1)
 	# ตัวรันคลื่น (T4): prep = นับถอยหลังโชว์ปุ่มเรียกก่อน ; wave = เกิดตามคิวกันฉาวจนจบ
 	if _state == "prep":
 		_prep_t -= delta
@@ -512,6 +541,7 @@ func _open_menu(spot_idx: int) -> void:
 	panel.position = TOWER_SPOTS[spot_idx] + Vector2(-66, -46)
 	panel.position.x = clampf(panel.position.x, 8.0, 1152.0 - 150.0)
 	panel.position.y = clampf(panel.position.y, 8.0, 648.0 - 150.0)
+	panel.z_index = 100   # T5.1: เมนูต้องลอยเหนือตัวป้อม (เดิม y-sort ดันเมนูไปหลังป้อม = อ่านไม่รู้เรื่อง)
 	_menu = panel
 	add_child(panel)
 
@@ -612,23 +642,6 @@ func _sell_tower(spot_idx: int) -> void:
 func _update_lives() -> void:
 	if _lives_label:
 		_lives_label.text = "ชีวิต: %d" % _lives
-
-# ---------- ภาพแต่งบนฉาก (overlay การออกแบบ) ----------
-func _draw() -> void:
-	# จุดเกิดมอน: วงม่วงที่ปากประตูบน (ทางเดียว)
-	draw_circle(Vector2(261, 250), 14.0, GATE_COLOR)
-	# จุดหมาย (ประตูปราสาท): วงส้มแดง
-	draw_circle(Vector2(816, 495), 12.0, CASTLE_COLOR)
-	# ลานจุดวางป้อม: วงทอง + ขอบเข้ม + เลขปุ่มลัด (ลานที่ปูแล้วไม่วาด) — เต้นกระพริบให้เห็นชัด (T5.1)
-	var pulse: float = 0.42 + 0.2 * (0.5 + 0.5 * sin(Time.get_ticks_msec() / 1000.0 * 4.5))
-	for i in range(TOWER_SPOTS.size()):
-		if _towers[i] != null:
-			continue
-		draw_circle(TOWER_SPOTS[i], SPOT_DRAW_R, Color(1.0, 0.79, 0.24, pulse))
-		draw_arc(TOWER_SPOTS[i], SPOT_DRAW_R, 0.0, TAU, 32, SPOT_EDGE, 2.5, true)
-		var font := ThemeDB.fallback_font
-		draw_string(font, TOWER_SPOTS[i] + Vector2(-10.0, 5.0), str(i + 1),
-			HORIZONTAL_ALIGNMENT_CENTER, 20, 13, Color(0.2, 0.12, 0.02))
 
 func _build_lives_label() -> void:
 	_hud = CanvasLayer.new()
