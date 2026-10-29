@@ -6,11 +6,12 @@
   "notes": "Pixellab: 2 keys ให้ใช้อิสระเมื่อต้องการ (Key A = session MCP, หลักหมดแต่ daily bonus ใช้ได้จริง; Key B = .mcp.json เหลือ 37/40) — รายละเอียด docs/ART_DIRECTION.md §3",
   "anim_cost_record": "2026-10-29: coin 8f + player 8f + enemy 8f = 3 gen (Key B ok, เหลือ 37/40) — เฟรมจริง 9 ไฟล์/ชุด + spritesheet ผูกในฉากแล้ว",
   "tileset_cost_record": "2026-10-29: kub_arena_sheet (16 tiles 32×32) = 1 gen (Key A daily bonus, available-เหลือ 4 วันนี้) — ผูกใน main.tscn (พื้น + กำแพง 4 ด้าน, กำแพง เข้าตา 40→32px ยึด grid) ทดสอบ headless ผ่าน",
-  "session_handoff": "2026-10-29: ระยะ C tileset เสร็จ (headless ผ่าน) ถัดไป: HUD icon+ฟอนต์ → เพลง bus → ระยะ A (เหรียญทอง 3pts ฯลฯ) → ระยะ B",
+  "music_record": "2026-10-29: music.wav chiptune loop 13.7s สังเคราะห์เองใน tools/generate_music.ps1 (ฟรี ไม่ใช้ gen) + bus Music/SFX (default_bus_layout.tres) + HUD icon ใช้ coin_kub.png ซ้ำ — ฟอนต์จริง process: หยุด (create_font Latin-only, ใช้ LabelSettings)",
+  "session_handoff": "2026-10-29: ระยะ C ครบทุกข้อแล้ว (sprite+anim+tileset+HUD+เพลง+bus) ถัดไป: ระยะ A polish → ระยะ B → ระยะ D save",
   "next_steps": [
-    "Phase C ท้าย: HUD icon เหรียญ + ฟอนต์, เพลงประกอบ + audio bus",
-    "Phase A: ระยะ A polish — เหรียญทอง 3 คะแนน (edit coin image ลด gen), เวลา ≤10 วิ ตัวเลขแดง, ปิดเหรียญหลังจบรอบ",
+    "Phase A polish: เหรียญทอง 3 คะแนน (edit coin image ลด gen), เวลา ≤10 วิ ตัวเลขแดง, ปิดเหรียญหลังจบรอบ",
     "Phase B: ความยาก เพิ่มไวรัสตามเวลา",
+    "Phase D: hi-score save user://",
     "ระวัง: ห้ามฝัง key ในไฟล์ commit — key อ่านจาก .mcp.json (gitignored) เท่านั้น"
   ],
   "art_direction_doc": "docs/ART_DIRECTION.md",

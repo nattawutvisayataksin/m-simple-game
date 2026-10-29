@@ -22,6 +22,10 @@ move_down={
 "events": [Object(InputEventKey,"device":-1,"physical_keycode":83), Object(InputEventKey,"device":-1,"keycode":4194322)]
 }
 
+[audio]
+
+general/default_bus_layout="res://default_bus_layout.tres"
+
 [rendering]
 
 renderer/rendering_method="gl_compatibility"

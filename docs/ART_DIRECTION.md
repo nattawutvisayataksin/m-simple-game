@@ -76,6 +76,9 @@
 | Player | `assets/art/sprites/player_kubi.png` | pixflux gen #2 (2026-10-29), gallery id `46c1a8be-...-419f` | ✅ อนุมัติ + ใช้ในฉากแล้ว |
 | Enemy | `assets/art/sprites/enemy_glitch.png` | pixflux gen #4 (2026-10-29), gallery id `e2302782-...-1c3d` | ✅ อนุมัติ + ใช้ในฉากแล้ว |
 | Arena tileset | `assets/art/gen/kub_arena_sheet.png` (+`.json` metadata) | topdown tileset gen เดียว (2026-10-29, **daily bonus ของ Key A**) job `d54165fd-...`, 16 tiles 32×32, bbox: พื้น=(64,32) กำแพง=(0,96) | ✅ ผู้ใช้เห็นภาพอนุมัติ + ผูกใน main.tscn แล้ว (create_topdown_tileset standard) |
+| HUD เหรียญ icon | `assets/art/sprites/coin_kub.png` (ใช้ซ้ำจากตัวเกม ไม่ gen เพิ่ม) | Sprite2D แดน HUD ข้าง ScoreLabel (2026-10-29) | ✅ ในฉากแล้ว |
+| เพลง chiptune loop | `assets/audio/music.wav` | **สังเคราะห์ PowerShell เอง** `tools/generate_music.ps1` (ฟรี ไม่ใช้ gen; square-wave lead+bass, 8 บาร์ 140 BPM C-G-Am-F, 13.7s seamless, loop=forward ตั้งใน .import) | ✅ ผูกในฉากแล้ว bus Music autoplay |
+| ฟอนต์ HUD | — (ไม่ผลิต) | pixellab `create_font` รองรับเฉพาะ Latin 80 glyph ไม่มีไทย → เลือกใช้ LabelSettings (สีทอง KUB + outline เข้ม) กับ default font แทน | ✅ ตัดสินใจแล้ว สามารถเปลี่ยน font จริงภายหลังถ้าต้องจ่าย gen |
 | Coin anim | `assets/art/gen/coin_frames_*.png` | animate-pixminimax (REST, 8 เฟรม) | 🔄 กำลัง gen |
 | Player anim | `assets/art/gen/player_frames_*.png` | animate-pixminimax (REST, 6 เฟรม) | 🔄 กำลัง gen |
 | Enemy anim | `assets/art/gen/enemy_frames_*.png` | animate-pixminimax (REST, 6 เฟรม) | 🔄 กำลัง gen |

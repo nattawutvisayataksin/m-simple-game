@@ -53,6 +53,14 @@ func _ready() -> void:
 		enemy.caught_player.connect(_on_player_caught)
 
 
+## หยุดเสียงก่อนออกจากต้นไม้ฉาก — กัน AudioStreamPlayback ค้างตอน quit (ObjectDB leak warning)
+func _exit_tree() -> void:
+	($Music as AudioStreamPlayer).stop()
+
+
+## เพลงประกอบวนลูปถูกตั้งใน .import (edit/loop_mode=1 จนหมดเพลง) ไม่ต้องผูกมือในโค้ด
+
+
 func _process(delta: float) -> void:
 	if state != GameState.PLAYING:
 		return
