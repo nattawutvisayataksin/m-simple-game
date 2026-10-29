@@ -50,8 +50,6 @@ func _ready() -> void:
 	_city_blocks()
 	_central_park()
 	_start_line_decor()
-	_track_props()
-	_bonus_props()
 	_ground_catcher()
 
 
@@ -147,6 +145,21 @@ func _paint_road_tile(cell: Vector3i, along_x: bool, corner: bool) -> void:
 	marking.rotation.y = PI / 2.0 if along_x else 0.0
 	surface.add_child(marking)
 
+	var edge_material := StandardMaterial3D.new()
+	edge_material.albedo_color = Color(0.78, 0.79, 0.75)
+	edge_material.roughness = 0.85
+	for side in [-1.0, 1.0]:
+		var edge := MeshInstance3D.new()
+		edge.name = "TrackEdge"
+		var edge_mesh := BoxMesh.new()
+		edge_mesh.size = Vector3(TILE_SCALE, 0.035, 0.1) if along_x \
+			else Vector3(0.1, 0.035, TILE_SCALE)
+		edge_mesh.material = edge_material
+		edge.mesh = edge_mesh
+		edge.position = Vector3(0, 0.025, side * 3.2) if along_x \
+			else Vector3(side * 3.2, 0.025, 0)
+		surface.add_child(edge)
+
 
 func _paint_outer_sidewalk(cell: Vector3i) -> void:
 	var center := _cell_world(cell.x, cell.z)
@@ -182,10 +195,10 @@ func _paint_city_streets() -> void:
 	asphalt.albedo_color = Color(0.20, 0.22, 0.23)
 	asphalt.roughness = 0.95
 	var road_layouts := [
-		["CityStreet_South", Vector3(49.0, 0.012, -10.0), Vector2(110.0, 4.5)],
-		["CityStreet_North", Vector3(49.0, 0.012, 73.0), Vector2(110.0, 4.5)],
-		["CityStreet_West", Vector3(-10.0, 0.012, 31.5), Vector2(4.5, 75.0)],
-		["CityStreet_East", Vector3(108.0, 0.012, 31.5), Vector2(4.5, 75.0)],
+		["CityStreet_South", Vector3(49.0, 0.012, -10.0), Vector2(110.0, 4.5), true],
+		["CityStreet_North", Vector3(49.0, 0.012, 73.0), Vector2(110.0, 4.5), true],
+		["CityStreet_West", Vector3(-10.0, 0.012, 31.5), Vector2(4.5, 75.0), false],
+		["CityStreet_East", Vector3(108.0, 0.012, 31.5), Vector2(4.5, 75.0), false],
 	]
 	for layout in road_layouts:
 		var road_mesh := PlaneMesh.new()
@@ -196,6 +209,41 @@ func _paint_city_streets() -> void:
 		road.mesh = road_mesh
 		road.position = layout[1]
 		add_child(road)
+		_paint_city_street_markings(str(layout[0]), road.position, layout[2], layout[3])
+
+
+func _paint_city_street_markings(street_name: String, center: Vector3,
+		size: Vector2, runs_east_west: bool) -> void:
+	var centerline_material := StandardMaterial3D.new()
+	centerline_material.albedo_color = Color(0.91, 0.72, 0.28)
+	centerline_material.roughness = 0.8
+	var edge_material := StandardMaterial3D.new()
+	edge_material.albedo_color = Color(0.76, 0.77, 0.73)
+	edge_material.roughness = 0.8
+	var line_length := size.x if runs_east_west else size.y
+	var centerline := MeshInstance3D.new()
+	centerline.name = street_name + "_Centerline"
+	var solid_line := BoxMesh.new()
+	solid_line.size = Vector3(line_length, 0.035, 0.12) if runs_east_west \
+		else Vector3(0.12, 0.035, line_length)
+	solid_line.material = centerline_material
+	centerline.mesh = solid_line
+	centerline.position = center + Vector3(0, 0.035, 0)
+	add_child(centerline)
+
+	for side in [-1.0, 1.0]:
+		for segment in range(1, int(line_length / 7.0)):
+			var dash := MeshInstance3D.new()
+			dash.name = street_name + "_EdgeDash"
+			var dash_mesh := BoxMesh.new()
+			dash_mesh.size = Vector3(2.4, 0.035, 0.1) if runs_east_west \
+				else Vector3(0.1, 0.035, 2.4)
+			dash_mesh.material = edge_material
+			dash.mesh = dash_mesh
+			var along := -line_length * 0.5 + float(segment) * 7.0
+			dash.position = center + Vector3(along, 0.035, side * 1.75) if runs_east_west \
+				else center + Vector3(side * 1.75, 0.035, along)
+			add_child(dash)
 
 
 ## Large, neutral paved city block with a soft green park as the focal point.
@@ -217,7 +265,7 @@ func _ground_catcher() -> void:
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(300, 260)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.36, 0.35, 0.31)
+	mat.albedo_color = Color(0.43, 0.42, 0.38)
 	mat.roughness = 1.0
 	plane.material = mat
 	mi.mesh = plane
@@ -228,23 +276,49 @@ func _ground_catcher() -> void:
 
 func _city_blocks() -> void:
 	var perimeter := [
-		[Vector3(20.0, 0, -23.0), 0],
-		[Vector3(48.0, 0, -25.0), 1],
-		[Vector3(77.0, 0, -23.0), 2],
-		[Vector3(20.0, 0, 86.0), 3],
-		[Vector3(49.0, 0, 88.0), 4],
-		[Vector3(78.0, 0, 86.0), 0],
-		[Vector3(-23.0, 0, 14.0), 1],
-		[Vector3(-25.0, 0, 48.0), 2],
-		[Vector3(120.0, 0, 14.0), 3],
-		[Vector3(122.0, 0, 48.0), 4],
+		[Vector3(13.0, 0, -18.5), 0],
+		[Vector3(31.0, 0, -18.5), 1],
+		[Vector3(49.0, 0, -18.5), 2],
+		[Vector3(67.0, 0, -18.5), 3],
+		[Vector3(85.0, 0, -18.5), 4],
+		[Vector3(13.0, 0, 82.5), 0],
+		[Vector3(31.0, 0, 82.5), 1],
+		[Vector3(49.0, 0, 82.5), 2],
+		[Vector3(67.0, 0, 82.5), 3],
+		[Vector3(85.0, 0, 82.5), 4],
+		[Vector3(-18.5, 0, 13.0), 0],
+		[Vector3(-18.5, 0, 31.5), 1],
+		[Vector3(-18.5, 0, 50.0), 2],
+		[Vector3(116.5, 0, 13.0), 3],
+		[Vector3(116.5, 0, 31.5), 4],
+		[Vector3(116.5, 0, 50.0), 0],
 	]
 	for i in perimeter.size():
 		var building: Array = BUILDINGS[i % BUILDINGS.size()]
 		var placement: Array = perimeter[i]
+		_add_city_lot(i, placement[0], i >= 6)
 		var structure := _spawn_static_prop(building[0], placement[0], building[1], deg_to_rad(90 * placement[1]))
 		if structure != null:
 			structure.name = "CityPerimeter_%02d" % i
+
+
+func _add_city_lot(index: int, center: Vector3, side_lot: bool) -> void:
+	var lot := MeshInstance3D.new()
+	lot.name = "CityLot_%02d" % index
+	var lot_mesh := PlaneMesh.new()
+	lot_mesh.size = Vector2(12.0, 12.0) if side_lot else Vector2(16.0, 12.0)
+	var material := StandardMaterial3D.new()
+	var lot_colors := [
+		Color(0.34, 0.35, 0.34),
+		Color(0.51, 0.48, 0.42),
+		Color(0.40, 0.41, 0.40),
+	]
+	material.albedo_color = lot_colors[index % lot_colors.size()]
+	material.roughness = 0.95
+	lot_mesh.material = material
+	lot.mesh = lot_mesh
+	lot.position = center + Vector3(0, 0.012, 0)
+	add_child(lot)
 
 
 func _central_park() -> void:
@@ -320,6 +394,16 @@ func _central_park() -> void:
 		bed.mesh = planter
 		bed.position = center + Vector3(cos(angle) * 14.0, 0.19, sin(angle) * 10.0)
 		park.add_child(bed)
+		var flowers_scene := load("res://models/town/deco/flowers.glb") as PackedScene
+		if flowers_scene != null:
+			var flowers := flowers_scene.instantiate() as Node3D
+			flowers.name = "ParkFlowers_%02d" % i
+			var flower_bounds := _mesh_aabb_local(flowers)
+			var flower_scale := 0.75 / maxf(flower_bounds.size.y, 0.05)
+			flowers.scale = Vector3.ONE * flower_scale
+			flowers.position = bed.position + Vector3(
+				0, 0.18 - flower_bounds.position.y * flower_scale, 0)
+			park.add_child(flowers)
 
 
 func _add_park_path(parent: Node3D, node_name: String, center: Vector3,
@@ -364,20 +448,6 @@ func _start_line_decor() -> void:
 		var body := _spawn_static_prop(deco[0], at, deco[1], 0.0)
 		if body != null:
 			body.name = "TownDecor_%02d" % i
-
-# --- ของแถวทางวิ่ง: กล่องซ้อน (ชนได้) + เป้าโบนัส ---
-
-func _track_props() -> void:
-	var corner_aa := _cell_world(4, 0)   # ข้างถนนล่าง
-	_spawn_static_prop("res://models/town/props/crate-medium.glb", corner_aa + Vector3(0, 0, 3.6), 1.5, deg_to_rad(8))
-	var p2 := _cell_world(10, 0)
-	_spawn_static_prop("res://models/town/props/crate-small.glb", p2 + Vector3(0, 0, 3.6), 1.2, deg_to_rad(95))
-	_spawn_static_prop("res://models/town/props/crate-medium.glb", p2 + Vector3(0.4, 0, 3.4), 1.5, deg_to_rad(-20))
-
-func _bonus_props() -> void:
-	# เป้าโบนัสหลังจุดเริ่ม (ทางออกจากเมือง)
-	var start := _cell_world(1, 0)
-	_spawn_static_prop("res://models/town/props/target-large.glb", start + Vector3(5.2, 0, -3.4), 2.6, deg_to_rad(45))
 
 # --- ตัวช่วยวางของทั่วเมือง (มีชน = StaticBody3D) ---
 

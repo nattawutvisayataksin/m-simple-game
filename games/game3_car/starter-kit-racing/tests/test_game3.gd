@@ -9,8 +9,8 @@ var failures: Array = []
 var passed: Array = []
 var stage := 0
 var drive_start := Vector3.ZERO
-var ai_start_position := Vector3.ZERO
-var ai_progress_start := 0.0
+var ai_start_positions: Array[Vector3] = []
+var ai_progress_start_values: Array[float] = []
 
 
 func _initialize() -> void:
@@ -57,7 +57,7 @@ func _process(_delta: float) -> bool:
 	elif stage == 5:
 		stage = 6
 		_stage_drive_setup()
-	elif stage == 6 and frames > 520:
+	elif stage == 6 and frames > 1000:
 		stage = 7
 		_stage_drive_check()
 		_finish()
@@ -79,6 +79,24 @@ func _stage_structure() -> void:
 	var route_tangent: Vector3 = game.call("_tangent_at", route_points[0])
 	_check("หัวรถ AI หันตามทิศทางสนาม",
 		first_ai.vehicle_model.global_basis.z.dot(route_tangent) > 0.98)
+	var all_racers: Array[Vehicle] = [game.get_node("Vehicle")]
+	all_racers.append_array(game.get("_ai_racers"))
+	var spawn_spacing_ok := true
+	for i in all_racers.size():
+		for j in range(i + 1, all_racers.size()):
+			spawn_spacing_ok = spawn_spacing_ok \
+				and all_racers[i].sphere.global_position.distance_to(
+					all_racers[j].sphere.global_position) > 2.2
+	_check("รถทุกคันเริ่มแข่งโดยไม่ซ้อนกัน", spawn_spacing_ok)
+	var vehicle_collisions_enabled := true
+	for racer in all_racers:
+		vehicle_collisions_enabled = vehicle_collisions_enabled \
+			and (racer.sphere.collision_layer & 8) != 0 \
+			and (racer.sphere.collision_mask & 9) == 9 \
+			and racer.sphere.continuous_cd \
+			and racer.sphere.contact_monitor \
+			and racer.sphere.max_contacts_reported > 0
+	_check("รถชนกันได้และยังชนพื้นสนาม", vehicle_collisions_enabled)
 	var item_boxes: Node3D = game.get_node_or_null("ItemBoxes")
 	var item_box_names: Array[String] = []
 	if item_boxes != null:
@@ -93,6 +111,7 @@ func _stage_structure() -> void:
 	var coins := game.get_node_or_null("Coins")
 	var gates := game.get_node_or_null("Gates")
 	var props := game.get_node_or_null("Props")
+	var barriers := game.get_node_or_null("TrackBarriers")
 	var track_points: Array = town.call("get_track_points") if town != null else []
 	_check("เมืองสร้างวงถนนครบ 42 จุด", track_points.size() == 42,
 		"points=%d" % track_points.size())
@@ -109,12 +128,25 @@ func _stage_structure() -> void:
 	_check("ของตกแต่ง 24 ชิ้นอยู่นอกเลนแข่ง", decoration_count == 24 and decorations_clear,
 		"count=%d clear=%s" % [decoration_count, decorations_clear])
 	var city_street_count := 0
+	var city_marking_count := 0
 	if town != null:
 		for child in town.get_children():
-			if child.name.begins_with("CityStreet_"):
+			if child.name in ["CityStreet_South", "CityStreet_North",
+					"CityStreet_West", "CityStreet_East"]:
 				city_street_count += 1
+			if child.name.ends_with("_Centerline"):
+				city_marking_count += 1
 	_check("มีถนนย่านเมืองล้อมรอบสนาม 4 ด้าน", city_street_count == 4,
 		"streets=%d" % city_street_count)
+	_check("ถนนเมืองมีเส้นแบ่งเลนชัดเจน", city_marking_count == 4,
+		"centerlines=%d" % city_marking_count)
+	var city_lot_count := 0
+	if town != null:
+		for child in town.get_children():
+			if child.name.begins_with("CityLot_"):
+				city_lot_count += 1
+	_check("มีลานพื้นต่างวัสดุรอบย่านอาคาร", city_lot_count == 16,
+		"lots=%d" % city_lot_count)
 	var sidewalk_count := 0
 	var sidewalks_aligned := true
 	if town != null:
@@ -138,7 +170,8 @@ func _stage_structure() -> void:
 	var road_mesh := road_surface.mesh as PlaneMesh if road_surface != null else null
 	_check("ถนนมีผิวแอสฟัลต์และเส้นประ", road_mesh != null
 		and road_mesh.size.is_equal_approx(Vector2(7.0, 7.0))
-		and road_surface.get_node_or_null("LaneDash") != null)
+		and road_surface.get_node_or_null("LaneDash") != null
+		and road_surface.get_child_count() == 3)
 	var road_collision: StaticBody3D = town.get_node_or_null("RoadCollision_1_0") if town != null else null
 	var road_shape: CollisionShape3D
 	if road_collision != null and road_collision.get_child_count() > 0:
@@ -148,6 +181,31 @@ func _stage_structure() -> void:
 		and road_collision.position.y == 0.0
 		and is_equal_approx(box_shape.size.x, 7.0)
 		and is_equal_approx(box_shape.size.z, 7.0))
+	var barriers_are_solid := barriers != null and barriers.get_child_count() == 8
+	var barrier_details: Array[String] = []
+	if barriers_are_solid:
+		for barrier in barriers.get_children():
+			var wall_shape_node := barrier.get_node_or_null("CollisionShape3D") as CollisionShape3D
+			barrier_details.append("%s:%s" % [barrier.name,
+				wall_shape_node.shape.get_class() if wall_shape_node != null else "missing"])
+			barriers_are_solid = barriers_are_solid and wall_shape_node != null \
+				and wall_shape_node.shape is BoxShape3D
+	_check("มีรั้วชนได้ล้อมรอบขอบในและขอบนอกสนาม", barriers_are_solid,
+		"barriers=%d %s" % [
+			barriers.get_child_count() if barriers != null else -1, "; ".join(barrier_details)])
+	var space := game.get_world_3d().direct_space_state
+	var inner_query := PhysicsRayQueryParameters3D.create(
+		Vector3(49, 0.5, 3.5), Vector3(49, 0.5, 12.0), 1)
+	var outer_query := PhysicsRayQueryParameters3D.create(
+		Vector3(49, 0.5, 3.5), Vector3(49, 0.5, -5.0), 1)
+	var inner_hit := space.intersect_ray(inner_query)
+	var outer_hit := space.intersect_ray(outer_query)
+	_check("กำแพงหยุดการตัดเข้าและออกจากสนาม",
+		not inner_hit.is_empty() and not outer_hit.is_empty()
+		and str(inner_hit["collider"].name).begins_with("Barrier_Inner")
+		and str(outer_hit["collider"].name).begins_with("Barrier_Outer"),
+		"inner=%s outer=%s" % [
+			inner_hit.get("collider", null), outer_hit.get("collider", null)])
 	var perimeter_count := 0
 	var buildings_in_scale := true
 	if town != null:
@@ -167,40 +225,58 @@ func _stage_structure() -> void:
 			buildings_in_scale = buildings_in_scale and building_box != null \
 				and building_box.size.y <= 6.1 and building_box.size.y >= 4.5
 	_check("อาคารเตี้ยสมส่วนและอยู่นอกวงสนาม",
-		perimeter_count == 10 and buildings_in_scale,
+		perimeter_count == 16 and buildings_in_scale,
 		"buildings=%d scale_ok=%s" % [perimeter_count, buildings_in_scale])
 	var park := town.get_node_or_null("CentralPark") if town != null else null
 	_check("กลางสนามเป็นสวนสาธารณะ มีลานและน้ำพุ",
 		park != null and park.get_node_or_null("ParkPathEastWest") != null
-		and park.get_node_or_null("ParkFountain") != null)
+		and park.get_node_or_null("ParkFountain") != null
+		and park.get_node_or_null("ParkFlowers_00") != null)
 	var ground: MeshInstance3D = town.get_node_or_null("CityGroundVisual") if town != null else null
 	var ground_material := ground.mesh.surface_get_material(0) if ground != null else null
 	_check("พื้นเมืองใช้โทนหินธรรมชาติแทนเขียวสด",
 		ground_material is StandardMaterial3D
-		and (ground_material as StandardMaterial3D).albedo_color.is_equal_approx(Color(0.36, 0.35, 0.31)))
+		and (ground_material as StandardMaterial3D).albedo_color.is_equal_approx(Color(0.43, 0.42, 0.38)))
+	var roadside_props_clear := true
+	if town != null:
+		for child in town.get_children():
+			if not child is StaticBody3D or child.name.begins_with("RoadCollision_") \
+					or child.name == "CityGround":
+				continue
+			var obstacle := child as StaticBody3D
+			var shape_node := obstacle.get_node_or_null("CollisionShape3D") as CollisionShape3D
+			if shape_node == null or not shape_node.shape is BoxShape3D:
+				continue
+			var box := shape_node.shape as BoxShape3D
+			var horizontal_radius := Vector2(box.size.x, box.size.z).length() * 0.5
+			for point in track_points:
+				var distance := Vector2(shape_node.global_position.x - point.x,
+					shape_node.global_position.z - point.z).length()
+				if distance - horizontal_radius < 4.6:
+					roadside_props_clear = false
+	_check("พร็อพชนได้ไม่ล้ำเข้าพื้นที่รถแข่ง", roadside_props_clear)
 	_check("ไม่มีเสาไฟฟ้าหรือสิ่งกีดขวางกลางเลน",
-		props != null and props.get_child_count() == 6)
+		props != null and props.get_child_count() == 3)
 	_check("Coins ถูกสร้าง", coins != null and coins.get_child_count() > 0,
 		"children=%s" % (coins.get_child_count() if coins else -1))
 	_check("Gates ครบ 3 ประตู", gates != null and gates.get_child_count() == 3,
 		"children=%s" % (gates.get_child_count() if gates else -1))
 	_check("Props ของประดับถูกวาง", props != null and props.get_child_count() > 0,
 		"children=%s" % (props.get_child_count() if props else -1))
-	var gate_props_are_roadside := props != null and props.get_child_count() >= 3
-	var gate_prop_details: Array[String] = []
-	if gate_props_are_roadside:
-		for i in 3:
-			var marker: Node3D = props.get_child(i)
-			var marker_height: float = game.call("_measure_height", marker) * marker.scale.y
-			var nearest_track_distance := INF
-			for point in track_points:
-				nearest_track_distance = minf(nearest_track_distance,
-					Vector2(marker.position.x, marker.position.z).distance_to(Vector2(point.x, point.z)))
-			gate_prop_details.append("h=%.2f d=%.2f" % [marker_height, nearest_track_distance])
-			gate_props_are_roadside = gate_props_are_roadside \
-				and marker_height <= 1.95 and nearest_track_distance >= 8.0
-	_check("ป้ายจุดตรวจขนาดพอดีและอยู่นอกขอบถนน", gate_props_are_roadside,
-		"; ".join(gate_prop_details))
+	var finish_label := gates.get_node_or_null("Gate0/GateVisual/GateLabel") as Label3D \
+		if gates != null else null
+	var gate_one_label := gates.get_node_or_null("Gate1/GateVisual/GateLabel") as Label3D \
+		if gates != null else null
+	var gate_two_label := gates.get_node_or_null("Gate2/GateVisual/GateLabel") as Label3D \
+		if gates != null else null
+	_check("เห็นซุ้มเส้นชัยและป้าย checkpoint ตามลำดับ",
+		finish_label != null and finish_label.text == "FINISH"
+		and gate_one_label != null and gate_one_label.text == "CHECKPOINT 1"
+		and gate_two_label != null and gate_two_label.text == "CHECKPOINT 2")
+	var gate_shape := gates.get_node("Gate0/CollisionShape3D").shape as BoxShape3D \
+		if gates != null else null
+	_check("เส้นตรวจนับรอบเป็นแถบขวางถนน ไม่ใช่พื้นที่กว้าง",
+		gate_shape != null and gate_shape.size.is_equal_approx(Vector3(7, 3.6, 1.8)))
 	if coins != null and coins.get_child_count() > 0:
 		var coin: Area3D = coins.get_child(0)
 		_check("เหรียญ set collision_mask=8", coin.collision_mask == 8)
@@ -285,9 +361,12 @@ func _stage_drive_setup() -> void:
 	print("[5] ขับได้จริง (กด W 60 เฟรม)")
 	Input.action_press("forward")
 	drive_start = game.get_node("Vehicle/Sphere").global_position
-	var first_ai: Vehicle = game.get("_ai_racers")[0]
-	ai_progress_start = float(first_ai.get_node("RacerAI").call("get_race_progress"))
-	ai_start_position = first_ai.sphere.global_position
+	ai_start_positions.clear()
+	ai_progress_start_values.clear()
+	for racer in game.get("_ai_racers"):
+		ai_start_positions.append(racer.sphere.global_position)
+		ai_progress_start_values.append(float(
+			racer.get_node("RacerAI").call("get_race_progress")))
 
 
 func _stage_drive_check() -> void:
@@ -295,19 +374,23 @@ func _stage_drive_check() -> void:
 	var now: Vector3 = game.get_node("Vehicle/Sphere").global_position
 	var moved: float = (now - drive_start).length()
 	_check("รถวิ่งไปได้ > 2 ม.", moved > 2.0, "moved=%.2f" % moved)
-	var first_ai: Vehicle = game.get("_ai_racers")[0]
-	var ai_node := first_ai.get_node("RacerAI")
-	var ai_progress := float(ai_node.call("get_race_progress"))
-	var ai_distance_travelled: float = first_ai.sphere.global_position.distance_to(ai_start_position)
-	var ai_waypoint := int(ai_node.get("waypoint_index"))
-	var ai_target: Vector3 = ai_node.call("_lane_target", ai_waypoint)
-	var ai_distance := first_ai.sphere.global_position.distance_to(ai_target)
-	_check("AI ขับตามเส้นทางและเพิ่มความคืบหน้า", ai_progress > ai_progress_start,
-		"progress=%.1f start=%.1f pos=%s target=%s d=%.1f speed=%.2f input=%s frozen=%s" % [
-			ai_progress, ai_progress_start, first_ai.sphere.global_position, ai_target,
-			ai_distance, first_ai.linear_speed, first_ai.input, first_ai.sphere.freeze])
-	_check("AI เคลื่อนที่จริงระหว่างแข่ง", ai_distance_travelled > 2.0,
-		"distance=%.2f" % ai_distance_travelled)
+	var all_ai_advanced := true
+	var all_ai_moved := true
+	var ai_details: Array[String] = []
+	var racers: Array = game.get("_ai_racers")
+	for i in racers.size():
+		var racer: Vehicle = racers[i]
+		var ai_node := racer.get_node("RacerAI")
+		var ai_progress := float(ai_node.call("get_race_progress"))
+		var distance_travelled := racer.sphere.global_position.distance_to(ai_start_positions[i])
+		all_ai_advanced = all_ai_advanced and ai_progress > ai_progress_start_values[i]
+		all_ai_moved = all_ai_moved and distance_travelled > 2.0
+		ai_details.append("%s: progress %.1f, distance %.1f" % [
+			racer.name, ai_progress, distance_travelled])
+	_check("AI ทุกคันขับตามเส้นทางและเพิ่มความคืบหน้า", all_ai_advanced,
+		"; ".join(ai_details))
+	_check("AI ทุกคันเคลื่อนที่จริงระหว่างแข่ง", all_ai_moved,
+		"; ".join(ai_details))
 
 
 func _finish() -> void:

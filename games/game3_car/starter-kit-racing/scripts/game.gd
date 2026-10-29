@@ -17,12 +17,6 @@ const CAR_OPTIONS := [
 	{"name": "Green Truck", "model": "res://models/vehicle-truck-green.glb", "speed": 1.04, "handling": 1.04},
 ]
 
-const PROP_TARGET_HEIGHT := {
-	"res://models/props/traffic-light.glb": 1.9,
-	"res://models/props/sign-highway.glb": 1.6,
-	"res://models/props/construction-cone.glb": 0.45,
-}
-
 var laps := 0
 var coins_collected := 0
 var next_gate := 0
@@ -52,6 +46,7 @@ var _hud_lap: Label
 var _hud_coin: Label
 var _hud_time: Label
 var _hud_rank: Label
+var _hud_checkpoint: Label
 var _hud_item: Label
 var _hud_hint: Label
 var _win_label: Label
@@ -118,7 +113,8 @@ func _spawn_ai_racers() -> void:
 	var tangent := _tangent_at(_path_points[0])
 	var right := tangent.cross(Vector3.UP).normalized()
 	var ai_car_indices := [1, 2, 4]
-	var lane_offsets := [-2.0, 2.0, 1.4]
+	var lane_offsets := [-1.35, 1.35, 0.0]
+	var row_back_distances := [3.4, 3.4, 6.8]
 	for i in OPPONENT_COUNT:
 		var racer := vehicle_scene.instantiate() as Vehicle
 		if racer == null:
@@ -130,7 +126,7 @@ func _spawn_ai_racers() -> void:
 		racer.set_car_model(option["model"])
 		racer.set_drive_profile(option["speed"], option["handling"])
 		racer.ai_controlled = true
-		var row_back := tangent * (-4.2 if i == 2 else 0.0)
+		var row_back: Vector3 = tangent * -float(row_back_distances[i])
 		var start: Vector3 = _path_points[0] + right * lane_offsets[i] + row_back
 		var spawn := Vector3(start.x, start.y + 0.6, start.z)
 		racer.global_transform = Transform3D(Basis(), spawn)
@@ -333,6 +329,8 @@ func _build_track_and_spawnables() -> void:
 		return aa < bb)
 	_path_points = ordered
 
+	_build_track_barriers()
+
 	var coins := Node3D.new()
 	coins.name = "Coins"
 	coins.position = Vector3.ZERO
@@ -358,28 +356,28 @@ func _build_track_and_spawnables() -> void:
 		coins.add_child(area)
 		_coin_roots.append(area)
 
-	_set_center_hint(Vector3(centroid.x, 0, centroid.y))
 	var gates := Node3D.new()
 	gates.name = "Gates"
 	add_child(gates)
 	var gate_steps := [0, _path_points.size() / 3, _path_points.size() * 2 / 3]
-	var gate_props := ["res://models/props/traffic-light.glb"
-		, "res://models/props/sign-highway.glb"
-		, "res://models/props/construction-cone.glb"]
 	for gi in 3:
 		var p: Vector3 = _path_points[gate_steps[gi]]
 		var area := Area3D.new()
 		area.name = "Gate%d" % gi
 		area.collision_mask = 8
-		area.position = p + Vector3(0, 2.4, 0)
+		area.position = p + Vector3(0, 1.8, 0)
+		var tangent := _tangent_at(p)
+		if tangent.length() > 0.01:
+			area.rotation.y = _yaw_for_direction(tangent)
 		var shape := BoxShape3D.new()
-		shape.size = Vector3(9, 7, 9)
+		shape.size = Vector3(7, 3.6, 1.8)
 		var cs := CollisionShape3D.new()
+		cs.name = "CollisionShape3D"
 		cs.shape = shape
 		area.add_child(cs)
 		area.body_entered.connect(_on_gate_body_entered.bind(gi))
+		_spawn_gate_visual(area, gi)
 		gates.add_child(area)
-		_spawn_prop(gate_props[gi], p, gi)
 
 	var center := Vector3.ZERO
 	for p in _path_points:
@@ -387,36 +385,106 @@ func _build_track_and_spawnables() -> void:
 	center /= _path_points.size()
 	_spawn_kart_fleet(center)
 
-var _center_hint := Vector3.ZERO
+func _build_track_barriers() -> void:
+	var barriers := Node3D.new()
+	barriers.name = "TrackBarriers"
+	add_child(barriers)
+	var track_width := 98.0
+	var track_depth := 63.0
+	var specs := [
+		["OuterSouth", Vector3(track_width * 0.5, 0.48, 0.12),
+			Vector3(track_width, 0.96, 0.4), true],
+		["OuterNorth", Vector3(track_width * 0.5, 0.48, track_depth - 0.12),
+			Vector3(track_width, 0.96, 0.4), true],
+		["OuterWest", Vector3(0.12, 0.48, track_depth * 0.5),
+			Vector3(0.4, 0.96, track_depth), false],
+		["OuterEast", Vector3(track_width - 0.12, 0.48, track_depth * 0.5),
+			Vector3(0.4, 0.96, track_depth), false],
+		["InnerSouth", Vector3(track_width * 0.5, 0.48, 7.12),
+			Vector3(track_width - 14.0, 0.96, 0.4), true],
+		["InnerNorth", Vector3(track_width * 0.5, 0.48, track_depth - 7.12),
+			Vector3(track_width - 14.0, 0.96, 0.4), true],
+		["InnerWest", Vector3(7.12, 0.48, track_depth * 0.5),
+			Vector3(0.4, 0.96, track_depth - 14.0), false],
+		["InnerEast", Vector3(track_width - 7.12, 0.48, track_depth * 0.5),
+			Vector3(0.4, 0.96, track_depth - 14.0), false],
+	]
+	for spec in specs:
+		var body := StaticBody3D.new()
+		body.name = "Barrier_" + str(spec[0])
+		var collision := CollisionShape3D.new()
+		collision.name = "CollisionShape3D"
+		var shape := BoxShape3D.new()
+		shape.size = spec[2]
+		collision.shape = shape
+		body.add_child(collision)
+		body.position = spec[1]
+		barriers.add_child(body)
+		_paint_barrier(body, shape.size, spec[3])
 
-func _set_center_hint(c := Vector3.ZERO) -> void:
-	_center_hint = c
+
+func _paint_barrier(parent: Node3D, size: Vector3, horizontal: bool) -> void:
+	var run_length := size.x if horizontal else size.z
+	var segment_length := 2.8
+	var offset := -run_length * 0.5
+	var segment_index := 0
+	while offset < run_length:
+		var width := minf(segment_length, run_length - offset)
+		var section := MeshInstance3D.new()
+		var mesh := BoxMesh.new()
+		mesh.size = Vector3(width, 0.7, 0.42) if horizontal \
+			else Vector3(0.42, 0.7, width)
+		var material := StandardMaterial3D.new()
+		material.albedo_color = Color(0.88, 0.82, 0.70) if segment_index % 2 == 0 \
+			else Color(0.72, 0.22, 0.15)
+		material.roughness = 0.82
+		mesh.material = material
+		section.mesh = mesh
+		section.position = Vector3(offset + width * 0.5, 0, 0) if horizontal \
+			else Vector3(0, 0, offset + width * 0.5)
+		parent.add_child(section)
+		offset += width
+		segment_index += 1
 
 
-## side >= 0 = วางประตู (เลือกด้านตามประตู), -1 = ของประดับด้านนอกสนาม
-func _spawn_prop(path: String, at: Vector3, side: int) -> void:
-	var scene: PackedScene = load(path)
-	if scene == null:
-		return
-	var target: float = PROP_TARGET_HEIGHT.get(path, 1.5)
-	var instance: Node3D = scene.instantiate()
-	var h := _measure_height(instance)
-	var s := target / maxf(h, 0.05)
-	_props_root.add_child(instance)
-	instance.scale = Vector3(s, s, s)
+func _spawn_gate_visual(area: Area3D, gate_index: int) -> void:
+	var visual := Node3D.new()
+	visual.name = "GateVisual"
+	area.add_child(visual)
+	var accent_colors := [
+		Color(0.98, 0.68, 0.16),
+		Color(0.20, 0.78, 0.88),
+		Color(0.94, 0.32, 0.24),
+	]
+	var accent: Color = accent_colors[gate_index]
+	for side in [-1.0, 1.0]:
+		_add_gate_box(visual, Vector3(0.42, 3.5, 0.42),
+			Vector3(side * 4.0, 1.75, 0), Color(0.86, 0.82, 0.70))
+	_add_gate_box(visual, Vector3(8.4, 0.55, 0.5),
+		Vector3(0, 3.55, 0), accent)
 
-	# จุดวาง: ดันออกด้านนอกสนามตามแนวรัศมีจากจุดศูนย์กลาง
-	var out := Vector3(at.x - _center_hint.x, 0, at.z - _center_hint.z)
-	out = out.normalized() if out.length() > 0.01 else Vector3(0, 0, 1)
-	var offset := out * 12.0
-	instance.position = at + offset
-	instance.position.y = -_mesh_aabb_local(instance).position.y * s   # ให้ฐานแตะพื้น
-	if side >= 0:
-		# ของถ้าเป็นประตู: หันหน้าตามแนวทางเดิน
-		var tangent := _tangent_at(at)
-		if tangent.length() > 0.01:
-			instance.rotation.y = atan2(tangent.x, tangent.z)
+	var label := Label3D.new()
+	label.name = "GateLabel"
+	label.text = "FINISH" if gate_index == 0 else "CHECKPOINT %d" % gate_index
+	label.font_size = 48
+	label.pixel_size = 0.008
+	label.outline_size = 8
+	label.modulate = Color(0.10, 0.10, 0.10)
+	label.position = Vector3(0, 3.5, -0.27)
+	visual.add_child(label)
 
+
+func _add_gate_box(parent: Node3D, dimensions: Vector3, at: Vector3, tint: Color) -> void:
+	var post := MeshInstance3D.new()
+	var mesh := BoxMesh.new()
+	mesh.size = dimensions
+	var material := StandardMaterial3D.new()
+	material.albedo_color = tint
+	material.roughness = 0.72
+	mesh.material = material
+	post.mesh = mesh
+	post.position = at
+	parent.add_child(post)
 
 func _spawn_kart_fleet(center: Vector3) -> void:
 	# เหล่า Kubi รุ่น kart จอดต้อนรับแถวเส้นชัย (3 คัน)
@@ -677,6 +745,7 @@ func _build_hud() -> void:
 
 	_hud_lap = _make_label(box, 30)
 	_hud_rank = _make_label(box, 24)
+	_hud_checkpoint = _make_label(box, 22)
 	_hud_coin = _make_label(box, 30)
 	_hud_time = _make_label(box, 30)
 	_hud_item = _make_label(box, 24)
@@ -717,6 +786,8 @@ func _update_hud() -> void:
 		if ai != null and float(ai.call("get_race_progress")) > player_progress:
 			position += 1
 	_hud_rank.text = "อันดับ: %d/%d" % [position, OPPONENT_COUNT + 1]
+	var checkpoint_names := ["FINISH", "CHECKPOINT 1", "CHECKPOINT 2"]
+	_hud_checkpoint.text = "ประตูถัดไป: " + checkpoint_names[next_gate]
 	_hud_coin.text = "เหรียญทอง: %d" % coins_collected
 	_hud_time.text = "เวลา: " + _format_time(elapsed)
 	_hud_item.text = "ไอเท็ม: %s  (Q)" % _item_display_name(held_item)
