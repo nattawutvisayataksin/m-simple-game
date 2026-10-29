@@ -4,18 +4,19 @@ extends Node3D
 @export var target: Vehicle
 
 @onready var camera = $Camera
+const CAMERA_NEAR_Z := 20.0
+const CAMERA_FAR_Z := 30.0
 
 # Functions
 
-func _physics_process(delta):
+func _physics_process(delta: float) -> void:
+	if target == null:
+		return
 	
 	# Ease position towards target vehicle position
-	
-	self.position = self.position.lerp(target.get_vehicle_position(), delta * 4)
+	position = position.lerp(target.get_vehicle_position(), delta * 4.0)
 
-	# Zoom camera based on the speed of the vehicle
-
-	var speed_factor = clamp(abs(target.linear_speed), 0.0, 1.0)
-	var target_z = remap(speed_factor, 0.0, 1.0, 10, 20)
-	
-	camera.position.z = lerp(camera.position.z, target_z, delta * 0.5)
+	# Keep enough track and city context visible while the player drives.
+	var speed_factor := clampf(absf(target.linear_speed), 0.0, 1.0)
+	var target_z := lerpf(CAMERA_NEAR_Z, CAMERA_FAR_Z, speed_factor)
+	camera.position.z = lerpf(camera.position.z, target_z, delta * 0.8)

@@ -37,7 +37,8 @@ target = NodePath("../Vehicle")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 16)
 current = true
 fov = 40.0
-far = 60.0
+far = 400.0
+fov = 52.0
 
 [node name="Sun" type="DirectionalLight3D" parent="." unique_id=385873465]
 transform = Transform3D(-0.422618, -0.694272, 0.582564, 0, 0.642788, 0.766044, -0.906308, 0.323744, -0.271654, 0, 0, 0)

@@ -87,14 +87,26 @@ func _stage_structure() -> void:
 		"count=%d clear=%s" % [decoration_count, decorations_clear])
 	var road: Node3D = town.get_node_or_null("Road_1_0") if town != null else null
 	_check("โมเดลถนนขยายตามขนาดช่อง 7 ม.", road != null and road.scale.is_equal_approx(Vector3.ONE * 7.0))
+	var road_surface: MeshInstance3D = town.get_node_or_null("RoadSurface_1_0") if town != null else null
+	var road_mesh := road_surface.mesh as PlaneMesh if road_surface != null else null
+	_check("ถนนมีผิวแอสฟัลต์และเส้นประ", road_mesh != null
+		and road_mesh.size.is_equal_approx(Vector2(7.0, 7.0))
+		and road_surface.get_node_or_null("LaneDash") != null)
 	var road_collision: StaticBody3D = town.get_node_or_null("RoadCollision_1_0") if town != null else null
 	var road_shape: CollisionShape3D
 	if road_collision != null and road_collision.get_child_count() > 0:
 		road_shape = road_collision.get_child(0) as CollisionShape3D
 	var box_shape := road_shape.shape as BoxShape3D if road_shape != null else null
 	_check("ถนนมี collider ครอบคลุมช่อง", box_shape != null
+		and road_collision.position.y == 0.0
 		and is_equal_approx(box_shape.size.x, 7.0)
 		and is_equal_approx(box_shape.size.z, 7.0))
+	var skyline_count := 0
+	if town != null:
+		for child in town.get_children():
+			if child.name.begins_with("CitySkyline_"):
+				skyline_count += 1
+	_check("มีอาคารเมืองล้อมรอบสนาม", skyline_count == 10, "buildings=%d" % skyline_count)
 	_check("Coins ถูกสร้าง", coins != null and coins.get_child_count() > 0,
 		"children=%s" % (coins.get_child_count() if coins else -1))
 	_check("Gates ครบ 3 ประตู", gates != null and gates.get_child_count() == 3,

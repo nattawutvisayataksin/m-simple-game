@@ -105,6 +105,7 @@ func _lay_road(cell: Vector3i, corner: bool, corner_index: int, along_x: bool) -
 	inst.position.y = ROAD_TOP - 0.02 * TILE_SCALE
 	add_child(inst)
 	_path_cells.append(Vector3(inst.position.x, ROAD_TOP, inst.position.z))
+	_paint_road_tile(cell, along_x, corner)
 	# กล่องชนพื้นบาง (ขับได้)
 	var body := StaticBody3D.new()
 	body.name = "RoadCollision_%d_%d" % [cell.x, cell.z]
@@ -114,8 +115,38 @@ func _lay_road(cell: Vector3i, corner: bool, corner_index: int, along_x: bool) -
 	cs.shape = shape
 	cs.position = Vector3(0, ROAD_TOP - 0.15, 0)
 	body.add_child(cs)
-	body.position = inst.position
+	body.position = Vector3(inst.position.x, ROAD_TOP, inst.position.z)
 	add_child(body)
+
+
+func _paint_road_tile(cell: Vector3i, along_x: bool, corner: bool) -> void:
+	var surface := MeshInstance3D.new()
+	surface.name = "RoadSurface_%d_%d" % [cell.x, cell.z]
+	var asphalt := PlaneMesh.new()
+	asphalt.size = Vector2(TILE_SCALE, TILE_SCALE)
+	var asphalt_material := StandardMaterial3D.new()
+	asphalt_material.albedo_color = Color(0.16, 0.19, 0.22)
+	asphalt_material.roughness = 0.95
+	asphalt.material = asphalt_material
+	surface.mesh = asphalt
+	surface.position = _cell_world(cell.x, cell.z) + Vector3(0, ROAD_TOP + 0.025, 0)
+	add_child(surface)
+
+	if corner:
+		return
+	var marking := MeshInstance3D.new()
+	marking.name = "LaneDash"
+	var dash := BoxMesh.new()
+	dash.size = Vector3(0.16, 0.035, 2.0)
+	var marking_material := StandardMaterial3D.new()
+	marking_material.albedo_color = Color(1.0, 0.78, 0.2)
+	marking_material.emission_enabled = true
+	marking_material.emission = Color(0.6, 0.28, 0.03)
+	dash.material = marking_material
+	marking.mesh = dash
+	marking.position.y = 0.025
+	marking.rotation.y = PI / 2.0 if along_x else 0.0
+	surface.add_child(marking)
 
 
 ## พื้นตัวรับเมืองทั้งผืน (ขับชื่นในเมืองระหว่างตึกได้ ไม่ตกฉาก) + อาณาเขตใหญ่
@@ -154,6 +185,18 @@ func _city_blocks() -> void:
 		var c: Array = spots[i]
 		var p := _cell_world(c[0], c[1])
 		_spawn_static_prop(path, Vector3(p.x, ROAD_TOP, p.z), target, deg_to_rad(90 * (i % 4)))
+	# อาคารขนาดใหญ่รอบขอบสนาม ทำให้เห็นเมืองได้จากกล้องขับรถ
+	var skyline := [
+		Vector3(24.5, 0, -13.5), Vector3(49.5, 0, -15.0), Vector3(75.5, 0, -13.5),
+		Vector3(24.5, 0, 76.5), Vector3(49.5, 0, 78.0), Vector3(75.5, 0, 76.5),
+		Vector3(-13.0, 0, 20.5), Vector3(-15.0, 0, 42.5),
+		Vector3(108.0, 0, 20.5), Vector3(110.0, 0, 42.5),
+	]
+	for i in skyline.size():
+		var building: Array = BUILDINGS[i % BUILDINGS.size()]
+		var structure := _spawn_static_prop(building[0], skyline[i], building[1], deg_to_rad(90 * (i % 4)))
+		if structure != null:
+			structure.name = "CitySkyline_%02d" % i
 	# กังหันลม + แท้งค์น้ำมุมเมือง
 	_spawn_static_prop("res://models/town/industrial/windmill.glb", _cell_world(6, 4) + Vector3(3.5, 0, 3.5), 14.0, 0.0)
 	_spawn_static_prop("res://models/town/industrial/water-tower.glb", _cell_world(13, 6) + Vector3(3.5, 0, 3.5), 13.0, deg_to_rad(180))
