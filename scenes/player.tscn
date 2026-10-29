@@ -10,7 +10,6 @@ radius = 16.0
 script = ExtResource("1_player")
 
 [node name="Visual" type="Sprite2D" parent="."]
-# Kubi: spritesheet 9 เฟรม (เฟรม 0 = ยืนนิ่ง, 1-8 = เดิน) — เลื่อนเฟรมใน player.gd
 texture = ExtResource("2_tex")
 hframes = 9
 

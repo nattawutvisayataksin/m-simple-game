@@ -46,7 +46,7 @@
 | Key | ที่เก็บ | สถานะโควตา (trial) | วิธีใช้ |
 |---|---|---|---|
 | Key A | session MCP ของ OpenCode (ภายนอก repo) | ใช้แล้ว ~45/40 ต้องรอ daily bonus | ผ่าน `tools.pixellab.*` ตรง ๆ |
-| Key B | `.mcp.json` (ถูก gitignore, Bearer header ของ pixellab) | **40/40 ว่าง** พร้อมใช้ทันที | REST v2 ตรง ๆ (`https://api.pixellab.ai/v2`) หรือกลายเป็น MCP ตอนรีสตาร์ทเซสชัน |
+| Key B | `.mcp.json` (ถูก gitignore, Bearer header ของ pixellab) | **ใช้แล้ว 3/40 → เหลือ 37** | REST v2 ตรง ๆ (`https://api.pixellab.ai/v2`) — หรือผู้ใช้รีสตาร์ท OpenCode แล้ว MCP ของ pixellab จะผูก key B ให้ใช้ผ่าน `tools.pixellab.*` ได้ด้วย |
 
 **กติกาใชญาโควตา:**
 - ทำงานผ่าน REST ได้เสมอด้วย key B — กินการ gen ตัวเอง (แต่ละปลายทางจะให้สถานะ "background_job_id" ที่ poll ได้ที่ `GET /background-jobs/{job_id}`)
@@ -57,9 +57,16 @@
 - หากโควตาหมดทั้ง 2 key: หยุด gen รอ daily bonus (+5 ทุกคืน, สูงสุด 20) หรือสับไปงานเอกสาร/โค้ดที่ไม่ใช้ gen
 - ⚠️ ห้ามฝัง key ในไฟล์ที่จะ commit — สคริปต์ต้องอ่านจาก `.mcp.json` เท่านั้น
 
-**สถานะแอนิเมชันที่ผลิตผ่าน Key B (วันใช้ทั้ง 1/40, koszt 3 gen สำหรับชุดนี้):
-- coin 8 frames: ✅ เสร็จ — `assets/art/gen/coin_sheet.png` + ผูกในฉากแล้ว
-- player 8 frames / enemy 8 frames: 🔄 กำลังผลิต (background)
+**สถานะแอนิเมชันที่ผลิตผ่าน Key B (ใช้ทั้งหมด 3 gen — เหลือ 37/40):**
+- coin 9 frames: ✅ เสร็จ — `assets/art/gen/coin_sheet.png` + ผูกในฉากแล้ว (`Sprite2D.hframes=9` + coin.gd)
+- player 9 frames: ✅ เสร็จ — `assets/art/gen/player_sheet.png` (เฟรม 0 = ยืน, 1-8 = เดิน) + player.gd
+- enemy 9 frames: ✅ เสร็จ — `assets/art/gen/enemy_sheet.png` (0 = ต้นฉบับ, 1-8 = เต้นหายใจ) + enemy.gd
+
+**สถานะทดสอบบนเครื่องผู้ใช้ (2026-10-29):**
+- Godot 4.7.2 ติดตั้งแล้วด้วย winget (exe อยู่ที่ `C:\Users\admin\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_...`)
+- `GODOT_PATH` ใน `.mcp.json` แก้ให้ชี้ exe จริงแล้ว / รอบต่อไปต้องอัปเดตเอกสารตาม HOME_SETUP ข้อ 3-4 อีกครั้งหากไปเครื่องอื่น
+- ทดสอบรันเกม headless + หน้าต่างจริง: **ผ่าน ไม่มี error**
+- ต้อง commit+push ไฟล์ที่แก้ในรอบนี้: `scenes/player.tscn, enemy.tscn, coin.tscn`, `scripts/coin.gd`, `docs/*` (สถานะ doc)
 
 ## สถานะการเก็บภาพ (asset provenance)
 

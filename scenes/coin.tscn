@@ -10,7 +10,6 @@ radius = 12.0
 script = ExtResource("1_coin")
 
 [node name="Visual" type="Sprite2D" parent="."]
-# เหรียญ: spritesheet 9 เฟรม (288×32) จาก REST animate-pixminimax — หมุนใน _process ของ coin.gd
 texture = ExtResource("2_tex")
 hframes = 9
 

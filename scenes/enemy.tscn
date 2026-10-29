@@ -1,7 +1,7 @@
 [gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemy.gd" id="1_enemy"]
-[ext_resource type="Texture2D" path="res://assets/art/sprites/enemy_glitch.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/art/gen/enemy_sheet.png" id="2_tex"]
 
 [sub_resource type="CircleShape2D" id="1_shape"]
 radius = 14.0
@@ -10,7 +10,6 @@ radius = 14.0
 script = ExtResource("1_enemy")
 
 [node name="Visual" type="Sprite2D" parent="."]
-# ไวรัส: spritesheet 9 เฟรม (0 = ต้นฉบับ, 1-8 = เต้นหายใจ) — เลื่อนเฟรมใน enemy.gd
 texture = ExtResource("2_tex")
 hframes = 9
 

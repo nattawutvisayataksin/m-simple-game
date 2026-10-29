@@ -11,9 +11,7 @@ signal collected
 
 @onready var visual: Sprite2D = $Visual
 
-@onready var visual: Sprite2D = $Visual
-
-## อัตราการเลิกเหรียญเฟรม (เฟรมต่อวินาที)
+## อัตราการเลื่อนเฟรมเหรียญ (เฟรมต่อวินาที)
 @export var anim_fps := 10.0
 var _anim_timer := 0.0
 
