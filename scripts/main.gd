@@ -5,8 +5,8 @@ extends Node2D
 ##  3) รับ signal จากศัตรูลูกเหล็ก โดน = แพ้
 ##  4) เล่นเสียงเอฟเฟกต์ (เก็บเหรียญ / ชนะ / แพ้)
 ## โจทย์ฝึกหัดต่อไป:
-##  - เพิ่มจำนวนศัตรูทีละด่าน (กระดาษแจกเป็นระบบ level)
-##  - เก็บเวลาที่ใช้ไปสร้าง hi-score ด้วยไฟล์ user://
+##  - เก็บเวลาที่ใช้ไปสร้าง hi-score ด้วยไฟล์ user:// (ระยะ D)
+##  - ตั้ง Input Map "sprint" ให้ผูก Shift สวยกว่า is_key_pressed
 
 ## จำนวนเหรียญทั้งหมดที่ต้องเก็บให้ครบ
 const COIN_COUNT := 10
@@ -19,6 +19,17 @@ const TIME_LIMIT := 30.0
 
 ## ระยะตำแหน่งเหรียญห่างกันขั้นน้อย
 const SPAWN_MIN_DIST := 90.0
+
+## คิวไวรัสเพิ่มตามเวลา (ระยะ B): เขียว = เด้งบ้าคลั่ง / น้ำเงิน = ไล่ตาม
+const VIRUS_SPAWN_SCHEDULE := [
+	{ "time": 10.0, "scene": preload("res://scenes/enemy_green.tscn") },
+	{ "time": 20.0, "scene": preload("res://scenes/enemy_blue.tscn") },
+]
+
+## ระยะห่างขั้นต่ำจากผู้เล่นตอน spawn ไวรัสใหม่ (กันตายฟรีจากของทับตัว)
+const VIRUS_SPAWN_DIST := 280.0
+
+var _virus_spawn_done := 0
 
 ## สถานะเกม ใช้สอยเทียบใน _process และ _on_* ต่าง ๆ
 enum GameState { PLAYING, WON, LOST }
@@ -70,8 +81,37 @@ func _process(delta: float) -> void:
 		return
 	time_left = maxf(time_left - delta, 0.0)
 	_update_time_label()
+	_check_virus_spawns()
 	if time_left <= 0.0:
 		_lose("หมดเวลา!")
+
+
+## ระยะ B: "ไวรัสเพิ่มตามเวลา" — เขียว (เด้งบ้าคลั่ง) ที่ 10 วิ / น้ำเงิน (ไล่ตาม) ที่ 20 วิ
+func _check_virus_spawns() -> void:
+	var elapsed := TIME_LIMIT - time_left
+	while _virus_spawn_done < VIRUS_SPAWN_SCHEDULE.size():
+		var due: float = float(VIRUS_SPAWN_SCHEDULE[_virus_spawn_done]["time"])
+		if elapsed < due:
+			break
+		_spawn_virus(VIRUS_SPAWN_SCHEDULE[_virus_spawn_done]["scene"])
+		_virus_spawn_done += 1
+
+
+## เกิดไวรัสตัวใหม่ — spawn ห่างผู้เล่น + เฟดอิน ก่อนเปิดกล่องชน (กันตายแบบไม่ตั้งใจ)
+func _spawn_virus(scene: PackedScene) -> void:
+	if state != GameState.PLAYING:
+		return
+	var virus: Area2D = scene.instantiate()
+	virus.position = _pick_coin_position([player.position] as Array[Vector2], VIRUS_SPAWN_DIST)
+	virus.caught_player.connect(_on_player_caught)
+	enemies_container.add_child(virus)
+
+	# เล่นเข้านุ่ม ๆ: โปร่งจาง 0 → 1 จากนั้นค่อยเปิดรับการชน
+	virus.modulate.a = 0.0
+	virus.monitoring = false
+	var tween := virus.create_tween()
+	tween.tween_property(virus, "modulate:a", 1.0, 0.5)
+	tween.tween_callback(func() -> void: virus.monitoring = true)
 
 
 func _input(event: InputEvent) -> void:
@@ -104,8 +144,8 @@ func _spawn_coins() -> void:
 		coins_container.add_child(coin)
 
 
-## สุ่มตำแหน่งเหรียญ 1 จุด ไม่ให้ซ้อนกันใกล้เกิน SPAWN_MIN_DIST
-func _pick_coin_position(taken: Array[Vector2]) -> Vector2:
+## สุ่มตำแหน่ง 1 จุด ไม่ให้ซ้อนกันใกล้เกิน min_dist (ใช้หาจุดวางเหรียญ + จุด spawn ไวรัส)
+func _pick_coin_position(taken: Array[Vector2], min_dist: float = SPAWN_MIN_DIST) -> Vector2:
 	var arena := Rect2(110.0, 110.0, 932.0, 428.0)
 
 	for attempt in range(100):
@@ -116,7 +156,7 @@ func _pick_coin_position(taken: Array[Vector2]) -> Vector2:
 
 		var too_close := false
 		for p in taken:
-			if candidate.distance_to(p) < SPAWN_MIN_DIST:
+			if candidate.distance_to(p) < min_dist:
 				too_close = true
 				break
 

@@ -9,11 +9,12 @@
   "music_record": "2026-10-29: music.wav chiptune loop 13.7s สังเคราะห์เองใน tools/generate_music.ps1 (ฟรี ไม่ใช้ gen) + bus Music/SFX (default_bus_layout.tres) + HUD icon ใช้ coin_kub.png ซ้ำ — ฟอนต์จริง process: หยุด (create_font Latin-only, ใช้ LabelSettings)",
   "gold_record": "2026-10-29: coin_gold (edit 1 gen) + goldcoin_sheet 9f (anim 1 gen) + ไวรัสเขียว/น้ำเงิน (edit ตัวละ 1 gen) = 4 gen รวม — หมด daily bonus Key A วันนี้ (used 50/40; ยืนยันด้วยการยิงจริงคืน error 'no generations or credits') ; ไวรัส 2 สีเก็บไว้ใช้ระยะ B",
   "keyb_record": "2026-10-29: MCP `pixellab-b` (Key B) ทำงานใน session ได้โดยไม่ต้องรีสตาร์ท — ใช้แล้ว 1 gen (burst_gold sparkle เอฟเฟกต์เก็บเหรียญ) เหลือ 36/40 + bonus 2; burst พื้นหลังดำตัดโปร่งเองด้วย tools/make_transparent.ps1 (ฟรี)",
-  "session_handoff": "2026-10-29: ระยะ C ครบ + ระยะ A ครบ 3/4 (เหรียญหมุน overlap-ยังค้าง: coin หมุนแล้ว/รอผู้ใช้เล่นจริง และ Shift ยังไม่ทำ) — โค้ด ระยะ A เขียนและผ่าน headless, ทดลองเล่นจริงรอผู้ใช้ — ถัดไป: ระยะ B (มีไวรัส 2 สีรออยู่) → ระยะ D save",
+  "session_handoff": "2026-10-29: ระยะ C ครบ + ระยะ A ครบ 4/4 + ระยะ B ครบ (ไวรัสเพิ่มตามเวลา: เขียว 10 วิ บ้าคลั่ง / น้ำเงิน 20 วิ ไล่ตาม — enemy_green/enemy_blue.tscn) — ท้ายโจทย์ระยะ D save ตามลำดับ; ถัดไป: ระยะ D (hi-score user://, ระบบใช้ save-systems skill) และอาจปรับจูนค่าความยากตาม feedback ผู้เล่นจริง",
   "next_steps": [
-    "Phase A polish: เหรียญทอง 3 คะแนน (edit coin image ลด gen), เวลา ≤10 วิ ตัวเลขแดง, ปิดเหรียญหลังจบรอบ",
-    "Phase B: ความยาก เพิ่มไวรัสตามเวลา",
-    "Phase D: hi-score save user://",
+    "Phase D: hi-score save user:// (เก็บด่านสุดท้าย/เวลาที่ใช้) — ใช้ save-systems skill",
+    "ปรับจูนความยาก (สเต็ปเขียว/น้ำเงิน) หลังผู้เล่นทดสอบจริง",
+    "โจทย์ค้างเล็ก: ผูก Input Map action \"sprint\" แทน is_key_pressed(KEY_SHIFT)",
+    "พรุ่งนี้: กลับมาใช้ Key A (daily bonus +5) ให้หมดก่อน จึงใช้ Key B",
     "ระวัง: ห้ามฝัง key ในไฟล์ commit — key อ่านจาก .mcp.json (gitignored) เท่านั้น"
   ],
   "art_direction_doc": "docs/ART_DIRECTION.md",
