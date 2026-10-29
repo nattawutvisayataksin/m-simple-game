@@ -6,6 +6,7 @@ extends Node2D
 # และวาดเงาวงรีใต้เท้า ยึดตัวมอนกับพื้น (แก้ภาพ "ลอย ๆ" เมื่อตัวทับกัน)
 
 signal reached_castle
+signal died(reward: int, at: Vector2)   # T3: ถูกป้อมฆ่า -> ให้ทอง + จุดป๊อบ (พิกัดตาย)
 
 const FRAME_SIZE := 64
 const ANIM_FPS := 9.0
@@ -13,6 +14,11 @@ const ANIM_FPS := 9.0
 var waypoints: PackedVector2Array = []
 var speed := 60.0
 var base_scale := 1.5
+var max_hp := 30.0
+var reward := 15            # ทองที่ได้เมื่อฆ่าสำเร็จ
+var dead := false
+var _hp := 30.0
+var _progress := 0.0        # ระยะทางที่เดินมาแล้ว (ป้อมเลืองเป้า "ขึ้นหน้าสุด")
 var no_flip := false
 var faces_left := true    # สไปรต์หันข้าง (sheet_side) เกิดหัวไปทางไหน (กิ้งก่า = ซ้าย)
 var body_bottom_row := 59  # แถวเท้าล่างสุดของชุดหน้าตรง (กบ=59 กิ้งก่าหน้าตรง=56) - tools/measure_feet.ps1
@@ -34,6 +40,8 @@ func _apply_sheet(tex: Texture2D, bottom_row: int) -> void:
 	_sprite.offset = Vector2(0, 2.0 / base_scale - (bottom_row - 32))
 
 func _ready() -> void:
+	_hp = max_hp
+	add_to_group("enemies")
 	_sprite = Sprite2D.new()
 	_sprite.scale = Vector2(base_scale, base_scale)
 	# จุด reference อยู่เท้า: เลื่อนตามแถวเท้าจริงของแต่ละสายพันธุ์ (กันเหาะเหนือถนน)
@@ -46,15 +54,40 @@ func _ready() -> void:
 	queue_redraw()
 
 func _draw() -> void:
-	# เงาใต้เท้า (วงรีโปร่งแสง) - วาดที่ position (เท้า)
+	# เงาใต้เท้า (วงรีโปร่งแสง) - วาดที่ position (เท้า) ; ตายแล้วไม่วาด (ตัวจางหาย)
+	if dead:
+		return
 	draw_set_transform(Vector2(0, 4), 0.0, Vector2(1.0, 0.42))
 	draw_circle(Vector2.ZERO, 17.0, Color(0.05, 0.09, 0.04, 0.35))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
+func take_damage(amount: float) -> void:
+	# T3: โดนกระสุนป้อม - แฟลชแดงสั้น ๆ ตายเมื่อหมดเลือด
+	if dead:
+		return
+	_hp -= amount
+	_sprite.modulate = Color(1.0, 0.45, 0.45)
+	var t := create_tween()
+	t.tween_property(_sprite, "modulate", Color.WHITE, 0.14)
+	if _hp <= 0.0:
+		_die()
+
+func _die() -> void:
+	dead = true
+	_progress = -1.0   # เลิกเป็นเป้าทันที
+	died.emit(reward, position)
+	queue_redraw()     # ลบเงาออก
+	var t := create_tween()
+	t.set_parallel(true)
+	t.tween_property(_sprite, "modulate", Color(1.0, 1.0, 1.0, 0.0), 0.35)
+	t.tween_property(_sprite, "scale", base_scale * Vector2(0.75, 0.6), 0.35)
+	t.chain().tween_callback(queue_free)
+
 func _process(delta: float) -> void:
-	if _wp_index >= waypoints.size() - 1:
+	if dead or _wp_index >= waypoints.size() - 1:
 		return
 	var step := speed * delta
+	_progress += step
 	while true:
 		var target := waypoints[_wp_index + 1]
 		var to_target := target - position
