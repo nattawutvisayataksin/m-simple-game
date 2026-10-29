@@ -21,7 +21,7 @@ const ICON_HEART := preload("res://assets/art/icons/heart.png")
 # ตารางป้อม (T3): ค่าบาลานซ์รวมที่เดียวจูนง่าย - ราคา/ดาเมจ/คูลดาวน์/รัศมี/ความเร็วกระสุน/ระเบิดกระจุก
 const TOWER_DEFS := {
 	"archer": {
-		"name": "นักธนู", "cost": 90, "kind": TowerScript.ARCHER,
+		"name": "ป้อมธนู", "cost": 90, "kind": TowerScript.ARCHER,
 		"tex": TOWER_ARCHER_TEX, "icon": ICON_BOW,
 		"dmg": 9.0, "interval": 0.75, "range": 170.0, "shot": 300.0, "splash": 0.0,
 	},
@@ -49,7 +49,7 @@ const PATH_A: Array[Vector2] = [
 const TOWER_SPOTS: Array[Vector2] = [
 	Vector2(110, 380),  # ทุ่งซ้าย
 	Vector2(420, 615),  # ใต้โค้งเลี้ยวขวา
-	Vector2(620, 350),  # เหนือถนนแนวนอน
+	Vector2(480, 455),  # ยุ่มหญ้าระหว่างบ้านเล็กกับถนนหน้าปราสาท (เดิม (620,350) ทับตัวปราสาท - ฟีดแบ็ค T4.1)
 	Vector2(700, 620),  # ใต้ถนนใกล้ปราสาท
 ]
 
@@ -571,18 +571,7 @@ func _build_lives_label() -> void:
 	_gold_label.position = Vector2(48, 46)
 	_gold_label.text = "ทอง: %d" % _gold
 	_hud.add_child(_gold_label)
-	# คำใบ้การสร้างป้อม (มุมล่างซ้าย)
-	var hint := Label.new()
-	var hs := LabelSettings.new()
-	hs.font_size = 19
-	hs.font_color = Color(1.0, 0.98, 0.95)
-	hs.outline_size = 8
-	hs.outline_color = Color(0.10, 0.07, 0.03)
-	hint.label_settings = hs
-	hint.position = Vector2(16, 610)
-	hint.text = "คลิกวงทอง (หรือปุ่ม 1-4) สร้างป้อม — 1 นักธนู / 2 ปืนใหญ่ / Esc ปิด · N = เรียกคลื่นก่อนได้โบนัส"
-	_hud.add_child(hint)
-	# แถวข้อมูลคลื่น (T4): อยู่ใต้แถวชีวิต/ทอง
+	# แถวข้อมูลคลื่น (T4): ใต้แถวชีวิต/ทอง (ข้อความวิธีเล่นล่างซ้ายถูกตัดออกตามฟีดแบ็ค T4.1)
 	_wave_label = Label.new()
 	var ws := LabelSettings.new()
 	ws.font_size = 16
