@@ -2,7 +2,7 @@ extends Area2D
 ## เหรียญที่ผู้เล่นเก็บได้ — ฝึกเรื่อง Area2D + Signal + แอนิเมชันสปรไตต์
 ##
 ## โจทย์ฝึกหัด:
-##  1) ทำเหรียญหมุนด้วยเฟรมจริง (animate_image → spritesheet) แทนการหมุนด้วยโค้ด
+##  1) ทำเหรียญเรืองแสงวาบ ๆ (modulate วิบวับ) ข้างเติมการหมุนด้วยเฟรมจริง
 ##  2) ทำเหรียญพิเศษสีทอง ให้คะแนน 3 เหรียญ (เพิ่ม export var value)
 
 ## สัญญาณที่เตือนไปยังฉากหลักว่า "เก็บได้แล้ว"
@@ -11,15 +11,19 @@ signal collected
 
 @onready var visual: Sprite2D = $Visual
 
-## ความเร็วการหมุน (เรเดียน/วินาที) — หมุนช้า ๆ เพื่อให้เห็นตัว K
-@export var spin_speed := 2.2
+@onready var visual: Sprite2D = $Visual
+
+## อัตราการเลิกเหรียญเฟรม (เฟรมต่อวินาที)
+@export var anim_fps := 10.0
+var _anim_timer := 0.0
 
 func _process(delta: float) -> void:
-	# หมุนเหรียญรอบตัวเอง (มุมมอง top-down = เหมือนเหรียญกลิ้งบนพื้น)
-	visual.rotation += spin_speed * delta
-	# squash & stretch เบา ๆ: บีบยุบ/ขยายสลับกันให้เหรียญมีชีวิต
-	var t := Time.get_ticks_msec() / 1000.0
-	visual.scale = Vector2.ONE * (1.0 + sin(t * 6.0) * 0.05)
+	# หมุนเหรียญด้วย "เฟรมจริง" จาก spritesheet (9 เฟรม, hframes ตั้งใน coin.tscn)
+	_anim_timer += delta
+	if _anim_timer >= 1.0 / anim_fps:
+		_anim_timer = 0.0
+		# เล่นเฟรมต่อจากตัวอย่างปกติ วนกลับ 0 เมื่อจบ
+		visual.frame = (visual.frame + 1) % visual.hframes
 
 func _on_body_entered(body: Node2D) -> void:
 	# body_entered ยิงมาเมื่อมี PhysicsBody เข้ามาในพื้นที่เหรียญ

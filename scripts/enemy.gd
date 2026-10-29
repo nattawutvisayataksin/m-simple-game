@@ -19,8 +19,9 @@ var velocity := Vector2.ZERO
 
 @onready var visual: Sprite2D = $Visual
 
-## เฟสพัดหวัดสำหรับ animation หายใจ/ระเบิดประกาย (สุ่มเฟรมเริ่ม ให้ 2 ตัวไม่เต้นพร้อมกัน)
-var _phase := randf_range(0.0, TAU)
+## อัตราการเลื่อนเฟรม "เต้นหายใจ" (เฟรมต่อวินาที)
+@export var anim_fps := 8.0
+var _anim_timer := 0.0
 
 func _ready() -> void:
 	# เริ่มต้นด้วยทิศทางสุ่ม
@@ -48,11 +49,12 @@ func _physics_process(delta: float) -> void:
 	_pulse(delta)
 
 
-## แอนิเมชันแบบโค้ด: ป่อง-หดแบบไวรัสหายใจ + เอียงเบา ๆ ให้ดูอันตราย
+## แอนิเมชัน: เฟรมจริงจาก spritesheet (index 1-8 วนลูป; 0 คือต้นฉบับ)
 func _pulse(delta: float) -> void:
-	_phase += delta * 6.0
-	visual.scale = Vector2.ONE * (1.0 + sin(_phase) * 0.07)
-	visual.rotation = sin(_phase * 0.5) * 0.12
+	_anim_timer += delta
+	if _anim_timer >= 1.0 / anim_fps:
+		_anim_timer = 0.0
+		visual.frame = 1 + (visual.frame % (visual.hframes - 1))
 
 func _on_body_entered(body: Node2D) -> void:
 	# body_entered (Area2D) ยิงมาเมื่อ PhysicsBody ชนเข้ามา

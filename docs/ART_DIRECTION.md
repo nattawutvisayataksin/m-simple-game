@@ -39,12 +39,27 @@
 - Player: idle ลอยเบา ๆ 4 เฟรม / เดิน 6 เฟรม
 - Enemy: ลอยแบบหยดสั่น + ประกายไฟ 4 เฟรม
 
-## 3. ข้อจำกัดการผลิต (Pixellab MCP)
+## 3. ข้อจำกัดการผลิต (Pixellab MCP / REST)
 
-- Free tier: **gen 1 job พร้อมกัน** + โควตาวันละจำกัด (~5–20, ตาม daily bonus)
-- หลักการใช้โควตา: ตรวจภาพให้ผู้ใช้เห็นก่อนถึงระยะผลิตจริง (concept → approve → produce)
-- มี `pixelart_workbench` (ฟรี ไม่กิน gen) ไว้เก็บรายละเอียด/แก้พิกเซลด้วยตัวเอง
-- หากโควตาหมด: หยุด gen รอวันพรุ่งนี้ หรือสลับไปทำงเอกสาร/โค้ดที่ไม่ใช้ gen
+**มี Pixellab API key จำนวน 2 key** (ผู้ใช้เปิดให้ใช้ได้อิสระ "เมื่ออยากใช้ให้ใช้ได้เลย"):
+
+| Key | ที่เก็บ | สถานะโควตา (trial) | วิธีใช้ |
+|---|---|---|---|
+| Key A | session MCP ของ OpenCode (ภายนอก repo) | ใช้แล้ว ~45/40 ต้องรอ daily bonus | ผ่าน `tools.pixellab.*` ตรง ๆ |
+| Key B | `.mcp.json` (ถูก gitignore, Bearer header ของ pixellab) | **40/40 ว่าง** พร้อมใช้ทันที | REST v2 ตรง ๆ (`https://api.pixellab.ai/v2`) หรือกลายเป็น MCP ตอนรีสตาร์ทเซสชัน |
+
+**กติกาใชญาโควตา:**
+- ทำงานผ่าน REST ได้เสมอด้วย key B — กินการ gen ตัวเอง (แต่ละปลายทางจะให้สถานะ "background_job_id" ที่ poll ได้ที่ `GET /background-jobs/{job_id}`)
+- การตรวจสภาพ cap: REST ฟรีแรงก์ 1 job พร้อมกัน — ยังพอรันงานขนานจาก 2 key ต่างบัญชีได้
+- การ frame count อนิเมต์: จำนวนเฟรมต้องเป็น **multiples of 4** (REST จะแจ้งเองถ้าไม่)
+- หลักการจันทน์โควไว: ตรวจภาพให้ผู้ใช้เห็นก่อน ผลิต asset ตัวจริง (concept → approve → produce)
+- มี `pixelart_workbench` (ฟรี ไม่กิน gen) ไว้แก้รายละเอียด/แก้พิกเซลด้วยตัวเอง
+- หากโควตาหมดทั้ง 2 key: หยุด gen รอ daily bonus (+5 ทุกคืน, สูงสุด 20) หรือสับไปงานเอกสาร/โค้ดที่ไม่ใช้ gen
+- ⚠️ ห้ามฝัง key ในไฟล์ที่จะ commit — สคริปต์ต้องอ่านจาก `.mcp.json` เท่านั้น
+
+**สถานะแอนิเมชันที่ผลิตผ่าน Key B (วันใช้ทั้ง 1/40, koszt 3 gen สำหรับชุดนี้):
+- coin 8 frames: ✅ เสร็จ — `assets/art/gen/coin_sheet.png` + ผูกในฉากแล้ว
+- player 8 frames / enemy 8 frames: 🔄 กำลังผลิต (background)
 
 ## สถานะการเก็บภาพ (asset provenance)
 

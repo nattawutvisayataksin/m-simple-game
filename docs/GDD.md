@@ -85,8 +85,11 @@
   - Coin เหรียญ K — `assets/art/sprites/coin_kub.png`
   - Enemy ไวรัสหนามแดง — `assets/art/sprites/enemy_glitch.png`
   - ฉากเบื้องหลัง/กำแพง/ตัวเลข HUD: เปลี่ยนเป็นสปรไตต์แล้ว (Sprite2D, pixel filter nearest, `project.godot`)
-  - แอนิเมชันเฟรมจริง: กำลังผลิตผ่าน REST `animate-pixminimax` (เหรียญหมุน / Kubi เดิน / ไวรัस pulsate)
-    วางไว้ที่ `assets/art/gen/` แล้วผูก AnimatedSprite ภายหลังตรวจสายตา
+  - แอนิเมชันเฟรมจริงผ่าน REST `animate-pixminimax` (มี Pixellab 2 key — Key B ใน `.mcp.json` มี 37 gen ว่าง ใช้ได้อิสระ):
+    - เหรียญหมุน: สร็จสปรีตชีต 9 เฟรม `assets/art/gen/coin_sheet.png` ผูก `Sprite2D.hframes=9`+เลื่อนเฟรมใน coin.gd
+    - Kubi เดิน: เสร็จ `assets/art/gen/player_sheet.png` (เฟรม 0 = ยืน, 1-8 = เดิน) ผูกแล้วใน player.gd
+    - ไวรัส pulsate: เสร็จ `assets/art/gen/enemy_sheet.png` ผูกแล้วใน enemy.gd
+    - สคริปต์ผลิต: `tools/pixellab_anim_resume.ps1` (อ่าน key จาก `.mcp.json`) + `tools/build_sprite_sheet.ps1`
 - เพลงประกอบ: ยังไม่มี
 - เสียงเอฟเฟกต์: มี 3 เสียง (`assets/audio/`) — pickup เก็บเหรียญ, win ชนะ, lose แพ้
   สร้างด้วยสคริปต์ `tools/generate_sfx.ps1` (สังเคราะห์คลื่น sine, แก้โน้ต/ความยาวได้ในไฟล์เดียว)
@@ -129,7 +132,7 @@ m-sample-game/
 
 ### ระยะ C: ตัวจริงและศิลป์ แทน Polygon2D
 - [x] วาด sprite ตัวละคร/เหรียญ/ศัตรู 3 ตัว ธีม KUB — ⭐ ผู้ใช้อนุมัติ 2026-10-29 (แทนที่ในฉากแล้ว)
-- [ ] แอนิเมชันเฟรมจริง (REST pixminimax): เหรียญหมุน 8f / Kubi เดิน 6f / ไวรัส pulsate 6f — กำลัง gen
+- [x] แอนิเมชันเฟรมจริง — เหรียญ: chatsheet 9 เฟรม ผูกในฉากแล้ว; Kubi เดิน / ไวรัส pulsate กำลังผลิตผ่าน REST `animate-pixminimax` (Pixellab 2 key, ใช้ได้อิสระเมื่อต้องการ)
 - [ ] เพลงประกอบ + แยก bus เสียง (ตอนนี้มีเพียง SFX 3 เสียง)
 
 ### ระยะ D: ปิดหลังบ้านเกม
@@ -152,3 +155,4 @@ m-sample-game/
 | 2026-10-29 | เพิ่มเงื่อนไขแพ้: นับเวลา 30 วิ + ศัตรูลูกเหล็กเด้ง, เสียงเอฟเฟกต์ 3 เสียง, สถานะเกม |
 | 2026-10-29 | วิเคราะห์ระบบทั้งโปรเจกต์ด้วย skill set (router + godot-gdscript), ตั้งชื่อเกมใหม่ "ชิงเหรียญทอง (Coin Rush)", อัปเดตแผนดีไซน์ 4 ระยะ (Polish / Level / ศิลป์ / Save) |
 | 2026-10-29 | ระยะ C เริ่ม: ธีมภาพ KUB, สปรไตต์ 3 ตัว (Kubi / เหรียญ K / ไวรัส) ผ่านการอนุมัติและแทนสายในฉาก, แอนิเมชัน free-juice ในโค้ด + ผลิตเฟรมจริงผ่าน REST pixminimax |
+| 2026-10-29 | เหรียญหมุนเฟรมจริงเสร็จ (spritesheet 9f → Sprite2D.hframes) + เพิ่ม Pixellab 2 key (REST v2 ใช้ได้อิสระ) — อัปเดต ART_DIRECTION §3, ASSET_MANIFEST; push ชุด sprite เดิมแล้ว, ชุดแอนิเมชันรอ commit ต่อ |

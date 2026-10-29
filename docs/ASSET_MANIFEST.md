@@ -3,6 +3,8 @@
 ```json
 {
   "project": "m-sample-game (Ching Lian Thong / Coin Rush)",
+  "notes": "Pixellab: 2 keys ให้ใช้อิสระเมื่อต้องการ (Key A = session MCP; Key B = .mcp.json, REST v2 มี 40 gen ว่าง) — รายละเอียด docs/ART_DIRECTION.md §3",
+  "anim_cost_record": "2026-10-29: coin 8f + player 8f + enemy 8f = 3 gen (Key B ok, เหลือ 37/40) — เฟรมจริง 9 ไฟล์/ชุด + spritesheet ผูกในฉากแล้ว",
   "art_direction_doc": "docs/ART_DIRECTION.md",
   "engine": "godot-4.7",
   "created": "2026-10-29",

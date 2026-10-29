@@ -10,8 +10,9 @@ radius = 14.0
 script = ExtResource("1_enemy")
 
 [node name="Visual" type="Sprite2D" parent="."]
-# ศัตรูวาดใหญ่กว่าจุดชนเล็กน้อย — เห็นปุ่มแดงกว้างกว่าที่แตะจริง ให้ผู้เล่นรอดหอม ๆ
+# ไวรัส: spritesheet 9 เฟรม (0 = ต้นฉบับ, 1-8 = เต้นหายใจ) — เลื่อนเฟรมใน enemy.gd
 texture = ExtResource("2_tex")
+hframes = 9
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("1_shape")
