@@ -11,8 +11,8 @@ run/main_scene="res://scenes/main.tscn"
 
 window/size/viewport_width=1152
 window/size/viewport_height=648
-# ยืดพิกัด: DPI 125% ย่อหน้าต่างจริงไม่สกรุปพิกัดเมาส์ (จอ 921x518 คลิกพลาดรัศมีลาน)
-# stretch canvas_items = Godot แปลงพิกัดเมาส์หน้าต่าง -> พิกัดโลกให้ตรงเสมอ (และพิกเซลคม)
+; ยืดพิกัด: DPI 125% ย่อหน้าต่างจริงไม่สกรุปพิกัดเมาส์ (จอ 921x518 คลิกพลาดรัศมีลาน)
+; stretch canvas_items = Godot แปลงพิกัดเมาส์หน้าต่าง -> พิกัดโลกให้ตรงเสมอ (และพิกเซลคม)
 window/stretch/mode="canvas_items"
 window/stretch/aspect="keep"
 
