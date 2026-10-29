@@ -1,0 +1,22 @@
+; Engine configuration file.
+; เกมที่ 3: เกมรถ — โครงตั้งต้น (ชื่อเต็มรอผู้อำนวยการกำหนดแนวเกมแล้วตั้งทีหลัง)
+; โครงตามเกม 1-2: แยกโปรเจกต์อิสระในโฟลเดอร์ตัวเอง
+
+[application]
+
+config/name="เกมรถ (Game 3 - Car)"
+run/main_scene="res://scenes/main.tscn"
+
+[display]
+
+window/size/viewport_width=1152
+window/size/viewport_height=648
+# บทเรียนจากเกม 2: stretch canvas_items แปลงพิกัดเมาส์คลิกถูกต้องเสมอแม้หน้าต่างถูก DPI ย่อ
+window/stretch/mode="canvas_items"
+window/stretch/aspect="keep"
+
+[rendering]
+
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0
