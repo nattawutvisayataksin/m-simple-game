@@ -18,6 +18,14 @@
           "Authorization": "Bearer {env:PIXELLAB_API_KEY_B}"
         }
       },
+      "pixellab-c": {
+        "type": "remote",
+        "url": "https://api.pixellab.ai/mcp",
+        "oauth": false,
+        "headers": {
+          "Authorization": "Bearer {env:PIXELLAB_API_KEY_C}"
+        }
+      },
       "godot-mcp": {
         "type": "local",
         "command": ["npx", "-y", "@coding-solo/godot-mcp"],
