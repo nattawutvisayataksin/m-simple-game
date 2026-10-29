@@ -24,6 +24,9 @@ var _attack_cd := 0.0
 var _hurt_cd := 0.0
 var _regen_cd := 0.0
 var _anim_t := 0.0
+var _attack_direction := Vector2.RIGHT
+var _attack_flash_t := 0.0
+var _command_marker_t := 0.0
 var _sprite: Sprite2D
 
 func _ready() -> void:
@@ -40,6 +43,7 @@ func move_to(pos: Vector2) -> void:
 		return
 	_target = pos
 	_moving = true
+	_command_marker_t = 0.75
 
 func take_damage(amount: float) -> void:
 	if _dead:
@@ -67,6 +71,8 @@ func _respawn() -> void:
 
 func _process(delta: float) -> void:
 	queue_redraw()   # แถบเลือดอยู่ใน _draw ต้องวาดใหม่ทุกเฟรม
+	_attack_flash_t = maxf(_attack_flash_t - delta, 0.0)
+	_command_marker_t = maxf(_command_marker_t - delta, 0.0)
 	if _dead:
 		_respawn_t -= delta
 		if _respawn_t <= 0.0:
@@ -112,6 +118,8 @@ func _process(delta: float) -> void:
 				best = e
 	if best != null and _attack_cd <= 0.0:
 		_attack_cd = attack_interval
+		_attack_direction = (best.position - position).normalized()
+		_attack_flash_t = 0.2
 		best.take_damage(attack_dmg)
 	# โดนรุม: ตัวใดยืนติดกันนานจนเย็น 0.9 วิ = บีบเลือดหนึ่งจังหวะ
 	if _hurt_cd <= 0.0:
@@ -122,10 +130,26 @@ func _process(delta: float) -> void:
 				break
 
 func _draw() -> void:
-	# แถบเลือดเหนือหัว (โชว์เสมอเมื่อเลือดไม่เต็ม)
-	if _dead or _hp >= max_hp - 0.01:
+	if _dead:
 		return
-	var w := 46.0
-	draw_rect(Rect2(-w / 2.0, -52.0, w, 7.0), Color(0.08, 0.05, 0.03, 0.85))
-	var frac := clampf(_hp / max_hp, 0.0, 1.0)
-	draw_rect(Rect2(-w / 2.0 + 1.0, -51.0, (w - 2.0) * frac, 5.0), Color(0.35, 0.9, 0.3))
+	if _command_marker_t > 0.0:
+		var marker := _target - position
+		var alpha := clampf(_command_marker_t / 0.75, 0.0, 1.0)
+		draw_arc(marker, 13.0, 0.0, TAU, 24, Color(1.0, 0.84, 0.34, alpha), 2.5, true)
+		draw_line(marker + Vector2(-5.0, 0.0), marker + Vector2(5.0, 0.0), Color(1.0, 0.92, 0.58, alpha), 2.0, true)
+		draw_line(marker + Vector2(0.0, -5.0), marker + Vector2(0.0, 5.0), Color(1.0, 0.92, 0.58, alpha), 2.0, true)
+	if _attack_flash_t > 0.0:
+		var slash_center := Vector2(0.0, -18.0) + _attack_direction * 20.0
+		var slash_side := _attack_direction.orthogonal()
+		var slash_alpha := clampf(_attack_flash_t / 0.2, 0.0, 1.0)
+		draw_line(slash_center - slash_side * 11.0 - _attack_direction * 7.0,
+			slash_center + slash_side * 11.0 + _attack_direction * 7.0,
+			Color(1.0, 0.72, 0.24, slash_alpha), 6.0, true)
+		draw_line(slash_center - slash_side * 8.0 - _attack_direction * 5.0,
+			slash_center + slash_side * 8.0 + _attack_direction * 5.0,
+			Color(1.0, 0.96, 0.72, slash_alpha), 2.0, true)
+	if _hp < max_hp - 0.01:
+		var w := 46.0
+		draw_rect(Rect2(-w / 2.0, -52.0, w, 7.0), Color(0.08, 0.05, 0.03, 0.85))
+		var frac := clampf(_hp / max_hp, 0.0, 1.0)
+		draw_rect(Rect2(-w / 2.0 + 1.0, -51.0, (w - 2.0) * frac, 5.0), Color(0.35, 0.9, 0.3))

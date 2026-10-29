@@ -11,11 +11,14 @@ const FROG_SHEET := preload("res://assets/art/gen/frog_sheet.png")
 const LIZARD_TEX := preload("res://assets/art/gen/lizard_front.png")
 const LIZARD_SHEET := preload("res://assets/art/gen/lizard_sheet.png")
 const LIZARD_SIDE_SHEET := preload("res://assets/art/gen/lizard_side_sheet.png")  # T5.1 ชุดหันข้าง 8 ช่อง (หัวหันขวาโดยกำเนิด)
+const GOLEM_TEX := preload("res://assets/art/gen/stone_golem.png")
 # NB: lizard_side_sheet.png เคยเก็บเป็น stock (ตัดสิน T3.2 ใช้ชุดหน้าตรง) — ฟีดแบ็ค T5.1 สลับกลับมาใช้จริง ช่วงเดินแนวนอน
 const TOWER_ARCHER_TEX := preload("res://assets/art/gen/tower_archer.png")
 const TOWER_CANNON_TEX := preload("res://assets/art/gen/tower_cannon.png")
+const TOWER_MAGE_TEX := preload("res://assets/art/gen/tower_mage.png")
 const ICON_BOW := preload("res://assets/art/icons/bow.png")
 const ICON_CANNON := preload("res://assets/art/icons/cannon.png")
+const ICON_MAGE := TOWER_MAGE_TEX
 const ICON_COIN := preload("res://assets/art/icons/coin.png")
 const ICON_HEART := preload("res://assets/art/icons/heart.png")
 const ICON_UPG_BOW := preload("res://assets/art/icons/upg_bow.png")       # T5 ไอคอนอัปเกรดป้อมธนู
@@ -39,6 +42,13 @@ const TOWER_DEFS := {
 		# T5: อัปเกรด Lv2 (ระเบิดหนัก บอดใหญ่)
 		"upg_cost": 110, "upg_icon": ICON_UPG_HAMMER,
 		"upg": {"dmg": 50.0, "interval": 1.45, "range": 225.0, "shot": 220.0, "splash": 85.0},
+	},
+	"mage": {
+		"name": "ป้อมเวท", "cost": 130, "kind": TowerScript.MAGE,
+		"tex": TOWER_MAGE_TEX, "icon": ICON_MAGE,
+		"dmg": 18.0, "interval": 1.1, "range": 185.0, "shot": 280.0, "splash": 0.0,
+		"upg_cost": 100, "upg_icon": ICON_MAGE,
+		"upg": {"dmg": 30.0, "interval": 0.95, "range": 210.0, "shot": 320.0, "splash": 0.0},
 	},
 }
 const SELL_REFUND := 0.6   # T5 ขายป้อมคืน 60% ของเงินที่ลงไป (สร้าง + อัปเกรด)
@@ -64,15 +74,15 @@ const TOWER_SPOTS: Array[Vector2] = [
 	Vector2(815, 607),  # ช่องหญ้าด้านล่างต่อจากแขนถนนเข้าปราสาท (เลี่ยงต้นไม้สองกลุ่ม ล่างขวา)
 ]
 
-const SPOT_FILL := Color(1.0, 0.79, 0.24, 0.55)
-const SPOT_EDGE := Color(0.16, 0.09, 0.03, 0.9)
-const SPOT_DRAW_R := 28.0   # T5.1 วงทองหนาขึ้นเห็นชัด
 const SPOT_HIT_R := 44.0    # T5.1 คลิกอ้อมเผื่อ (เดิม 32 = ต้องคลิกเป๊ะ ๆ หาจุดไม่เจอ)
 const GATE_COLOR := Color(0.55, 0.25, 0.80, 0.80)
 const CASTLE_COLOR := Color(1.0, 0.35, 0.15, 0.85)
 
 const FROG_SPEED := 35.0
 const LIZARD_SPEED := 60.0
+const GOLEM_SPEED := 27.0
+const GOLEM_HP := 95.0
+const GOLEM_RESIST := 0.65
 const START_LIVES := 20
 const LANE_OFFSET := 13.0  # ระยะเลื่อนข้างถนนต่อมอน (กันซ้อนตึงตึว)
 
@@ -93,8 +103,8 @@ const WAVES: Array = [
 	[["lizard", 5]],
 	[["frog", 6], ["lizard", 4]],
 	[["frog", 5], ["lizard", 6]],
-	[["frog", 9], ["lizard", 5]],
-	[["lizard", 11]],
+	[["frog", 9], ["lizard", 5], ["stone_golem", 1]],
+	[["lizard", 9], ["stone_golem", 2]],
 	[["frog", 8], ["lizard", 8]],
 	[["frog", 6], ["lizard", 12]],
 ]
@@ -123,24 +133,38 @@ var _wave_btn: Button         # ปุ่มเรียกคลื่นถั
 
 class SpotsOverlay:
 	extends Node2D
-	# T5.1 แก้บั๊กร้ายแก้ไม่จบ: แต่เดิมวาดวงทองใน main._draw() — ลูกโหนด (Background) วาด "หลัง" แม่
-	# จึงทับวงทองหมดสี = ผู้เล่นเห็นลานเปล่าว่างเปล่า เลยต้อง "คลิกมั่วที่พื้น" หาจุดซื้อ
-	# ยกไปเป็นโหนดลูก z_index 30 สูงกว่าแผนที่/มอน/ป้อม (แต่ต่ำกว่าเมนู 100) วงจึงแสดงเสมอ
+	# ฐานหกเหลี่ยมแทนวงทองขนาดใหญ่; เลขเล็กช่วยจับคู่กับปุ่มลัด 1-4
+	const PAD_RADIUS := 23.0
+	const PAD_EDGE := Color(0.13, 0.10, 0.06, 0.92)
+	const PAD_FILL := Color(0.28, 0.34, 0.20, 0.90)
+	const PAD_ACCENT := Color(1.0, 0.79, 0.24, 0.95)
+
 	var spots: Array[Vector2] = []
 	var busy: Array = []        # ผูกอ้างอิงสดกับ main._towers (ลานที่มีป้อมไม่วาดวง)
+	var selected := -1
 
 	func _draw() -> void:
-		var pulse := 0.42 + 0.2 * (0.5 + 0.5 * sin(Time.get_ticks_msec() / 1000.0 * 4.5))
 		# จุดเกิดมอน (วงม่วง) + ประตูปราสาท (วงแดงส้ม) — เดิมถูกพื้นหลังบดบังด้วยแล้วแก้ไปด้วยกัน
 		draw_circle(Vector2(261, 250), 14.0, Color(0.55, 0.25, 0.80, 0.80))
 		draw_circle(Vector2(816, 495), 12.0, Color(1.0, 0.35, 0.15, 0.85))
 		for i in range(spots.size()):
 			if busy[i] != null:
 				continue
-			draw_circle(spots[i], 28.0, Color(1.0, 0.79, 0.24, pulse))
-			draw_arc(spots[i], 28.0, 0.0, TAU, 32, Color(0.16, 0.09, 0.03, 0.9), 2.5, true)
-			draw_string(ThemeDB.fallback_font, spots[i] + Vector2(-10.0, 5.0), str(i + 1),
-				HORIZONTAL_ALIGNMENT_CENTER, 20, 14, Color(0.2, 0.12, 0.02))
+			var center := spots[i]
+			var vertices := PackedVector2Array()
+			for corner in range(6):
+				var angle := TAU * float(corner) / 6.0
+				vertices.append(center + Vector2.from_angle(angle) * PAD_RADIUS)
+			draw_colored_polygon(vertices, PAD_FILL)
+			draw_polyline(vertices, PAD_EDGE, 3.0, true)
+			draw_arc(center, 14.0, 0.0, TAU, 24, PAD_ACCENT, 1.5, true)
+			draw_line(center + Vector2(-5.0, 0.0), center + Vector2(5.0, 0.0), PAD_ACCENT, 3.0, true)
+			draw_line(center + Vector2(0.0, -5.0), center + Vector2(0.0, 5.0), PAD_ACCENT, 3.0, true)
+			draw_rect(Rect2(center + Vector2(-7.0, -35.0), Vector2(14.0, 14.0)), PAD_EDGE)
+			draw_string(ThemeDB.fallback_font, center + Vector2(-4.0, -24.0), str(i + 1),
+				HORIZONTAL_ALIGNMENT_CENTER, 8, 11, PAD_ACCENT)
+			if i == selected:
+				draw_arc(center, PAD_RADIUS + 5.0, 0.0, TAU, 32, PAD_ACCENT, 2.0, true)
 
 func _ready() -> void:
 	y_sort_enabled = true  # มอนวาดเรียงตามแนวระดับ (ตัวล่างจอบนตัวบนจอ - แก้ทับซ้อนดูลอย)
@@ -212,9 +236,14 @@ func _spawn_kind(kind: String) -> void:
 	var hp_mult := pow(HP_GROWTH, _wave_idx)
 	if kind == "frog":
 		_spawn_enemy(FROG_TEX, FROG_SHEET, _shift_path(PATH_A, lane), FROG_SPEED * jitter, true, false, 59, null, 43, 26.0 * hp_mult, 15)
-	else:
+	elif kind == "lizard":
 		# กิ้งก่า: ชุดหันข้าง 8 ช่องหัวหันขวาโดยกำเนิด (ฟีดแบ็ค T5.1: เดินขวาต้องเห็นหัวหันขวาจริง ไม่ใช่รูปหน้าตรงส่ายหัว)
 		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56, LIZARD_SIDE_SHEET, 43, 42.0 * hp_mult, 25)
+	elif kind == "stone_golem":
+		_spawn_enemy(GOLEM_TEX, null, _shift_path(PATH_A, lane), GOLEM_SPEED * jitter, true, false,
+			59, null, 43, GOLEM_HP * hp_mult, 35, GOLEM_RESIST, 1.7)
+	else:
+		push_error("Unknown enemy type: %s" % kind)
 
 func _spawn_point_clear() -> bool:
 	# เว้นระยะเกิด: มอนหรือศพจางยังจอดปากประตู (< 80px) = ยังไม่เกิด
@@ -257,12 +286,14 @@ func _shift_path(path: Array[Vector2], off: float) -> Array[Vector2]:
 			out.append(path[i] + Vector2(off, 0))   # ช่วงเดินตั้ง -> เลื่อนตามแกน x
 	return out
 
-func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], speed: float, no_flip: bool, faces_left: bool, bottom_row: int, s_sheet: Texture2D = null, s_bottom: int = 43, hp: float = 26.0, gold: int = 15) -> void:
+func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], speed: float, no_flip: bool, faces_left: bool, bottom_row: int, s_sheet: Texture2D = null, s_bottom: int = 43, hp: float = 26.0, gold: int = 15, resist: float = 0.0, enemy_scale: float = 1.5) -> void:
 	var e := EnemyScript.new()
 	e.sheet = sheet          # เฟรมเดินจริงถ้ามี sheet (fallback texture นิ่ง)
 	e.texture = texture
 	e.waypoints = PackedVector2Array(path)
 	e.speed = speed
+	e.damage_resist = resist
+	e.base_scale = enemy_scale
 	e.no_flip = no_flip
 	e.faces_left = faces_left
 	e.body_bottom_row = bottom_row  # แถวเท้าจริงในเฟรม
@@ -324,7 +355,7 @@ func _flash_gold() -> void:
 # ---------- ระบบคลื่น + จบเกม (T4) ----------
 func _wave_text(idx: int) -> String:
 	# แต้มคลื่นอ่านง่าย: "กบ 4, กิ้งก่า 3"
-	var names := {"frog": "กบ", "lizard": "กิ้งก่า"}
+	var names := {"frog": "กบ", "lizard": "กิ้งก่า", "stone_golem": "โกเลมหิน"}
 	var parts: Array = []
 	for entry in WAVES[idx]:
 		parts.append("%s %d" % [names[entry[0]], entry[1]])
@@ -479,7 +510,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif _menu != null:
 			_close_menu()
 	elif event is InputEventKey and event.pressed and not event.echo:
-		# ทางลัดคีย์บอร์ด (ปลอดภัยกับ DPI เสมอ): 1-4 เปิดเมนูลาน, 1/2 ใช้ของในเมนู, Esc/X ปิด
+		# ทางลัดคีย์บอร์ด (ปลอดภัยกับ DPI เสมอ): 1-4 เปิดลาน, 1/2/3 เลือกป้อม, Esc/X ปิด
 		var code: int = event.keycode
 		if _state == "prep" and code == KEY_N:
 			# ทางลัดเรียกคลื่นก่อน = เหมือนกดปุ่มมุมขวาบน (ได้โบนัสตามวินาทีคงเหลือ)
@@ -495,6 +526,8 @@ func _unhandled_input(event: InputEvent) -> void:
 					_build_tower(_menu_spot, "archer")
 				elif code == KEY_2:
 					_build_tower(_menu_spot, "cannon")
+				elif code == KEY_3:
+					_build_tower(_menu_spot, "mage")
 			elif _menu_mode == "built":
 				if code == KEY_1 and _menu_spot >= 0 and _towers[_menu_spot] != null and _lvl[_menu_spot] < 2:
 					_upgrade_tower(_menu_spot)
@@ -510,15 +543,40 @@ func _open_menu(spot_idx: int) -> void:
 	_menu_spot = spot_idx
 	# T5: เมนู 2 โหมด - ลานว่าง = สร้างป้อม / ลานที่มีป้อม = อัปเกรด + ขาย
 	_menu_mode = "build" if _towers[spot_idx] == null else "built"
+	if _spots_layer:
+		_spots_layer.selected = spot_idx
+		_spots_layer.queue_redraw()
+	if _menu_mode == "built":
+		var selected_tower: Node2D = _towers[spot_idx]
+		selected_tower.show_range = true
+		selected_tower.queue_redraw()
 	var panel := PanelContainer.new()
+	var menu_width := 316.0 if _menu_mode == "build" else 218.0
+	panel.custom_minimum_size.x = menu_width
+	var layout := VBoxContainer.new()
+	layout.add_theme_constant_override("separation", 6)
+	panel.add_child(layout)
+	var heading := Label.new()
+	heading.text = "สร้างป้อม · ลาน %d" % [spot_idx + 1] if _menu_mode == "build" else "จัดการป้อม · ลาน %d" % [spot_idx + 1]
+	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var heading_style := LabelSettings.new()
+	heading_style.font_size = 14
+	heading_style.font_color = Color(1.0, 0.85, 0.45)
+	heading_style.outline_size = 4
+	heading_style.outline_color = Color(0.08, 0.06, 0.03)
+	heading.label_settings = heading_style
+	layout.add_child(heading)
 	var hb := HBoxContainer.new()
-	hb.add_theme_constant_override("separation", 14)
-	panel.add_child(hb)
+	hb.add_theme_constant_override("separation", 8)
+	hb.alignment = BoxContainer.ALIGNMENT_CENTER
+	layout.add_child(hb)
 	if _menu_mode == "build":
-		for key in ["archer", "cannon"]:
+		var option_number := 1
+		for key in ["archer", "cannon", "mage"]:
 			var def: Dictionary = TOWER_DEFS[key]
 			var tip: String = "%s (รัศมี %d, ดาเมจ %.0f)" % [def["name"], def["range"], def["dmg"]]
-			_menu_entry(hb, def["icon"], int(def["cost"]), tip, _build_tower.bind(spot_idx, key))
+			_menu_entry(hb, def["icon"], "%d %s" % [option_number, def["name"]], int(def["cost"]), tip, _build_tower.bind(spot_idx, key))
+			option_number += 1
 	else:
 		var t: Node2D = _towers[spot_idx]
 		var def: Dictionary = TOWER_DEFS[_tower_def_key(t)]
@@ -526,10 +584,10 @@ func _open_menu(spot_idx: int) -> void:
 			# อัปเกรด Lv2: ไอคอนประจำป้อม + ราคาต่ำงาน
 			var upg: Dictionary = def["upg"]
 			var tip2: String = "อัปเกรด %s Lv2 (ดาเมจ %.0f, รัศมี %d)" % [def["name"], upg["dmg"], upg["range"]]
-			_menu_entry(hb, def["upg_icon"], int(def["upg_cost"]), tip2, _upgrade_tower.bind(spot_idx))
+			_menu_entry(hb, def["upg_icon"], "1 อัปเกรด", int(def["upg_cost"]), tip2, _upgrade_tower.bind(spot_idx))
 		# ขายคืน 60% ของเงินที่ลงไป (ไอคอนเหรียญ Kubi เดิม)
 		var refund := _refund(spot_idx)
-		_menu_entry(hb, ICON_COIN, refund, "ขายคืน 60%% ของเงินที่ลงไป (%d)" % refund, _sell_tower.bind(spot_idx))
+		_menu_entry(hb, ICON_COIN, "2 ขายคืน", refund, "ขายคืน 60%% ของเงินที่ลงไป (%d)" % refund, _sell_tower.bind(spot_idx))
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.10, 0.07, 0.03, 0.9)
 	style.set_corner_radius_all(8)
@@ -538,31 +596,39 @@ func _open_menu(spot_idx: int) -> void:
 	style.content_margin_top = 7
 	style.content_margin_bottom = 7
 	panel.add_theme_stylebox_override("panel", style)
-	panel.position = TOWER_SPOTS[spot_idx] + Vector2(-66, -46)
-	panel.position.x = clampf(panel.position.x, 8.0, 1152.0 - 150.0)
-	panel.position.y = clampf(panel.position.y, 8.0, 648.0 - 150.0)
+	panel.position = TOWER_SPOTS[spot_idx] + Vector2(-100, -78)
+	panel.position.x = clampf(panel.position.x, 8.0, 1152.0 - menu_width - 8.0)
+	panel.position.y = clampf(panel.position.y, 8.0, 648.0 - 178.0)
 	panel.z_index = 100   # T5.1: เมนูต้องลอยเหนือตัวป้อม (เดิม y-sort ดันเมนูไปหลังป้อม = อ่านไม่รู้เรื่อง)
 	_menu = panel
 	add_child(panel)
 
-func _menu_entry(hb: HBoxContainer, icon: Texture2D, price: int, tip: String, pressed: Callable) -> void:
-	# T5: แถวเมนูชิ้นเดียว (ปุ่มภาพ + ราคาใต้ตัว) - ใช้ทั้งโหมดสร้างและอัปเกรด/ขาย
+func _menu_entry(hb: HBoxContainer, icon: Texture2D, title: String, price: int, tip: String, pressed: Callable) -> void:
+	# แสดงชื่อและราคาใต้ไอคอน เพื่อให้รู้ว่ากำลังกดซื้อหรือจัดการอะไร
 	var col := VBoxContainer.new()
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	col.add_theme_constant_override("separation", 2)
 	var btn := TextureButton.new()
 	btn.texture_normal = icon
-	btn.custom_minimum_size = Vector2(52, 52)
+	btn.custom_minimum_size = Vector2(56, 56)
 	btn.ignore_texture_size = true
 	btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
 	btn.tooltip_text = tip
 	btn.pressed.connect(pressed)
 	col.add_child(btn)
+	var name_label := Label.new()
+	name_label.text = title
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	name_label.add_theme_font_size_override("font_size", 12)
+	name_label.add_theme_color_override("font_color", Color(0.96, 0.94, 0.87))
+	name_label.custom_minimum_size.x = 92.0
+	col.add_child(name_label)
 	var cost := Label.new()
 	cost.text = "%d" % price
 	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var cst := LabelSettings.new()
 	cst.font_size = 15
-	cst.font_color = Color(1.0, 0.85, 0.2)
+	cst.font_color = Color(1.0, 0.35, 0.25) if price > _gold else Color(1.0, 0.85, 0.2)
 	cst.outline_size = 5
 	cst.outline_color = Color(0.15, 0.09, 0.02)
 	cost.label_settings = cst
@@ -573,6 +639,13 @@ func _close_menu() -> void:
 	if _menu != null:
 		_menu.queue_free()
 		_menu = null
+	if _menu_spot >= 0 and _menu_spot < _towers.size() and _towers[_menu_spot] != null:
+		var selected_tower: Node2D = _towers[_menu_spot]
+		selected_tower.show_range = false
+		selected_tower.queue_redraw()
+	if _spots_layer:
+		_spots_layer.selected = -1
+		_spots_layer.queue_redraw()
 	_menu_spot = -1
 	_menu_mode = ""
 
@@ -693,6 +766,15 @@ func _build_lives_label() -> void:
 	_wave_label.label_settings = ws
 	_wave_label.position = Vector2(16, 80)
 	_hud.add_child(_wave_label)
+	var controls := Label.new()
+	controls.text = "ฐาน +: เลือกสร้างป้อม · คลิกขวา: สั่ง Kubi · 1-4: เลือกฐาน"
+	controls.add_theme_font_size_override("font_size", 13)
+	controls.add_theme_color_override("font_color", Color(0.95, 0.93, 0.86))
+	controls.add_theme_color_override("font_shadow_color", Color(0.08, 0.06, 0.04, 0.95))
+	controls.add_theme_constant_override("shadow_offset_x", 1)
+	controls.add_theme_constant_override("shadow_offset_y", 1)
+	controls.position = Vector2(16, 108)
+	_hud.add_child(controls)
 	# ปุ่มเรียกคลื่นถัดไปก่อนพร้อมโบนัส (มุมขวาบน - T4)
 	_wave_btn = Button.new()
 	_wave_btn.text = "เรียกคลื่น 1"

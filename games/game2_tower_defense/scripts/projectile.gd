@@ -6,6 +6,7 @@ extends Node2D
 # ชนิดกระสุน (ค่าคงที่ int - ชุดเดียวกับ tower.gd)
 const ARCHER := 0
 const CANNON := 1
+const MAGE := 2
 
 const ARROW_TEX := preload("res://assets/art/gen/arrow.png")
 const BOMB_TEX := preload("res://assets/art/gen/bomb.png")
@@ -17,11 +18,20 @@ var splash_r := 0.0
 var kind := 0
 
 func _ready() -> void:
-	# ภาพจริงแทนวาดมือ (T4.1): ธนู = หัวหัน +x (rotation ตัว node คุมด้วย look_at) / ปืนใหญ่ = ระเบิดกลมภัย
+	if kind == MAGE:
+		queue_redraw()
+		return
 	var s := Sprite2D.new()
 	s.texture = ARROW_TEX if kind == ARCHER else BOMB_TEX
 	s.scale = Vector2(0.45, 0.45) if kind == ARCHER else Vector2(0.22, 0.22)
 	add_child(s)
+
+func _draw() -> void:
+	if kind != MAGE:
+		return
+	draw_line(Vector2(-16.0, 0.0), Vector2(-4.0, 0.0), Color(0.35, 0.78, 1.0, 0.75), 4.0, true)
+	draw_circle(Vector2.ZERO, 8.0, Color(0.18, 0.69, 1.0, 0.7))
+	draw_circle(Vector2.ZERO, 4.0, Color(0.86, 0.98, 1.0, 1.0))
 
 func _physics_process(delta: float) -> void:
 	var alive: bool = target != null and is_instance_valid(target) and not target.dead
@@ -45,7 +55,7 @@ func _hit() -> void:
 	if kind == CANNON:
 		_explode(position)
 	else:
-		target.take_damage(damage)
+		target.take_damage(damage, kind == MAGE)
 	queue_free()
 
 func _explode(at: Vector2) -> void:

@@ -16,6 +16,7 @@ var speed := 60.0
 var base_scale := 1.5
 var max_hp := 30.0
 var reward := 15            # ทองที่ได้เมื่อฆ่าสำเร็จ
+var damage_resist := 0.0
 var dead := false
 var _hp := 30.0
 var _progress := 0.0        # ระยะทางที่เดินมาแล้ว (ป้อมเลืองเป้า "ขึ้นหน้าสุด")
@@ -61,11 +62,14 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, 17.0, Color(0.05, 0.09, 0.04, 0.35))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, bypass_resistance := false) -> void:
 	# T3: โดนกระสุนป้อม - แฟลชแดงสั้น ๆ ตายเมื่อหมดเลือด
 	if dead:
 		return
-	_hp -= amount
+	var applied_damage := amount
+	if not bypass_resistance:
+		applied_damage *= 1.0 - clampf(damage_resist, 0.0, 0.85)
+	_hp -= applied_damage
 	_sprite.modulate = Color(1.0, 0.45, 0.45)
 	var t := create_tween()
 	t.tween_property(_sprite, "modulate", Color.WHITE, 0.14)

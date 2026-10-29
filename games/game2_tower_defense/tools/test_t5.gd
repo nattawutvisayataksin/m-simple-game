@@ -65,6 +65,15 @@ func _initialize() -> void:
 		quit(1)
 		return
 	print("TEST_T5 tower PASS build+upgrade+sell gold=", _main._gold)
+	_main._build_tower(2, "archer")
+	var spot3_tower: Node2D = _main._towers[2]
+	var background: Sprite2D = _main.get_node("Background")
+	if spot3_tower == null or spot3_tower.position != _main.TOWER_SPOTS[2] or background.z_index >= spot3_tower.z_index:
+		print("TEST_T5 FAIL spot-3 tower render order background_z=", background.z_index,
+			" tower_z=", spot3_tower.z_index if spot3_tower != null else "missing")
+		quit(1)
+		return
+	print("TEST_T5 spot-3 visibility PASS background_z=", background.z_index, " tower_z=", spot3_tower.z_index)
 	_phase = 1
 
 	# ---- ช่วง 2: ฮีโร่ฟาดกบ (max_hp 10 ตายในจังหวะเดียว) ----
