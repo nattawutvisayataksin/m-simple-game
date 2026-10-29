@@ -389,62 +389,95 @@ func _build_track_barriers() -> void:
 	var barriers := Node3D.new()
 	barriers.name = "TrackBarriers"
 	add_child(barriers)
-	var track_width := 98.0
-	var track_depth := 63.0
-	var specs := [
-		["OuterSouth", Vector3(track_width * 0.5, 0.48, 0.12),
-			Vector3(track_width, 0.96, 0.4), true],
-		["OuterNorth", Vector3(track_width * 0.5, 0.48, track_depth - 0.12),
-			Vector3(track_width, 0.96, 0.4), true],
-		["OuterWest", Vector3(0.12, 0.48, track_depth * 0.5),
-			Vector3(0.4, 0.96, track_depth), false],
-		["OuterEast", Vector3(track_width - 0.12, 0.48, track_depth * 0.5),
-			Vector3(0.4, 0.96, track_depth), false],
-		["InnerSouth", Vector3(track_width * 0.5, 0.48, 7.12),
-			Vector3(track_width - 14.0, 0.96, 0.4), true],
-		["InnerNorth", Vector3(track_width * 0.5, 0.48, track_depth - 7.12),
-			Vector3(track_width - 14.0, 0.96, 0.4), true],
-		["InnerWest", Vector3(7.12, 0.48, track_depth * 0.5),
-			Vector3(0.4, 0.96, track_depth - 14.0), false],
-		["InnerEast", Vector3(track_width - 7.12, 0.48, track_depth * 0.5),
-			Vector3(0.4, 0.96, track_depth - 14.0), false],
+	var straight_runs := [
+		["OuterSouth", Vector3(10.5, 0.48, 0.12), Vector3(87.5, 0.48, 0.12)],
+		["OuterEast", Vector3(97.88, 0.48, 10.5), Vector3(97.88, 0.48, 52.5)],
+		["OuterNorth", Vector3(87.5, 0.48, 62.88), Vector3(10.5, 0.48, 62.88)],
+		["OuterWest", Vector3(0.12, 0.48, 52.5), Vector3(0.12, 0.48, 10.5)],
+		["InnerSouth", Vector3(10.5, 0.48, 7.12), Vector3(87.5, 0.48, 7.12)],
+		["InnerEast", Vector3(90.88, 0.48, 10.5), Vector3(90.88, 0.48, 52.5)],
+		["InnerNorth", Vector3(87.5, 0.48, 55.88), Vector3(10.5, 0.48, 55.88)],
+		["InnerWest", Vector3(7.12, 0.48, 52.5), Vector3(7.12, 0.48, 10.5)],
 	]
-	for spec in specs:
-		var body := StaticBody3D.new()
-		body.name = "Barrier_" + str(spec[0])
-		var collision := CollisionShape3D.new()
-		collision.name = "CollisionShape3D"
-		var shape := BoxShape3D.new()
-		shape.size = spec[2]
-		collision.shape = shape
-		body.add_child(collision)
-		body.position = spec[1]
-		barriers.add_child(body)
-		_paint_barrier(body, shape.size, spec[3])
+	for run in straight_runs:
+		_add_barrier_run(barriers, str(run[0]), run[1], run[2])
+
+	var corners := [
+		["SE", Vector2(87.5, 10.5), -PI * 0.5, 0.0],
+		["NE", Vector2(87.5, 52.5), 0.0, PI * 0.5],
+		["NW", Vector2(10.5, 52.5), PI * 0.5, PI],
+		["SW", Vector2(10.5, 10.5), PI, PI * 1.5],
+	]
+	for corner in corners:
+		var corner_name := str(corner[0])
+		var center: Vector2 = corner[1]
+		var start_angle: float = corner[2]
+		var end_angle: float = corner[3]
+		_add_barrier_arc(barriers, "Outer_Corner_" + corner_name,
+			center, 10.38, start_angle, end_angle)
+		_add_barrier_arc(barriers, "Inner_Corner_" + corner_name,
+			center, 3.38, start_angle, end_angle)
 
 
-func _paint_barrier(parent: Node3D, size: Vector3, horizontal: bool) -> void:
-	var run_length := size.x if horizontal else size.z
-	var segment_length := 2.8
-	var offset := -run_length * 0.5
-	var segment_index := 0
-	while offset < run_length:
-		var width := minf(segment_length, run_length - offset)
-		var section := MeshInstance3D.new()
-		var mesh := BoxMesh.new()
-		mesh.size = Vector3(width, 0.7, 0.42) if horizontal \
-			else Vector3(0.42, 0.7, width)
-		var material := StandardMaterial3D.new()
-		material.albedo_color = Color(0.88, 0.82, 0.70) if segment_index % 2 == 0 \
-			else Color(0.72, 0.22, 0.15)
-		material.roughness = 0.82
-		mesh.material = material
-		section.mesh = mesh
-		section.position = Vector3(offset + width * 0.5, 0, 0) if horizontal \
-			else Vector3(0, 0, offset + width * 0.5)
-		parent.add_child(section)
-		offset += width
-		segment_index += 1
+func _add_barrier_run(parent: Node3D, label: String,
+		start: Vector3, end: Vector3) -> void:
+	var body := StaticBody3D.new()
+	body.name = "Barrier_" + label
+	parent.add_child(body)
+	var run := end - start
+	var length := run.length()
+	var tangent := run / length
+	var segment_count := ceili(length / 2.8)
+	for index in segment_count:
+		var segment_length := length / segment_count
+		var center := start + tangent * (segment_length * (float(index) + 0.5))
+		_add_barrier_piece(body, "Segment_%02d" % index,
+			center, tangent, segment_length, index)
+
+
+func _add_barrier_arc(parent: Node3D, label: String, center: Vector2,
+		radius: float, start_angle: float, end_angle: float) -> void:
+	var body := StaticBody3D.new()
+	body.name = "Barrier_" + label
+	parent.add_child(body)
+	var arc_length := radius * absf(end_angle - start_angle)
+	var segment_count := maxi(ceili(arc_length / 2.2), 4)
+	var segment_angle := (end_angle - start_angle) / segment_count
+	for index in segment_count:
+		var angle := start_angle + segment_angle * (float(index) + 0.5)
+		var point := center + Vector2(cos(angle), sin(angle)) * radius
+		var tangent := Vector3(-sin(angle), 0, cos(angle))
+		var segment_length := 2.0 * radius * sin(absf(segment_angle) * 0.5)
+		_add_barrier_piece(body, "Segment_%02d" % index,
+			Vector3(point.x, 0.48, point.y), tangent, segment_length, index)
+
+
+func _add_barrier_piece(parent: StaticBody3D, piece_name: String, center: Vector3,
+		tangent: Vector3, segment_length: float, color_index: int) -> void:
+	var segment_rotation := atan2(-tangent.z, tangent.x)
+
+	var collision := CollisionShape3D.new()
+	collision.name = piece_name + "_Collision"
+	collision.position = center
+	collision.rotation.y = segment_rotation
+	var shape := BoxShape3D.new()
+	shape.size = Vector3(segment_length + 0.08, 0.96, 0.4)
+	collision.shape = shape
+	parent.add_child(collision)
+
+	var section := MeshInstance3D.new()
+	section.name = piece_name
+	section.position = center
+	section.rotation.y = segment_rotation
+	var mesh := BoxMesh.new()
+	mesh.size = Vector3(segment_length, 0.7, 0.42)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.88, 0.82, 0.70) if color_index % 2 == 0 \
+		else Color(0.72, 0.22, 0.15)
+	material.roughness = 0.82
+	mesh.material = material
+	section.mesh = mesh
+	parent.add_child(section)
 
 
 func _spawn_gate_visual(area: Area3D, gate_index: int) -> void:

@@ -15,6 +15,8 @@ var collision_pair_hits := 0
 var collision_player: Vehicle
 var collision_opponent: Vehicle
 var barrier_test_start_z := 0.0
+var corner_test_center := Vector2(87.5, 10.5)
+var corner_test_start_radius := 9.0
 var pending_motion_bodies: Array[RigidBody3D] = []
 var pending_motion_velocities: Array[Vector3] = []
 var gate_approach_hit := ""
@@ -82,36 +84,37 @@ func _on_physics_frame() -> void:
 	elif stage == 8 and frames > 1100:
 		stage = 9
 		_stage_barrier_collision_check()
-		var sphere := collision_player.sphere
-		sphere.freeze = true
-		sphere.global_position = Vector3(250.0, 20.0, 250.0)
-		_schedule_motion(sphere, Vector3.ZERO)
-	elif stage == 9 and frames > 1120:
+		_stage_corner_barrier_collision_setup()
+	elif stage == 9 and frames > 1140:
 		stage = 10
-		_stage_gate_crossing_setup(0)
-	elif stage == 10 and frames > 1140:
+		_stage_corner_barrier_collision_check()
+		_stage_clear_gate_overlap()
+	elif stage == 10 and frames > 1160:
 		stage = 11
+		_stage_gate_crossing_setup(0)
+	elif stage == 11 and frames > 1180:
+		stage = 12
 		_stage_gate_crossing_check(0)
 		_stage_clear_gate_overlap()
-	elif stage == 11 and frames > 1160:
-		stage = 12
-		_stage_gate_crossing_setup(1)
-	elif stage == 12 and frames > 1180:
+	elif stage == 12 and frames > 1200:
 		stage = 13
+		_stage_gate_crossing_setup(1)
+	elif stage == 13 and frames > 1220:
+		stage = 14
 		_stage_gate_crossing_check(1)
 		_stage_clear_gate_overlap()
-	elif stage == 13 and frames > 1200:
-		stage = 14
-		_stage_gate_crossing_setup(2)
-	elif stage == 14 and frames > 1220:
+	elif stage == 14 and frames > 1240:
 		stage = 15
+		_stage_gate_crossing_setup(2)
+	elif stage == 15 and frames > 1260:
+		stage = 16
 		_stage_gate_crossing_check(2)
 		_stage_clear_gate_overlap()
-	elif stage == 15 and frames > 1240:
-		stage = 16
-		_stage_gate_crossing_setup(0, true)
-	elif stage == 16 and frames > 1260:
+	elif stage == 16 and frames > 1280:
 		stage = 17
+		_stage_gate_crossing_setup(0, true)
+	elif stage == 17 and frames > 1300:
+		stage = 18
 		_stage_gate_crossing_check(0, true)
 		_finish()
 
@@ -192,6 +195,34 @@ func _stage_structure() -> void:
 		"streets=%d" % city_street_count)
 	_check("ถนนเมืองมีเส้นแบ่งเลนชัดเจน", city_marking_count == 4,
 		"centerlines=%d" % city_marking_count)
+	var city_roads_join := true
+	if town != null:
+		for horizontal_name in ["CityStreet_South", "CityStreet_North"]:
+			var horizontal := town.get_node_or_null(horizontal_name) as MeshInstance3D
+			var horizontal_mesh := horizontal.mesh as PlaneMesh if horizontal != null else null
+			city_roads_join = city_roads_join and horizontal_mesh != null \
+				and horizontal_mesh.size.is_equal_approx(Vector2(122.5, 4.5))
+			if horizontal_mesh == null:
+				continue
+			for vertical_name in ["CityStreet_West", "CityStreet_East"]:
+				var vertical := town.get_node_or_null(vertical_name) as MeshInstance3D
+				var vertical_mesh := vertical.mesh as PlaneMesh if vertical != null else null
+				if vertical_mesh == null:
+					city_roads_join = false
+					continue
+				var overlap_x := minf(horizontal.position.x + horizontal_mesh.size.x * 0.5,
+					vertical.position.x + vertical_mesh.size.x * 0.5) \
+					- maxf(horizontal.position.x - horizontal_mesh.size.x * 0.5,
+					vertical.position.x - vertical_mesh.size.x * 0.5)
+				var overlap_z := minf(horizontal.position.z + horizontal_mesh.size.y * 0.5,
+					vertical.position.z + vertical_mesh.size.y * 0.5) \
+					- maxf(horizontal.position.z - horizontal_mesh.size.y * 0.5,
+					vertical.position.z - vertical_mesh.size.y * 0.5)
+				city_roads_join = city_roads_join \
+					and vertical_mesh.size.is_equal_approx(Vector2(4.5, 87.5)) \
+					and overlap_x > 0.0 and overlap_z > 0.0 \
+					and horizontal.position.y < vertical.position.y
+	_check("ถนนเมืองต่อถึงกันที่สี่แยก ไม่มีช่องว่าง", city_roads_join)
 	var city_lot_count := 0
 	if town != null:
 		for child in town.get_children():
@@ -233,15 +264,20 @@ func _stage_structure() -> void:
 		and road_collision.position.y == 0.0
 		and is_equal_approx(box_shape.size.x, 7.0)
 		and is_equal_approx(box_shape.size.z, 7.0))
-	var barriers_are_solid := barriers != null and barriers.get_child_count() == 8
+	var barriers_are_solid := barriers != null and barriers.get_child_count() == 16
 	var barrier_details: Array[String] = []
 	if barriers_are_solid:
 		for barrier in barriers.get_children():
-			var wall_shape_node := barrier.get_node_or_null("CollisionShape3D") as CollisionShape3D
-			barrier_details.append("%s:%s" % [barrier.name,
-				wall_shape_node.shape.get_class() if wall_shape_node != null else "missing"])
-			barriers_are_solid = barriers_are_solid and wall_shape_node != null \
-				and wall_shape_node.shape is BoxShape3D
+			var segment_count := 0
+			for segment in barrier.get_children():
+				if not segment is CollisionShape3D:
+					continue
+				segment_count += 1
+				barriers_are_solid = barriers_are_solid \
+					and segment.shape is BoxShape3D
+			barrier_details.append("%s:%d" % [barrier.name, segment_count])
+			barriers_are_solid = barriers_are_solid \
+				and segment_count > 0 and barrier is StaticBody3D
 	_check("มีรั้วชนได้ล้อมรอบขอบในและขอบนอกสนาม", barriers_are_solid,
 		"barriers=%d %s" % [
 			barriers.get_child_count() if barriers != null else -1, "; ".join(barrier_details)])
@@ -258,6 +294,44 @@ func _stage_structure() -> void:
 		and str(outer_hit["collider"].name).begins_with("Barrier_Outer"),
 		"inner=%s outer=%s" % [
 			inner_hit.get("collider", null), outer_hit.get("collider", null)])
+	var corner_barriers_solid := true
+	var corner_lane_clear := true
+	var corners := [
+		["SE", Vector2(87.5, 10.5), -PI * 0.25],
+		["NE", Vector2(87.5, 52.5), PI * 0.25],
+		["NW", Vector2(10.5, 52.5), PI * 0.75],
+		["SW", Vector2(10.5, 10.5), PI * 1.25],
+	]
+	for corner in corners:
+		var corner_name: String = corner[0]
+		var center: Vector2 = corner[1]
+		var angle: float = corner[2]
+		var radial := Vector3(cos(angle), 0, sin(angle))
+		var lane_point := Vector3(center.x, 0.5, center.y) + radial * 7.0
+		var inner_query_corner := PhysicsRayQueryParameters3D.create(
+			lane_point, Vector3(center.x, 0.5, center.y) + radial * 2.2, 1)
+		var outer_query_corner := PhysicsRayQueryParameters3D.create(
+			lane_point, Vector3(center.x, 0.5, center.y) + radial * 11.8, 1)
+		var inner_corner_hit := space.intersect_ray(inner_query_corner)
+		var outer_corner_hit := space.intersect_ray(outer_query_corner)
+		var inner_corner_collider := inner_corner_hit.get("collider") as Node3D
+		var outer_corner_collider := outer_corner_hit.get("collider") as Node3D
+		corner_barriers_solid = corner_barriers_solid \
+			and inner_corner_collider != null \
+			and inner_corner_collider.name.contains("Barrier_Inner_Corner_" + corner_name) \
+			and outer_corner_collider != null \
+			and outer_corner_collider.name.contains("Barrier_Outer_Corner_" + corner_name)
+		var lane_shape := SphereShape3D.new()
+		lane_shape.radius = 0.35
+		var lane_query := PhysicsShapeQueryParameters3D.new()
+		lane_query.shape = lane_shape
+		lane_query.transform = Transform3D(Basis(), lane_point)
+		lane_query.collision_mask = 1
+		corner_lane_clear = corner_lane_clear \
+			and space.intersect_shape(lane_query, 32).is_empty()
+	_check("กำแพงโค้งทั้งสี่มุมชนได้ แต่ไม่กินเข้าเลน",
+		corner_barriers_solid and corner_lane_clear,
+		"barriers=%s lane_clear=%s" % [corner_barriers_solid, corner_lane_clear])
 	var perimeter_count := 0
 	var buildings_in_scale := true
 	if town != null:
@@ -506,7 +580,7 @@ func _stage_barrier_collision_setup() -> void:
 	collision_opponent.set_race_enabled(false)
 	var sphere := collision_player.sphere
 	sphere.freeze = true
-	sphere.global_position = Vector3(49.0, 1.5, 3.5)
+	sphere.global_position = Vector3(49.0, 0.5, 3.5)
 	barrier_test_start_z = sphere.global_position.z
 	_schedule_motion(sphere, Vector3(0, 0, -8.0))
 
@@ -517,6 +591,28 @@ func _stage_barrier_collision_check() -> void:
 		sphere.global_position.z > 0.45
 		and sphere.global_position.z < barrier_test_start_z - 1.0,
 		"start_z=%.2f end_z=%.2f" % [barrier_test_start_z, sphere.global_position.z])
+
+
+func _stage_corner_barrier_collision_setup() -> void:
+	var radial := Vector3(cos(-PI * 0.25), 0, sin(-PI * 0.25))
+	var sphere := collision_player.sphere
+	sphere.freeze = true
+	sphere.global_position = Vector3(corner_test_center.x, 0.5, corner_test_center.y) \
+		+ radial * corner_test_start_radius
+	_schedule_motion(sphere, radial * 8.0)
+
+
+func _stage_corner_barrier_collision_check() -> void:
+	var sphere := collision_player.sphere
+	var current_position := sphere.global_position
+	var current_radius := Vector2(current_position.x - corner_test_center.x,
+		current_position.z - corner_test_center.y).length()
+	var shape := sphere.get_node("CollisionShape").shape as SphereShape3D
+	_check("ฟิสิกส์หยุดรถที่กำแพงโค้งมุมสนามจริง",
+		current_radius > corner_test_start_radius + 0.05 and current_radius < 10.0,
+		"start_radius=%.2f end_radius=%.2f y=%.2f radius=%.2f velocity=%s contacts=%s" % [
+			corner_test_start_radius, current_radius, current_position.y,
+			shape.radius, sphere.linear_velocity, sphere.get_colliding_bodies()])
 
 
 func _stage_gate_crossing_check(index: int, final_lap := false) -> void:

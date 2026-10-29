@@ -195,10 +195,10 @@ func _paint_city_streets() -> void:
 	asphalt.albedo_color = Color(0.20, 0.22, 0.23)
 	asphalt.roughness = 0.95
 	var road_layouts := [
-		["CityStreet_South", Vector3(49.0, 0.012, -10.0), Vector2(110.0, 4.5), true],
-		["CityStreet_North", Vector3(49.0, 0.012, 73.0), Vector2(110.0, 4.5), true],
-		["CityStreet_West", Vector3(-10.0, 0.012, 31.5), Vector2(4.5, 75.0), false],
-		["CityStreet_East", Vector3(108.0, 0.012, 31.5), Vector2(4.5, 75.0), false],
+		["CityStreet_South", Vector3(49.0, 0.012, -10.0), Vector2(122.5, 4.5), true],
+		["CityStreet_North", Vector3(49.0, 0.012, 73.0), Vector2(122.5, 4.5), true],
+		["CityStreet_West", Vector3(-10.0, 0.014, 31.5), Vector2(4.5, 87.5), false],
+		["CityStreet_East", Vector3(108.0, 0.014, 31.5), Vector2(4.5, 87.5), false],
 	]
 	for layout in road_layouts:
 		var road_mesh := PlaneMesh.new()
