@@ -1,4 +1,4 @@
-# Coin Catcher (m-sample-game)
+# ชิงเหรียญทอง — Coin Rush (m-sample-game)
 
 เกมฝึกพัฒนา 2D ด้วย [Godot Engine 4.x](https://godotengine.org/) — เป้าหมายคือฝึกพื้นฐานการทำเกมทีละระบบ
 
