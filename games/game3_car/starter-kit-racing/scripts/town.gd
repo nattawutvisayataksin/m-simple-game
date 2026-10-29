@@ -12,17 +12,17 @@ const ROAD_STRAIGHT := "res://models/town/roads/road-straight.glb"
 const ROAD_BEND := "res://models/town/roads/road-bend.glb"
 
 const BUILDINGS := [
-	["res://models/town/industrial/building-g.glb", 14.0],
-	["res://models/town/industrial/building-l.glb", 12.0],
-	["res://models/town/industrial/building-n.glb", 13.0],
-	["res://models/town/industrial/building-j.glb", 11.0],
-	["res://models/town/industrial/building-q.glb", 15.0],
+	["res://models/town/industrial/building-g.glb", 5.2],
+	["res://models/town/industrial/building-l.glb", 4.7],
+	["res://models/town/industrial/building-n.glb", 5.6],
+	["res://models/town/industrial/building-j.glb", 4.9],
+	["res://models/town/industrial/building-q.glb", 6.0],
 ]
 
 const DECOS := [
-	["res://models/town/deco/tree-pine-small.glb", 4.0],
-	["res://models/town/deco/flowers.glb", 1.0],
-	["res://models/town/deco/tree-pine-small.glb", 3.2],
+	["res://models/town/deco/tree-pine-small.glb", 3.0],
+	["res://models/town/deco/flowers.glb", 0.6],
+	["res://models/town/deco/tree-pine-small.glb", 2.6],
 ]
 
 const KUBI_WALKERS := [
@@ -46,6 +46,7 @@ func _ready() -> void:
 	_straight_scene = load(ROAD_STRAIGHT)
 	_bend_scene = load(ROAD_BEND)
 	_paint_ring()
+	_paint_city_streets()
 	_city_blocks()
 	_central_park()
 	_start_line_decor()
@@ -176,6 +177,27 @@ func _paint_outer_sidewalk(cell: Vector3i) -> void:
 	add_child(sidewalk)
 
 
+func _paint_city_streets() -> void:
+	var asphalt := StandardMaterial3D.new()
+	asphalt.albedo_color = Color(0.20, 0.22, 0.23)
+	asphalt.roughness = 0.95
+	var road_layouts := [
+		["CityStreet_South", Vector3(49.0, 0.012, -10.0), Vector2(110.0, 4.5)],
+		["CityStreet_North", Vector3(49.0, 0.012, 73.0), Vector2(110.0, 4.5)],
+		["CityStreet_West", Vector3(-10.0, 0.012, 31.5), Vector2(4.5, 75.0)],
+		["CityStreet_East", Vector3(108.0, 0.012, 31.5), Vector2(4.5, 75.0)],
+	]
+	for layout in road_layouts:
+		var road_mesh := PlaneMesh.new()
+		road_mesh.size = layout[2]
+		road_mesh.material = asphalt
+		var road := MeshInstance3D.new()
+		road.name = layout[0]
+		road.mesh = road_mesh
+		road.position = layout[1]
+		add_child(road)
+
+
 ## Large, neutral paved city block with a soft green park as the focal point.
 func _ground_catcher() -> void:
 	var city_center := Vector3(49.0, 0, 31.5)
@@ -195,7 +217,7 @@ func _ground_catcher() -> void:
 	var plane := PlaneMesh.new()
 	plane.size = Vector2(300, 260)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.48, 0.46, 0.40)
+	mat.albedo_color = Color(0.36, 0.35, 0.31)
 	mat.roughness = 1.0
 	plane.material = mat
 	mi.mesh = plane
@@ -206,16 +228,16 @@ func _ground_catcher() -> void:
 
 func _city_blocks() -> void:
 	var perimeter := [
-		[Vector3(20.0, 0, -20.0), 0],
-		[Vector3(48.0, 0, -22.0), 1],
-		[Vector3(77.0, 0, -20.0), 2],
-		[Vector3(20.0, 0, 83.0), 3],
-		[Vector3(49.0, 0, 85.0), 4],
-		[Vector3(78.0, 0, 83.0), 0],
-		[Vector3(-19.0, 0, 14.0), 1],
-		[Vector3(-21.0, 0, 48.0), 2],
-		[Vector3(116.0, 0, 14.0), 3],
-		[Vector3(118.0, 0, 48.0), 4],
+		[Vector3(20.0, 0, -23.0), 0],
+		[Vector3(48.0, 0, -25.0), 1],
+		[Vector3(77.0, 0, -23.0), 2],
+		[Vector3(20.0, 0, 86.0), 3],
+		[Vector3(49.0, 0, 88.0), 4],
+		[Vector3(78.0, 0, 86.0), 0],
+		[Vector3(-23.0, 0, 14.0), 1],
+		[Vector3(-25.0, 0, 48.0), 2],
+		[Vector3(120.0, 0, 14.0), 3],
+		[Vector3(122.0, 0, 48.0), 4],
 	]
 	for i in perimeter.size():
 		var building: Array = BUILDINGS[i % BUILDINGS.size()]
@@ -280,7 +302,7 @@ func _central_park() -> void:
 		var angle := TAU * float(i) / 8.0
 		var tree_pos := center + Vector3(cos(angle) * 20.0, 0, sin(angle) * 13.0)
 		var tree := _spawn_static_prop("res://models/town/deco/tree-pine-small.glb",
-			tree_pos, 5.0, angle)
+			tree_pos, 3.2, angle)
 		if tree != null:
 			tree.name = "ParkTree_%02d" % i
 
@@ -323,21 +345,23 @@ func _start_line_decor() -> void:
 	for i in KUBI_WALKERS.size():
 		var p := start + Vector3(-5.5 + i * 2.6, 0.05, -7.6)
 		_spawn_static_prop(KUBI_WALKERS[i], p, 2.2, deg_to_rad(15 * i - 30))
-	# ต้นไม้และดอกไม้กระจายรอบนอกสนาม โดยเว้นเลนแข่งไว้
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 20260229
-	var zones := [
-		Rect2(-48, -24, 36, 112),
-		Rect2(110, -24, 36, 112),
-		Rect2(-12, -34, 124, 26),
-		Rect2(-12, 72, 124, 26),
-	]
+	# Landscape rows create a deliberate buffer between the circuit and local streets.
 	for i in 24:
+		var side := i / 6
+		var slot := i % 6
+		var along := 10.0 + slot * 16.0
+		var at := Vector3.ZERO
+		match side:
+			0:
+				at = Vector3(along, ROAD_TOP, -5.0)
+			1:
+				at = Vector3(along, ROAD_TOP, 68.0)
+			2:
+				at = Vector3(-5.0, ROAD_TOP, 8.0 + slot * 9.0)
+			_:
+				at = Vector3(103.0, ROAD_TOP, 8.0 + slot * 9.0)
 		var deco: Array = DECOS[i % DECOS.size()]
-		var zone: Rect2 = zones[rng.randi_range(0, zones.size() - 1)]
-		var rx := rng.randf_range(zone.position.x, zone.end.x)
-		var rz := rng.randf_range(zone.position.y, zone.end.y)
-		var body := _spawn_static_prop(deco[0], Vector3(rx, ROAD_TOP, rz), deco[1], rng.randf() * TAU)
+		var body := _spawn_static_prop(deco[0], at, deco[1], 0.0)
 		if body != null:
 			body.name = "TownDecor_%02d" % i
 

@@ -4,8 +4,8 @@ extends Node3D
 @export var target: Vehicle
 
 @onready var camera = $Camera
-const CAMERA_NEAR_Z := 20.0
-const CAMERA_FAR_Z := 30.0
+const CAMERA_NEAR_Z := 24.0
+const CAMERA_FAR_Z := 32.0
 
 # Functions
 

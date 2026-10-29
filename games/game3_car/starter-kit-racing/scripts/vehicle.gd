@@ -42,13 +42,73 @@ var prev_position: Vector3
 
 var calculated_lean: float
 
+var ai_controlled := false
+var ai_steering := 0.0
+var ai_throttle := 0.0
+var max_speed_scale := 1.0
+var handling_scale := 1.0
+var boost_time := 0.0
+var slowdown_time := 0.0
+
 # Public Functions
 
 func get_vehicle_position() -> Vector3: return vehicle_model.global_position
 
+func set_ai_control(steering: float, throttle: float) -> void:
+	ai_steering = clampf(steering, -1.0, 1.0)
+	ai_throttle = clampf(throttle, -1.0, 1.0)
+
+
+func set_drive_profile(speed_scale: float, handling: float) -> void:
+	max_speed_scale = clampf(speed_scale, 0.7, 1.35)
+	handling_scale = clampf(handling, 0.7, 1.35)
+
+
+func set_race_enabled(enabled: bool) -> void:
+	set_physics_process(enabled)
+	if sphere != null:
+		sphere.freeze = not enabled
+		if not enabled:
+			sphere.linear_velocity = Vector3.ZERO
+			sphere.angular_velocity = Vector3.ZERO
+
+
+func set_car_model(scene_path: String) -> void:
+	var packed := load(scene_path) as PackedScene
+	if packed == null:
+		push_error("Vehicle: unable to load car model %s" % scene_path)
+		return
+	var old_model := vehicle_model.get_node_or_null("Model")
+	if old_model != null:
+		vehicle_model.remove_child(old_model)
+		old_model.queue_free()
+	var model := packed.instantiate() as Node3D
+	if model == null:
+		push_error("Vehicle: car model root must be Node3D (%s)" % scene_path)
+		return
+	model.name = "Model"
+	vehicle_model.add_child(model)
+	vehicle_body = vehicle_model.get_node_or_null("Model/body")
+	wheel_fl = vehicle_model.get_node_or_null("Model/wheel-front-left")
+	wheel_fr = vehicle_model.get_node_or_null("Model/wheel-front-right")
+	wheel_bl = vehicle_model.get_node_or_null("Model/wheel-back-left")
+	wheel_br = vehicle_model.get_node_or_null("Model/wheel-back-right")
+
+
+func apply_boost(duration: float = 1.6) -> void:
+	boost_time = maxf(boost_time, duration)
+	slowdown_time = 0.0
+
+
+func apply_oil_slowdown(duration: float = 1.8) -> void:
+	slowdown_time = maxf(slowdown_time, duration)
+	boost_time = 0.0
+
 # Functions
 
 func _physics_process(delta):
+	boost_time = maxf(boost_time - delta, 0.0)
+	slowdown_time = maxf(slowdown_time - delta, 0.0)
 
 	handle_input(delta)
 
@@ -57,7 +117,7 @@ func _physics_process(delta):
 
 	var steering_grip = clamp(abs(linear_speed), 0.2, 1.0)
 
-	var target_angular = -input.x * steering_grip * 4 * direction
+	var target_angular = -input.x * steering_grip * 4 * handling_scale * direction
 	angular_speed = lerp(angular_speed, target_angular, delta * 4)
 
 	vehicle_model.rotate_y(angular_speed * delta)
@@ -79,7 +139,12 @@ func _physics_process(delta):
 
 	colliding = raycast.is_colliding()
 
-	var target_speed = input.z
+	var effect_scale := 1.0
+	if boost_time > 0.0:
+		effect_scale = 1.28
+	elif slowdown_time > 0.0:
+		effect_scale = 0.55
+	var target_speed: float = input.z * max_speed_scale * effect_scale
 
 	if (target_speed < 0 and linear_speed > 0.01):
 		linear_speed = lerp(linear_speed, 0.0, delta * 8)
@@ -113,8 +178,12 @@ func _physics_process(delta):
 func handle_input(delta):
 
 	if raycast.is_colliding():
-		input.x = Input.get_axis("left", "right")
-		input.z = Input.get_axis("back", "forward")
+		if ai_controlled:
+			input.x = ai_steering
+			input.z = ai_throttle
+		else:
+			input.x = Input.get_axis("left", "right")
+			input.z = Input.get_axis("back", "forward")
 
 	sphere.angular_velocity += vehicle_model.get_global_transform().basis.x * (linear_speed * 100) * delta
 
