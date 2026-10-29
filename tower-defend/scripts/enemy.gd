@@ -14,25 +14,31 @@ var waypoints: PackedVector2Array = []
 var speed := 60.0
 var base_scale := 1.5
 var no_flip := false
-var faces_left := false   # สไปรต์หันข้างเกิดหัวไปทางไหน (กิ้งก่า = ซ้าย)
-var body_bottom_row := 59  # แถวเท้าล่างสุดในเฟรม 64px (กบ=59) - จาก tools/measure_feet.ps1
+var faces_left := true    # สไปรต์หันข้าง (sheet_side) เกิดหัวไปทางไหน (กิ้งก่า = ซ้าย)
+var body_bottom_row := 59  # แถวเท้าล่างสุดของชุดหน้าตรง (กบ=59 กิ้งก่าหน้าตรง=56) - tools/measure_feet.ps1
+var side_sheet: Texture2D       # ชุดหันข้าง (ใช้ช่วงเดินแนวนอน) - null = ใช้หน้าตรงตลอด
+var side_bottom_row := 43       # แถวเท้าล่างสุดของชุดหันข้าง (กิ้งก่าหันข้าง=43)
 var texture: Texture2D        # ภาพนิ่ง (fallback)
-var sheet: Texture2D          # spritesheet แถวเดียว (เลือกใช้ถ้ามี)
+var sheet: Texture2D          # spritesheet หน้าตรง แถวเดียว (เลือกใช้ถ้ามี)
 
 var _wp_index := 0
 var _bob := 0.0
 var _anim_t := 0.0
 var _sprite: Sprite2D
 
+func _apply_sheet(tex: Texture2D, bottom_row: int) -> void:
+	# สลับชุดสไปรต์ (หน้าตรง/หันข้าง) - ต้องเลื่อนเท้าตามแถวเท้าของชุดนั้นด้วย
+	_sprite.texture = tex
+	if tex != null and tex.get_width() > FRAME_SIZE:
+		_sprite.hframes = tex.get_width() / FRAME_SIZE
+	_sprite.offset = Vector2(0, 2.0 / base_scale - (bottom_row - 32))
+
 func _ready() -> void:
 	_sprite = Sprite2D.new()
-	var tex := sheet if sheet != null else texture
-	_sprite.texture = tex
-	if sheet != null and sheet.get_width() > FRAME_SIZE:
-		_sprite.hframes = sheet.get_width() / FRAME_SIZE
 	_sprite.scale = Vector2(base_scale, base_scale)
 	# จุด reference อยู่เท้า: เลื่อนตามแถวเท้าจริงของแต่ละสายพันธุ์ (กันเหาะเหนือถนน)
-	_sprite.offset = Vector2(0, 2.0 / base_scale - (body_bottom_row - 32))
+	var front := sheet if sheet != null else texture
+	_apply_sheet(front, body_bottom_row)
 	add_child(_sprite)
 	# ยืนจุดแรกของเส้นทาง
 	if waypoints.size() > 0:
@@ -66,8 +72,25 @@ func _process(delta: float) -> void:
 			reached_castle.emit()
 			queue_free()  # ปลอดภัย: ตัวนี้ถูกปล่อยท้ายเฟรม ไม่ใช่ระหว่าง signal ฟิสิกส์
 			return
-	# เล่นเฟรมเดินจริงจาก sheet (ถ้ามี) — ด้านกบ/กิ้งก่าเห็นขา+ตัวขยับสอดคล้องกัน
-	if sheet != null and sheet.get_width() > FRAME_SIZE:
+	# เฟรมเดิน + เลือกชุดท่าตามทิศเดิน
+	var nxt := waypoints[_wp_index + 1]
+	var d := nxt - position
+	var horizontal := absf(d.x) > absf(d.y)
+	var front: Texture2D = sheet if sheet != null else texture
+	var animing := false
+	if horizontal and side_sheet != null:
+		# ช่วงเดินแนวนอน: ใช้ชุดหันข้าง แล้ว flip ให้หัวตามทิศเดิน
+		if _sprite.texture != side_sheet:
+			_apply_sheet(side_sheet, side_bottom_row)
+		_sprite.flip_h = nxt.x > position.x and faces_left  # native หัวซ้าย -> เดินขวาต้องกลับ
+		animing = side_sheet.get_width() > FRAME_SIZE
+	else:
+		# ช่วงเดินตรงเข้าหาเรา (แนวตั้ง/ทแยง): ชุดหน้าตรง ไม่ flip
+		if _sprite.texture != front:
+			_apply_sheet(front, body_bottom_row)
+		_sprite.flip_h = false
+		animing = front != null and front.get_width() > FRAME_SIZE
+	if animing:
 		_anim_t += delta * ANIM_FPS
 		_sprite.frame = int(_anim_t) % _sprite.hframes
 	else:
@@ -75,8 +98,3 @@ func _process(delta: float) -> void:
 		_bob += delta * 9.0
 		var s := base_scale * (1.0 + 0.05 * sin(_bob))
 		_sprite.scale = Vector2(s, s)
-	# หันหน้าตามทิศเดิน (sheet หน้าตรงไม่กลับ; หันข้าง flip ตาม native facing)
-	var nxt := waypoints[_wp_index + 1]
-	if not no_flip and absf(nxt.x - position.x) > 1.0:
-		var moving_right := nxt.x > position.x
-		_sprite.flip_h = faces_left == moving_right  # ทิศเดินสวน native จึงกลับ

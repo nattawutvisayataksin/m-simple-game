@@ -9,6 +9,7 @@ const FROG_TEX := preload("res://assets/art/gen/frog.png")
 const LIZARD_TEX := preload("res://assets/art/gen/lizard_front.png")
 const FROG_SHEET := preload("res://assets/art/gen/frog_sheet.png")
 const LIZARD_SHEET := preload("res://assets/art/gen/lizard_sheet.png")
+const LIZARD_SIDE_SHEET := preload("res://assets/art/gen/lizard_side_sheet.png")
 
 # หมุดโลก (ฉากเดียว 1152x648): ประตูม่วงบนซ้าย (261, 250) ; ประตูปราสาท (816, 495)
 const PATH_A: Array[Vector2] = [
@@ -82,7 +83,7 @@ func _spawn_next() -> void:
 	if kind:
 		_spawn_enemy(FROG_TEX, FROG_SHEET, _shift_path(PATH_A, lane), FROG_SPEED * jitter, true, false, 59)
 	else:
-		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56)
+		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56, LIZARD_SIDE_SHEET, 43)
 
 func _shift_path(path: Array[Vector2], off: float) -> Array[Vector2]:
 	# เลื่อน waypoint ทั้งเส้นตามแนวตั้งฉากของแต่ละช่วง (สายเดินข้างกันไม่ทับถนนกลาง)
@@ -101,7 +102,7 @@ func _shift_path(path: Array[Vector2], off: float) -> Array[Vector2]:
 			out.append(path[i] + Vector2(off, 0))   # ช่วงเดินตั้ง -> เลื่อนตามแกน x
 	return out
 
-func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], speed: float, no_flip: bool, faces_left: bool, bottom_row: int) -> void:
+func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], speed: float, no_flip: bool, faces_left: bool, bottom_row: int, s_sheet: Texture2D = null, s_bottom: int = 43) -> void:
 	var e := EnemyScript.new()
 	e.sheet = sheet          # เฟรมเดินจริงถ้ามี sheet (fallback texture นิ่ง)
 	e.texture = texture
@@ -109,7 +110,9 @@ func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], sp
 	e.speed = speed
 	e.no_flip = no_flip
 	e.faces_left = faces_left
-	e.body_bottom_row = bottom_row  # แถวเท้าจริงในเฟรม (กบ 59 / กิ้งก่าเดิม 43)
+	e.body_bottom_row = bottom_row  # แถวเท้าจริงในเฟรม (กบ 59 / กิ้งก่าหน้าตรง 56)
+	e.side_sheet = s_sheet          # ชุดหันข้าง (ช่วงเดินแนวนอน) - กิ้งก่า 43 แถว
+	e.side_bottom_row = s_bottom
 	add_child(e)
 	e.reached_castle.connect(_on_enemy_leak)
 
