@@ -92,7 +92,8 @@
 
 | Asset | ไฟล์ (tower-defend/assets/) | ที่มา | สถานะ |
 |---|---|---|---|
-| พื้นหลังฉาก | `art/kub_kingdom_map.png` | pixflux 384×216 job `ecb637c9` (1 gen) → upscale nearest 3× ด้วย `tools/upscale_nearest.ps1` | ✅ ผู้ใช้อนุมัติ (เห็นใน Photos) + ผูกใน scenes/main.tscn แล้ว |
+| พื้นหลังฉาก | `art/kub_kingdom_map.png` | pixflux 384×216 job `ecb637c9` (1 gen) → upscale nearest 3× ด้วย `tools/upscale_nearest.ps1` | ✅ ผู้ใช้อนุมัติ (แทนด้วย bg v2 แล้ว — เก็บไว้เป็นต้นฉบับ T1) |
+| พื้นหลัง bg v2 (ปราสาทชิดขอบขวาบน) | `art/gen/raw/kub_kingdom_map_v2_raw.png` | pixflux 384×216 job `5d0fffcf` (1 gen) → upscale 3× | ✅ อนุมัติ — เป็น master ครึ่งบนของโลกใหญ่ |
 | ฮีโร่ Kubi 64px | `art/gen/kubi_hero_neutral.png` | pixflux job `27d41df4` (1 gen) | ✅ อนุมัติ (ตัวเฟรม 0 ของ anim ใช้เป็นท่ายืนแทน — ต้นฉบับพื้นขาวตัดแล้ว) |
 | แอนิชันเดิน 8 เฟรม | `art/gen/kubi_hero_sheet.png` (512×64) | animate_image_pixminimax job `e285f2e8` (1 gen) เฟรม 1-8 (ตัดเฟรมท่ายืน index 0) → `tools/build_sprite_sheet.ps1` | ✅ อนุมัติ |
 | กบยักษ์เขียว | `art/gen/frog.png` | pixflux job `ddf520f0` (1 gen) + ตัดพื้นขาว `tools/cut_white_bg.ps1` | ✅ อนุมัติ |
@@ -100,5 +101,10 @@
 | ป้อมนักธนู | `art/gen/tower_archer.png` | pixflux job `5801ea35` (1 gen) + ตัดพื้นขาว | ✅ อนุมัติ |
 | ป้อมปืนใหญ่ | `art/gen/tower_cannon.png` | pixflux job `faf8a0e4` (1 gen) + ตัดพื้นขาว | ✅ อนุมัติ |
 | Mockup สนามจริง | `mockup_field_v2.png` | ประกอบด้วย `tools/compose_mockup.ps1` — จุดเกิด 3, ลานจุดวาง 5, ตำแหน่งบนถนนจริงของภาพ | ✅ ผู้ใช้เห็น + อนุมัติ (ต่อ T2) |
+| แอนิเมชันเดินกบ 8 เฟรม | `art/gen/frog_sheet.png` (512×64) | animate_image_pixminimax job `f476bf24` (1 gen) — ref เฟรม 0 (diff ต่ำสุดใส่ frog.png) ใช้เฟรม 1-8 | ✅ อนุมัติ — แทน scale-pulse ใน enemy.gd |
+| แอนิเมชันเดินกิ้งก่า 8 เฟรม | `art/gen/lizard_sheet.png` (512×64) | animate_image_pixminimax job `51facc93` (1 gen) — first_frame ส่ง data URL จาก lizard.png (job id เดิมเสีย prefix) เฟรม 0-7 (เฟรม 8 ซ้ำ f0 ปิดลูป ตัดออก) | ✅ อนุมัติ — หันข้าง native ซ้าย (faces_left) |
+| **โลกใหญ่ 1152×1296** | `art/kub_world.png` | ประกอบใน `tools/compose_world.ps1` (ฟรี): master bg v2 + แผงทุ่งหญ้า `796a3559` ไม่มีถนน + วาดถนนแนวตั้งเอง (สี sample จริง R247 G193 B132) + แสตมป์ประตูม่วงตัดจาก master flood-fill + ยูนิฟอร์มหญ้าแผงล่าง → พาเลตต์ master (160,204,69 / 188,216,77 → 150,203,70) + ประตูล่างฟลัชขอบล่าง | ✅ อนุมัติ (mockup_world_v3) |
+| ประตูม่วงล่าง (สดมภ์ในเกม) | bbox raw: master (52,6,60×84) | ตัดจาก master ด้วย flood-fill ตัดสีหญ้า (compose_world.ps1) | ✅ ภายในโลกใหญ่ |
+| ไอคอน HUD/ปุ่มป้อม | `art/icons/*.png` (8 ไฟล์ 64px) | **Ravenmore Icon Pack 2.0** (ravenmore.itch.io, ฟรี) — ที่เตรียมที่ `download_asset_opengameart/RavenmoreIconPack.02.2014/` คัด bow/hammer/coin/heart/scroll/x/upg_bow/upg_hammer | ✅ อนุมัติ — ใช้ T3-T4 (credit Ravenmore) |
 
 --- 

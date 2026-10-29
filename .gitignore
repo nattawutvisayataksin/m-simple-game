@@ -18,3 +18,5 @@ export/
 # OS junk
 Thumbs.db
 .DS_Store
+
+download_asset_opengameart/

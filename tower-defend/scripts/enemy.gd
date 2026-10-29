@@ -1,22 +1,34 @@
 extends Node2D
-# มอนสเตอร์เดินตามถนน - หอคอยคู่ฟ้า (T2)
+# มอนสเตอร์เดินตามถนน - หอคอยคู่ฟ้า (T2 + แอนิเมชันเดินลื่น)
 # เดินตาม waypoint อย่างมี carry leftover distance (ระยะ step ค้างข้ามจุด -
 # กันมอนเร็ว "หยุดหายใจ" ที่จุดกำหนดเพราะเดินเลยหัวไปแล้วใน 1 เฟรม)
+# T2.5: ถ้าให้ sheet (hframes จาก sheet_size.x / 64) จะเล่นเฟรมเดินจริง
+# แทน scale-pulse; ถ้าได้ภาพนิ่งยัง fallback ด้วยการเด้งเดิม
 
 signal reached_castle
+
+const FRAME_SIZE := 64
+const ANIM_FPS := 9.0
 
 var waypoints: PackedVector2Array = []
 var speed := 60.0
 var base_scale := 1.5
-var texture: Texture2D
+var no_flip := false
+var faces_left := false   # สไปรต์หันข้างแนวหัวไปทางไหน (กิ้งก่า = หันซ้าย)
+var texture: Texture2D        # ภาพนิ่ง (fallback)
+var sheet: Texture2D          # spritesheet แถวเดียว (เลือกใช้ถ้ามี)
 
 var _wp_index := 0
 var _bob := 0.0
+var _anim_t := 0.0
 var _sprite: Sprite2D
 
 func _ready() -> void:
 	_sprite = Sprite2D.new()
-	_sprite.texture = texture
+	var tex := sheet if sheet != null else texture
+	_sprite.texture = tex
+	if sheet != null and sheet.get_width() > FRAME_SIZE:
+		_sprite.hframes = sheet.get_width() / FRAME_SIZE
 	_sprite.scale = Vector2(base_scale, base_scale)
 	add_child(_sprite)
 	# ยืนจุดแรกของเส้นทาง
@@ -44,11 +56,17 @@ func _process(delta: float) -> void:
 			reached_castle.emit()
 			queue_free()  # ปลอดภัย: ตัวนี้ถูกปล่อยท้ายเฟรม ไม่ใช่ระหว่าง signal ฟิสิกส์
 			return
-	# เด้งตัวเป็นจังหวะเดิน (เกม 1 ใช้ scale-pulse trick แทนเฟรมจริง)
-	_bob += delta * 9.0
-	var s := base_scale * (1.0 + 0.05 * sin(_bob))
-	_sprite.scale = Vector2(s, s)
-	# หันหน้าตามทิศเดิน
+	# เล่นเฟรมเดินจริงจาก sheet (ถ้ามี) — ด้านกบ/กิ้งก่าเห็นขา+ตัวขยับสอดคล้องกัน
+	if sheet != null and sheet.get_width() > FRAME_SIZE:
+		_anim_t += delta * ANIM_FPS
+		_sprite.frame = int(_anim_t) % _sprite.hframes
+	else:
+		# fallback: เด้งตัวเป็นจังหวะเดิน (scale-pulse trick)
+		_bob += delta * 9.0
+		var s := base_scale * (1.0 + 0.05 * sin(_bob))
+		_sprite.scale = Vector2(s, s)
+	# หันหน้าตามทิศเดิน (sheet หน้าตรงไม่กลับ; หันข้าง flip ตาม native facing)
 	var nxt := waypoints[_wp_index + 1]
-	if absf(nxt.x - position.x) > 1.0:
-		_sprite.flip_h = nxt.x < position.x
+	if not no_flip and absf(nxt.x - position.x) > 1.0:
+		var moving_right := nxt.x > position.x
+		_sprite.flip_h = faces_left == moving_right  # ทิศเดินสวน native จึงกลับ

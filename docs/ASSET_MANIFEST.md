@@ -8,14 +8,15 @@
   "tileset_cost_record": "2026-10-29: kub_arena_sheet (16 tiles 32×32) = 1 gen (Key A daily bonus, available-เหลือ 4 วันนี้) — ผูกใน main.tscn (พื้น + กำแพง 4 ด้าน, กำแพง เข้าตา 40→32px ยึด grid) ทดสอบ headless ผ่าน",
   "music_record": "2026-10-29: music.wav chiptune loop 13.7s สังเคราะห์เองใน tools/generate_music.ps1 (ฟรี ไม่ใช้ gen) + bus Music/SFX (default_bus_layout.tres) + HUD icon ใช้ coin_kub.png ซ้ำ — ฟอนต์จริง process: หยุด (create_font Latin-only, ใช้ LabelSettings)",
   "gold_record": "2026-10-29: coin_gold (edit 1 gen) + goldcoin_sheet 9f (anim 1 gen) + ไวรัสเขียว/น้ำเงิน (edit ตัวละ 1 gen) = 4 gen รวม — หมด daily bonus Key A วันนี้ (used 50/40; ยืนยันด้วยการยิงจริงคืน error 'no generations or credits') ; ไวรัส 2 สีเก็บไว้ใช้ระยะ B",
-  "keyb_record": "2026-10-29: MCP `pixellab-b` (Key B) ใช้ไปแล้ววันนี้ 7 gen (เกม 2 T1: พื้นหลัง ecb637c9 + ฮีโร่ 27d41df4 + anim เดิน e285f2e8 + กบ ddf520f0 + กิ้งก่า 56d4f5e0 + ป้อมนักธนู 5801ea35 + ป้อมปืนใหญ่ faf8a0e4) — balance จริง: used 12 remaining 28 (40 รวม) ; ท่องไว้: free tier อนุญาต 1 job ต่อ key ช่วงเวลาเดียว (พบ rate-limit ตติดชั่ว ~45 วิ หลังจบ job)",
+  "keyb_record": "2026-10-29: MCP `pixellab-b` (Key B) — balance จริงตอนนี้: used 20 remaining 20/40, รายการวันนี้: T1/T2 (พื้นหลัง ecb637c9, ฮีโร่+anim e285f2e8, กบ ddf520f0, กิ้งก่า 56d4f5e0, ป้อมนักธนู 5801ea35, ป้อมปืนใหญ่ faf8a0e4) + bg v2 5d0fffcf + quadrant ล้ม 2 (00a9c8cf, dcd61dfb) + quadrant ซ้ำอีก 2 (76fb3ff4, c8510832 ล้ม) + แผงทุ่งหญ้า 796a3559 + anim เดิน กบ f476bf24 / กิ้งก่า 51facc93 — ท่องไว้: free tier 1 job ต่อ key ช่วงเวลาเดียว (cooldown ~45 วิ หลังจบ job) และ gen ทำถนนข้ามชิ้นเชื่อมกันไม่เคยตรง (บทเรียน: gen พื้นว่าง + วาดถนนเอง)",
+  "external_pack_record": "2026-10-29: **Ravenmore Icon Pack 2.0** (ravenmore.itch.io, ฟรี) ผู้อำนวยการส่งเตรียมที่ C:\\m-simple-game\\download_asset_opengameart\\RavenmoreIconPack.02.2014\\ (512/128/64 + psd) — ไอคอนมือวาด 29+12 ชิ้น พื้นโปร่ง ออกแบบมาบนพื้นหลังมืด เหมาะ HUD; คัดมาวาง tower-defend/assets/art/icons/ (bow, hammer, coin, heart, scroll, x, upg_bow, upg_hammer ตัว 64px) ใช้ปุ่มป้อม/HUD/ป้าราคา T3-T4 **ไม่กิน gen**; license: itch.io pack ฟรี (ให้ credit Ravenmore บนหน้าเครดิตเกม)",
   "game2_record": "2026-10-29: T1 กองพลศิลป์เกมที่ 2 (หอคอยคู่ฟ้า) อนุมัติครบ 6 ชิ้น — ไฟล์ทั้งหมดใน tower-defend/assets/art/ (พื้นหลัง kub_kingdom_map.png 1152×648 ขยาย nearest 3× จาก gen 384×216; gen/* 64px; แผนที่ gen พื้นขาวตัดโปร่งด้วย tools/cut_white_bg.ps1 ใหม่) + mockup_field_v2.png ประกอบตำแหน่งจริง",
   "session_handoff": "2026-10-29: แผน 4 ระยะครบ + **ผู้เล่นยืนยันเซฟได้จริงบนเครื่อง (เทสบนเครื่องจริงผ่าน)** — จบ normal ของโปรเจกต์; ทางต่อยอดเลือกได้: (1) ผูก Input Map sprint (2) จูนค่าไวรัสหลังเล่นเยอะ (3) export build Windows แจกเพื่อน (4) เอาลง itch.io; พรุ่งนี้: Key A bonus +5 ใช้ให้หมดก่อน จึง Key B",
   "next_steps": [
-    "เกมที่ 2 T3: ป้อม 2 สายยิงได้ — คลิกลานทอง เปิดเมนูสร้าง (นักธนู/ปืนใหญ่) ยิงมอนในรัศมี + ทองต่อฆ่า",
+    "เกมที่ 2 T3: ป้อม 2 สายยิงได้ — คลิกลานทอง เปิดเมนูสร้าง (ไอคอน bow/hammer จาก art/icons/) ยิงมอนในรัศมี + ทองต่อฆ่า",
     "เกมที่ 2 T4: waves + economy + จบเกม (ชนะ/แพ้) ให้เล่นได้เต็มรอบ",
     "เกม 1 ทางต่อยอด (เลือกสั่งได้): ผูก Input Map action \"sprint\", จูนไวรัส, export Windows build, ปูทาง itch-publish",
-    "พรุ่งนี้: กลับมาใช้ Key A (daily bonus +5) ให้หมดก่อน จึงใช้ Key B (วันนี้ Key B เหลือ 28/40)",
+    "พรุ่งนี้: กลับมาใช้ Key A (daily bonus +5) ให้หมดก่อน จึงใช้ Key B (วันนี้ Key B เหลือ 20/40)",
     "ระวัง: ห้ามฝัง key ในไฟล์ commit — key อ่านจาก .mcp.json (gitignored) เท่านั้น"
   ],
   "art_direction_doc": "docs/ART_DIRECTION.md",
