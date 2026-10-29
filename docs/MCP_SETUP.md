@@ -10,8 +10,19 @@
 | `pixellab-a` | **global** นอก repo | gen ศิลป์ AI ชุดที่ 1 (คนละ Key กับ B/C — โควตาเดียวกันแต่แยกนับ) | `pixelart_workbench` (ฟรี วาดพิกเซลเอง), `get_balance`, `list_projects` (git clone/push เกมโปรเจกต์): 103 เครื่องมือ |
 | `pixellab-b` | **global** เดียวกัน | gen ศิลป์ AI ชุดที่ 2 — **นโยบายใช้ B ให้หมดก่อน** | เดียวกัน |
 | `pixellab-c` | **global** เดียวกัน | gen ศิลป์ AI ชุดที่ 3 | เดียวกัน |
+| `blender` | **global** เดียวกัน (`mcp.servers.blender`) | สั่ง **Blender 5.2** (3D): จัดฉาก/วัตถุ/วัสดุ/ส่งออกโมเดล .glb — โมเดล 3D ให้เกม | `setup`, `execute_script`, `get_viewport_screenshot`, `polyhaven_*(asset/texture/hdr)`, `get_scene_info` |
 
 > 3 เซิร์ฟเวอร์ pixellab คือ base เดียวกันต่างกันแค่ API key — แยกไว้เผื่อโควตายืดอุ่นรวม quota เกินให้งบต่อรอบ
+
+### บันทึกติดตั้ง `blender` (mcp-for-blender, commit 2026-10-29)
+
+- **ประกอบ 2 ชิ้น**: (1) **Blender addon** ติดตั้งอยู่ `%APPDATA%\Blender Foundation\Blender\5.2\scripts\addons\blender_mcp.py` (setup CLI เปิดใช้ให้อัตโนมัติ) — เวลาใช้ต้อง**เปิด Blender ก่อน** (tab "MCP for Blender" แถบริม N, กดปุ่มเริ่ม server) ถึงจะคุยได้ (2) **MCP server** ผ่าน `uvx mcp-for-blender`
+- **ตุ้กที่พิสูจน์แล้วบนเครื่องนี้ 2 ช่อง**:
+  - installer เขียน server ลงผิดชั้นเป็น `mcp.blender` — **ต้องย้ายไปใต้ `mcp.servers.blender`** ตาม schema OpenCode (และ `$schema` อยู่ระดับบนสุดเสมอ)
+  - `uvx` เรียกตัว default แล้วชน Python 3.15 ที่ uv จัดไว้ใน `%APPDATA%\Roaming\uv\python` — **โดน Application Control policy ของเครื่องบล็อก DLL** (`select`/`asyncio`) — วิธีแกยืนยัน: ผูก `--python 3.12` ใน args เสมอ (cpython-3.12 ของ uv ผ่าน)
+- **ตั้งค่าชุดสำเร็จ** (ใน global config): `command: [uvx.EXE, "--python", "3.12", "mcp-for-blender"]`, `enabled: true` — restart OpenCode ครั้งเดียวเพื่อโหลด server ใหม่
+- บั๊กคอนโซลจิ๋ว (job ภายนอก): รัน `setup` บนคอนโซล cp874 จิ้ม crash พิมพ์เครื่องหมาย ✓ — แก้ด้วย `$env:PYTHONIOENCODING="utf-8"` (ไม่กระทบการตั้งค่า)
+- โครง source ดาวน์โหลดไว้ (อ้างอิงสอบถามได้): `%TEMP%\opencode\mcp-for-blender` (clone ของ github.com/ahujasid/mcp-for-blender) — รุ่น pyproject `2.2.6`
 
 ## 2. ตำแหน่งไฟล์ตั้งค่า (ความเข้าใจให้ตรง)
 
