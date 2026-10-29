@@ -14,8 +14,9 @@ const LIZARD_SHEET := preload("res://assets/art/gen/lizard_sheet.png")
 const TOWER_ARCHER_TEX := preload("res://assets/art/gen/tower_archer.png")
 const TOWER_CANNON_TEX := preload("res://assets/art/gen/tower_cannon.png")
 const ICON_BOW := preload("res://assets/art/icons/bow.png")
-const ICON_HAMMER := preload("res://assets/art/icons/hammer.png")
+const ICON_CANNON := preload("res://assets/art/icons/cannon.png")
 const ICON_COIN := preload("res://assets/art/icons/coin.png")
+const ICON_HEART := preload("res://assets/art/icons/heart.png")
 
 # ตารางป้อม (T3): ค่าบาลานซ์รวมที่เดียวจูนง่าย - ราคา/ดาเมจ/คูลดาวน์/รัศมี/ความเร็วกระสุน/ระเบิดกระจุก
 const TOWER_DEFS := {
@@ -26,7 +27,7 @@ const TOWER_DEFS := {
 	},
 	"cannon": {
 		"name": "ปืนใหญ่", "cost": 150, "kind": TowerScript.CANNON,
-		"tex": TOWER_CANNON_TEX, "icon": ICON_HAMMER,
+		"tex": TOWER_CANNON_TEX, "icon": ICON_CANNON,
 		"dmg": 30.0, "interval": 1.7, "range": 200.0, "shot": 220.0, "splash": 70.0,
 	},
 }
@@ -534,6 +535,14 @@ func _build_lives_label() -> void:
 	_hud = CanvasLayer.new()
 	_hud.layer = 10
 	add_child(_hud)
+	# แถวชีวิต (T4.1): ไอคอนหัวใจ + ตัวเลข
+	var heart := TextureRect.new()
+	heart.texture = ICON_HEART
+	heart.custom_minimum_size = Vector2(26, 26)
+	heart.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	heart.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	heart.position = Vector2(16, 12)
+	_hud.add_child(heart)
 	_lives_label = Label.new()
 	var ls := LabelSettings.new()
 	ls.font_size = 22
@@ -541,7 +550,7 @@ func _build_lives_label() -> void:
 	ls.outline_size = 6
 	ls.outline_color = Color(0.16, 0.09, 0.03)
 	_lives_label.label_settings = ls
-	_lives_label.position = Vector2(16, 12)
+	_lives_label.position = Vector2(48, 12)
 	_lives_label.text = "ชีวิต: %d" % _lives
 	_hud.add_child(_lives_label)
 	# แถวทอง (T3): ไอคอนเหรียญ + ตัวเลข
@@ -565,12 +574,12 @@ func _build_lives_label() -> void:
 	# คำใบ้การสร้างป้อม (มุมล่างซ้าย)
 	var hint := Label.new()
 	var hs := LabelSettings.new()
-	hs.font_size = 14
-	hs.font_color = Color(0.92, 0.92, 0.95)
-	hs.outline_size = 5
-	hs.outline_color = Color(0.08, 0.06, 0.05)
+	hs.font_size = 19
+	hs.font_color = Color(1.0, 0.98, 0.95)
+	hs.outline_size = 8
+	hs.outline_color = Color(0.10, 0.07, 0.03)
 	hint.label_settings = hs
-	hint.position = Vector2(16, 618)
+	hint.position = Vector2(16, 610)
 	hint.text = "คลิกวงทอง (หรือปุ่ม 1-4) สร้างป้อม — 1 นักธนู / 2 ปืนใหญ่ / Esc ปิด · N = เรียกคลื่นก่อนได้โบนัส"
 	_hud.add_child(hint)
 	# แถวข้อมูลคลื่น (T4): อยู่ใต้แถวชีวิต/ทอง

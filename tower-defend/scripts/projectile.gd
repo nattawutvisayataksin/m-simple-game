@@ -7,11 +7,21 @@ extends Node2D
 const ARCHER := 0
 const CANNON := 1
 
+const ARROW_TEX := preload("res://assets/art/gen/arrow.png")
+const BOMB_TEX := preload("res://assets/art/gen/bomb.png")
+
 var target: Node2D
 var damage := 9.0
 var speed := 260.0
 var splash_r := 0.0
 var kind := 0
+
+func _ready() -> void:
+	# ภาพจริงแทนวาดมือ (T4.1): ธนู = หัวหัน +x (rotation ตัว node คุมด้วย look_at) / ปืนใหญ่ = ระเบิดกลมภัย
+	var s := Sprite2D.new()
+	s.texture = ARROW_TEX if kind == ARCHER else BOMB_TEX
+	s.scale = Vector2(0.45, 0.45) if kind == ARCHER else Vector2(0.22, 0.22)
+	add_child(s)
 
 func _physics_process(delta: float) -> void:
 	var alive: bool = target != null and is_instance_valid(target) and not target.dead
@@ -47,13 +57,3 @@ func _explode(at: Vector2) -> void:
 				dmg = damage * 0.55   # ตัวรอบ ๆ โหมเบากว่าเป้าหลัก
 			e.take_damage(dmg)
 	queue_free()
-
-func _draw() -> void:
-	if kind == ARCHER:
-		# ลูกธนูหันตามหัว +x ตัวเอง (rotation ถูกคุมด้วย look_at)
-		draw_line(Vector2(5, 0), Vector2(-7, 0), Color(0.32, 0.18, 0.06), 2.5)
-		draw_circle(Vector2(6.5, 0), 2.6, Color(1.0, 0.68, 0.1))
-	else:
-		# ลูกระเบิดปืนใหญ่กลมดำ + ไฮไลต์
-		draw_circle(Vector2.ZERO, 5.5, Color(0.14, 0.1, 0.08))
-		draw_circle(Vector2(-1.5, -1.5), 1.6, Color(1.0, 1.0, 1.0, 0.55))
