@@ -10,7 +10,7 @@ const FROG_TEX := preload("res://assets/art/gen/frog.png")
 const LIZARD_TEX := preload("res://assets/art/gen/lizard_front.png")
 const FROG_SHEET := preload("res://assets/art/gen/frog_sheet.png")
 const LIZARD_SHEET := preload("res://assets/art/gen/lizard_sheet.png")
-const LIZARD_SIDE_SHEET := preload("res://assets/art/gen/lizard_side_sheet.png")
+# NB: lizard_side_sheet.png (4 ขา) เก็บเป็น stock - ผู้อำนวยการตัดสิน "ใช้สองขาสม่ำเสมอแบบกบ" ดีกว่าสลับ
 const TOWER_ARCHER_TEX := preload("res://assets/art/gen/tower_archer.png")
 const TOWER_CANNON_TEX := preload("res://assets/art/gen/tower_cannon.png")
 const ICON_BOW := preload("res://assets/art/icons/bow.png")
@@ -72,6 +72,7 @@ var _gold_label: Label
 var _hud: CanvasLayer
 var _built: Array[bool] = [false, false, false, false]   # ลานที่ปูป้อมแล้ว
 var _menu: Control            # แผงเลือกป้อม (เปิดเมื่อคลิกลานว่าง)
+var _menu_spot := -1          # ลานที่เมนูกำลังเปิด (สำหรับปุ่ม 1/2 เลือกป้อม)
 
 func _ready() -> void:
 	y_sort_enabled = true  # มอนวาดเรียงตามแนวระดับ (ตัวล่างจอบนตัวบนจอ - แก้ทับซ้อนดูลอย)
@@ -107,7 +108,8 @@ func _spawn_next() -> void:
 	if kind:
 		_spawn_enemy(FROG_TEX, FROG_SHEET, _shift_path(PATH_A, lane), FROG_SPEED * jitter, true, false, 59, null, 43, 26.0, 15)
 	else:
-		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56, LIZARD_SIDE_SHEET, 43, 42.0, 25)
+		# กิ้งก่า: ใช้หน้าตรงสองขาตลอดสาย (สไตล์กบ - sheet สี่ขาเก็บเป็น stock เพราะสลับแล้วขาไม่สม่ำเสมอ)
+		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56, null, 43, 42.0, 25)
 
 func _shift_path(path: Array[Vector2], off: float) -> Array[Vector2]:
 	# เลื่อน waypoint ทั้งเส้นตามแนวตั้งฉากของแต่ละช่วง (สายเดินข้างกันไม่ทับถนนกลาง)
@@ -187,15 +189,44 @@ func _flash_gold() -> void:
 # ---------- เมนูสร้างป้อม (T3) ----------
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
-		var p := to_local(event.position)
-		for i in range(TOWER_SPOTS.size()):
-			if _built[i]:
-				continue
-			if p.distance_to(TOWER_SPOTS[i]) <= 30.0:
-				_open_menu(i)
-				return
-		if _menu != null:
+		# NB: พิกัดคลิกมี 2 ระบบขึ้นกับ DPI - จอ 125% ย่อหน้าต่างจริงเป็น 921x518
+		# เช็คทั้งพิกัดโลก, event.position ดิบ (หน้าต่าง=สเกลเดียว), และ event.position ยืดตามสเกลหน้าต่าง
+		var candidates: Array[Vector2] = [event.position]
+		if is_inside_tree():
+			candidates.insert(0, get_global_mouse_position())
+		var win := get_window()
+		var wsize := Vector2(win.size) if win != null else Vector2.ZERO
+		if wsize.x > 100.0 and wsize.y > 100.0 and (wsize.x < 1100.0 or wsize.y < 600.0):
+			candidates.append(event.position * Vector2(1152.0, 648.0) / wsize)
+		var hit := -1
+		for p in candidates:
+			for i in range(TOWER_SPOTS.size()):
+				if not _built[i] and p.distance_to(TOWER_SPOTS[i]) <= 32.0:
+					hit = i
+					break
+			if hit >= 0:
+				break
+		if hit >= 0:
+			print("OPEN_MENU spot=", hit, " p=", candidates[0])  # DEBUG (console)
+			_open_menu(hit)
+		elif _menu != null:
 			_close_menu()
+	elif event is InputEventKey and event.pressed and not event.echo:
+		# ทางลัดคีย์บอร์ด (ปลอดภัยกับ DPI เสมอ): 1-4 เปิดเมนูลาน, 1/2 เลือกป้อม, Esc/X ปิด
+		var code: int = event.keycode
+		if _menu == null:
+			if code >= KEY_1 and code <= KEY_4:
+				var idx := code - KEY_1
+				if not _built[idx]:
+					print("OPEN_MENU spot=", idx, " (key)")  # DEBUG (console)
+					_open_menu(idx)
+		else:
+			if code == KEY_1:
+				_build_tower(_menu_spot, "archer")
+			elif code == KEY_2:
+				_build_tower(_menu_spot, "cannon")
+			elif code == KEY_ESCAPE or code == KEY_X:
+				_close_menu()
 	elif event.is_action_pressed("ui_cancel") and _menu != null:
 		_close_menu()
 
@@ -203,6 +234,7 @@ func _open_menu(spot_idx: int) -> void:
 	if _built[spot_idx]:
 		return
 	_close_menu()
+	_menu_spot = spot_idx
 	var panel := PanelContainer.new()
 	var hb := HBoxContainer.new()
 	hb.add_theme_constant_override("separation", 14)
@@ -248,6 +280,7 @@ func _close_menu() -> void:
 	if _menu != null:
 		_menu.queue_free()
 		_menu = null
+	_menu_spot = -1
 
 func _build_tower(spot_idx: int, key: String) -> void:
 	var def: Dictionary = TOWER_DEFS[key]
@@ -274,12 +307,15 @@ func _draw() -> void:
 	draw_circle(Vector2(261, 250), 14.0, GATE_COLOR)
 	# จุดหมาย (ประตูปราสาท): วงส้มแดง
 	draw_circle(Vector2(816, 495), 12.0, CASTLE_COLOR)
-	# ลานจุดวางป้อม: วงทอง + ขอบเข้ม (ลานที่ปูแล้วไม่วาด - เหลือป้อมจริง)
+	# ลานจุดวางป้อม: วงทอง + ขอบเข้ม + เลขปุ่มลัด (ลานที่ปูแล้วไม่วาด)
 	for i in range(TOWER_SPOTS.size()):
 		if _built[i]:
 			continue
 		draw_circle(TOWER_SPOTS[i], 26.0, SPOT_FILL)
 		draw_arc(TOWER_SPOTS[i], 26.0, 0.0, TAU, 32, SPOT_EDGE, 2.0, true)
+		var font := ThemeDB.fallback_font
+		draw_string(font, TOWER_SPOTS[i] + Vector2(-10.0, 5.0), str(i + 1),
+			HORIZONTAL_ALIGNMENT_CENTER, 20, 13, Color(0.2, 0.12, 0.02))
 
 func _build_lives_label() -> void:
 	_hud = CanvasLayer.new()
@@ -313,3 +349,14 @@ func _build_lives_label() -> void:
 	_gold_label.position = Vector2(48, 46)
 	_gold_label.text = "ทอง: %d" % _gold
 	_hud.add_child(_gold_label)
+	# คำใบ้การสร้างป้อม (มุมล่างซ้าย)
+	var hint := Label.new()
+	var hs := LabelSettings.new()
+	hs.font_size = 14
+	hs.font_color = Color(0.92, 0.92, 0.95)
+	hs.outline_size = 5
+	hs.outline_color = Color(0.08, 0.06, 0.05)
+	hint.label_settings = hs
+	hint.position = Vector2(16, 618)
+	hint.text = "คลิกวงทอง (หรือกดปุ่ม 1-4) สร้างป้อม — เมนูเปิด: กด 1 นักธนู / 2 ปืนใหญ่ / Esc ปิด"
+	_hud.add_child(hint)
