@@ -94,7 +94,9 @@ func _lay_road(cell: Vector3i, corner: bool, corner_index: int, along_x: bool) -
 	if scene == null:
 		return
 	var inst: Node3D = scene.instantiate()
+	inst.name = "Road_%d_%d" % [cell.x, cell.z]
 	inst.position = _cell_world(cell.x, cell.z)
+	inst.scale = Vector3.ONE * TILE_SCALE
 	if corner:
 		inst.rotation.y = (BENDING_BASE + corner_index) * PI / 2.0
 	else:
@@ -105,6 +107,7 @@ func _lay_road(cell: Vector3i, corner: bool, corner_index: int, along_x: bool) -
 	_path_cells.append(Vector3(inst.position.x, ROAD_TOP, inst.position.z))
 	# กล่องชนพื้นบาง (ขับได้)
 	var body := StaticBody3D.new()
+	body.name = "RoadCollision_%d_%d" % [cell.x, cell.z]
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
 	shape.size = Vector3(TILE_SCALE, 0.3, TILE_SCALE)
@@ -173,14 +176,23 @@ func _start_line_decor() -> void:
 	for i in KUBI_WALKERS.size():
 		var p := start + Vector3(-5.5 + i * 2.6, 0.05, -7.6)
 		_spawn_static_prop(KUBI_WALKERS[i], p, 2.2, deg_to_rad(15 * i - 30))
-	# ต้นไม้ใบไม้กระจายรอบเมือง
+	# ต้นไม้และดอกไม้กระจายรอบนอกสนาม โดยเว้นเลนแข่งไว้
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 20260229
+	var zones := [
+		Rect2(-48, -24, 36, 112),
+		Rect2(110, -24, 36, 112),
+		Rect2(-12, -34, 124, 26),
+		Rect2(-12, 72, 124, 26),
+	]
 	for i in 24:
 		var deco: Array = DECOS[i % DECOS.size()]
-		var rx := rng.randf_range(-46.0, 46.0)
-		var rz := rng.randf_range(-34.0, 34.0)
-		_spawn_static_prop(deco[0], Vector3(rx, ROAD_TOP, rz), deco[1], rng.randf() * TAU)
+		var zone: Rect2 = zones[rng.randi_range(0, zones.size() - 1)]
+		var rx := rng.randf_range(zone.position.x, zone.end.x)
+		var rz := rng.randf_range(zone.position.y, zone.end.y)
+		var body := _spawn_static_prop(deco[0], Vector3(rx, ROAD_TOP, rz), deco[1], rng.randf() * TAU)
+		if body != null:
+			body.name = "TownDecor_%02d" % i
 
 # --- ของแถวทางวิ่ง: กล่องซ้อน (ชนได้) + เป้าโบนัส ---
 

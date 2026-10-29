@@ -1,6 +1,6 @@
 # m-sample-game — คลังฝึกทำเกม (Godot 4.7)
 
-Repo นี้เก็บ **เกมฝึกพัฒนา 2 เกม (แยกโฟลเดอร์เกมของตัวเอง มี `project.godot` อิสระแต่ละเกม)** + เครื่องมือทั่วไป + เอกสารแยกต่อเกม ตั้งใจให้เกมที่ 3 เพิ่มตามมาได้ทันที
+Repo นี้เก็บ **เกมฝึกพัฒนา 3 เกม (แยกโฟลเดอร์เกมของตัวเอง มี `project.godot` อิสระแต่ละเกม)** + เครื่องมือทั่วไป + เอกสารแยกต่อเกม
 
 ## เกมที่มีและเล่นได้
 
@@ -8,10 +8,10 @@ Repo นี้เก็บ **เกมฝึกพัฒนา 2 เกม (แ�
 |---|---|---|---|---|
 | 1 | **ชิงเหรียญทอง (Coin Rush)** 🪙 | `games/game1_coin_rush/` | เก็บเหรียญ 10 (ทองพิเศษ ค่า 1-10) ภายใน 30 วิ · ไวรัสไล่ · WASD/ลูกศร + Shift วิ่งเร็ว · R รีสตาร์ท | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game1_coin_rush` |
 | 2 | **หอคอยคู่ฟ้า (Kub Kingdom Rush)** 🏰 | `games/game2_tower_defense/` | Tower defense: มอนเดินเส้นเดียว ซื้อ/อัปเกรด/ขายป้อม · กลิ้ง 10 คลื่น + ฮีโร่ Kubi · ปุ่ม 1-4 ลานป้อม | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game2_tower_defense` |
-| 3 | **เกมรถ (Game 3 - Car)** 🚗 | `games/game3_car/` | โครงตั้งต้น — รอกำหนดแนวเกม (แข่งเร็ว / หลบรถ / เก็บของ เป็นต้น) | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game3_car` |
+| 3 | **Kubi Grand Prix ราชวงศ์ทอง** 🚗 | `games/game3_car/starter-kit-racing/` | แข่งรถ 3D ในเมือง Kubi · WASD ขับ/เบรก/เลี้ยว · เก็บเหรียญและผ่านประตูให้ครบ 3 รอบ | ดับเบิลคลิก `games/game3_car/play.bat` หรือ `godot --path games/game3_car/starter-kit-racing` |
 
 > สถานะเกม 2: **ปิดโปรเจกต์** ที่ T5.2 (คำวินิจฉัยผู้อำนวยการ + บทเรียนเก็บไว้เต็ม ๆ ใน GDD เกม 2)
-> สถานะเกม 3: **โครงตั้งต้น T0** — โฟลเดอร์ + ฉาก stub พร้อมรัน, รอผู้อำนวยการกำหนดแนวเกมรถ (`docs/game3_car/GDD.md`)
+> สถานะเกม 3: **T1.1 WIP** — เกมรถ 3D พร้อมระบบหลัก กำลังต่อยอดภาพเมือง Kubi (`docs/game3_car/GDD.md`)
 
 ## โครงสร้าง repo
 
@@ -19,7 +19,8 @@ Repo นี้เก็บ **เกมฝึกพัฒนา 2 เกม (แ�
 m-sample-game/
 ├─ games/
 │  ├─ game1_coin_rush/      # เกม 1 (project.godot + scenes/scripts/assets/tools + play.bat)
-│  └─ game2_tower_defense/  # เกม 2 (โครงเดียวกัน, tools มีสูทเทสอัตโนมัติ)
+│  ├─ game2_tower_defense/  # เกม 2 (โครงเดียวกัน, tools มีสูทเทสอัตโนมัติ)
+│  └─ game3_car/            # เกม 3 (Kubi Grand Prix; โปรเจกต์เล่นได้ใน starter-kit-racing/)
 ├─ shared/                  # เครื่องมือพิกเซล/ภาพใช้ร่วมทุกเกม (gen_pixen, pixellab_anim, upscale_nearest, ...)
 ├─ docs/
 │  ├─ game1_coin_rush/      # GDD · ART_DIRECTION · ARCHITECTURE · ASSETS

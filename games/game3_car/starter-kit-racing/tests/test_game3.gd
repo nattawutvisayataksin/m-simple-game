@@ -66,9 +66,35 @@ func _process(_delta: float) -> bool:
 
 func _stage_structure() -> void:
 	print("[1] โครงสร้างระบบเกม")
+	var town := game.get_node_or_null("Town")
 	var coins := game.get_node_or_null("Coins")
 	var gates := game.get_node_or_null("Gates")
 	var props := game.get_node_or_null("Props")
+	var track_points: Array = town.call("get_track_points") if town != null else []
+	_check("เมืองสร้างวงถนนครบ 42 จุด", track_points.size() == 42,
+		"points=%d" % track_points.size())
+	var decorations_clear := true
+	var decoration_count := 0
+	if town != null:
+		for child in town.get_children():
+			if not child.name.begins_with("TownDecor_"):
+				continue
+			decoration_count += 1
+			for point in track_points:
+				if Vector2(child.position.x, child.position.z).distance_to(Vector2(point.x, point.z)) < 5.0:
+					decorations_clear = false
+	_check("ของตกแต่ง 24 ชิ้นอยู่นอกเลนแข่ง", decoration_count == 24 and decorations_clear,
+		"count=%d clear=%s" % [decoration_count, decorations_clear])
+	var road: Node3D = town.get_node_or_null("Road_1_0") if town != null else null
+	_check("โมเดลถนนขยายตามขนาดช่อง 7 ม.", road != null and road.scale.is_equal_approx(Vector3.ONE * 7.0))
+	var road_collision: StaticBody3D = town.get_node_or_null("RoadCollision_1_0") if town != null else null
+	var road_shape: CollisionShape3D
+	if road_collision != null and road_collision.get_child_count() > 0:
+		road_shape = road_collision.get_child(0) as CollisionShape3D
+	var box_shape := road_shape.shape as BoxShape3D if road_shape != null else null
+	_check("ถนนมี collider ครอบคลุมช่อง", box_shape != null
+		and is_equal_approx(box_shape.size.x, 7.0)
+		and is_equal_approx(box_shape.size.z, 7.0))
 	_check("Coins ถูกสร้าง", coins != null and coins.get_child_count() > 0,
 		"children=%s" % (coins.get_child_count() if coins else -1))
 	_check("Gates ครบ 3 ประตู", gates != null and gates.get_child_count() == 3,

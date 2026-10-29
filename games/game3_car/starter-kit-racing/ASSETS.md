@@ -1,6 +1,6 @@
 # Assets ที่ใช้ในเกม 3 (Kubi Grand Prix ราชวงศ์ทอง)
 
-ทุกชิ้นเป็นของฟรีลิขสิทธิ์ CC0 (Kenney NL) — ไม่มีการใช้ gen AI ใด ๆ ในขั้น T1.0
+ทุกชิ้นเป็นของฟรีลิขสิทธิ์ CC0 (Kenney NL) — ไม่มีการใช้ gen AI ในชุด asset นี้
 
 ## ที่มาและไฟล์ที่ vendor ลงโปรเจกต์
 
@@ -10,12 +10,16 @@
 | `models/kart-oobi.glb`, `kart-oodi.glb`, `kart-oozi.glb` (เหล่า kart ตกแต่งเส้นชัย) | kenney_car-kit |
 | `models/props/electricity-pole.glb`, `traffic-light.glb`, `sign-highway.glb`, `construction-cone.glb`, `road-side-barrier.glb` (ของประดับสนาม) | kenney_city-kit-roads |
 | `models/props/Textures/colormap.png` | kenney_city-kit-roads (GLB อ้างไฟล์ texture ภายนอกแบบ relative path) |
+| `models/town/roads/*.glb` และ `Textures/colormap.png` | [City Kit (Roads)](https://kenney.nl/assets/city-kit-roads) |
+| `models/town/industrial/*.glb` และ `Textures/colormap.png` | [City Kit (Industrial)](https://kenney.nl/assets/city-kit-industrial) |
+| `models/town/deco/*.glb` และ `Textures/colormap.png` | [Platformer Kit](https://kenney.nl/assets/platformer-kit) (ตัวละคร ต้นไม้ รั้ว และเหรียญ) |
+| `models/town/props/*.glb` และ `Textures/colormap.png` | [Blaster Kit](https://kenney.nl/assets/blaster-kit) (ลังและเป้า) |
 
 - ใบอนุญาตครบทั้งสองชุดอยู่ที่ `models/props/LICENSE_car-kit.txt` และ `LICENSE_city-kit-roads.txt` (CC0)
-- ต้นฉบับทั้งหมด: https://kenney.nl/assets (Kenney Studio, CC0 1.0 Universal)
-- ชุดฐาน Starter Kit Racing (Kenney NL) — MIT/CC0 เดิมตาม README ของ kit
+- ชุด asset ของ Kenney ที่ใช้ในเมืองระบุ CC0 บนหน้าแหล่งที่มาด้านบน
+- ชุดฐาน Starter Kit Racing (Kenney NL) ใช้โค้ด MIT และโมเดล/เสียง CC0 ตาม README และ LICENSE ที่มากับชุด
 - ขนาดของ prop ถูกจัดที่รันไทม์ (`scripts/game.gd` — `PROP_TARGET_HEIGHT` + วัด AABB เอาอัตโนมัติ) ไม่ต้องแก้ไฟล์โมเดล
 
-## สิ่งที่ยังไม่เอามา (ไว้แผนถัดไป)
+## เมือง Kubi
 
-ชุด `kenney_city-kit-roads` ยังมีชิ้นถนนเมืองครบ (road-straight, road-curve, intersection, roundabout, ไฟจราจรติดตั้ง เป็นต้น) เก็บไว้ทำ T1.1: สร้าง MeshLibrary ถนนเมือง Kubi แทนชุดสนาม kit เดิม = สนามเอกลักษณ์เป็นเมือง Kubi
+`scripts/town.gd` ใช้เฉพาะโมเดลถนน อาคาร และของตกแต่งที่ระบุไว้ข้างต้นเพื่อสร้างฉากเมืองสำหรับสนามแข่ง ไม่ได้นำโปรเจกต์หรือระบบควบคุมจาก Starter Kit City Builder มาใช้
