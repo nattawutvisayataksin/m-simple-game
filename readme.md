@@ -1,36 +1,44 @@
-# m-sample-game
+# Coin Catcher (m-sample-game)
 
-โปรเจกต์เกมที่พัฒนาด้วย [Godot Engine](https://godotengine.org/)
+เกมฝึกพัฒนา 2D ด้วย [Godot Engine 4.x](https://godotengine.org/) — เป้าหมายคือฝึกพื้นฐานการทำเกมทีละระบบ
 
-## ข้อมูลเบื้องต้น
-
-- ชื่อโปรเจกต์: `m-sample-game`
-- เอนจิน: Godot
-- Renderer: GL Compatibility
-- Godot MCP: `@coding-solo/godot-mcp`
+**วิธีเล่น:** เก็บเหรียญให้ครบ 10 อัน ด้วย **WASD** หรือ **ปุ่มลูกศร** เก็บครบแล้วชนะ กด **R** เริ่มใหม่
 
 ## โครงสร้างโปรเจกต์
 
 ```text
 m-sample-game/
-├─ project.godot       # ไฟล์ตั้งค่าโปรเจกต์ Godot
-├─ readme.md           # เอกสารเบื้องต้นของโปรเจกต์
-├─ scenes/             # ไฟล์ฉากของเกม (.tscn)
-├─ scripts/            # สคริปต์ GDScript (.gd)
-├─ addons/             # ส่วนเสริมของ Godot
-└─ .vscode/
-   └─ mcp.json         # การตั้งค่า Godot MCP สำหรับ VS Code
+├─ project.godot          # ตั้งค่าเอนจิน + Input Map (WASD/ลูกศร)
+├─ readme.md
+├─ HOME_SETUP.md          # คู่มือเตรียมเครื่องที่บ้าน
+├─ docs/GDD.md            # Game Design Document
+├─ scenes/
+│  ├─ main.tscn           # ฉากหลัก: กำแพง + Player + HUD
+│  ├─ player.tscn         # CharacterBody2D (นักเก็บเหรียญ)
+│  └─ coin.tscn           # Area2D (เหรียญที่เก็บได้)
+├─ scripts/
+│  ├─ main.gd             # จัดการ score / spawn เหรียญ / ชนะ
+│  ├─ player.gd           # การเคลื่อนที่ (move_and_slide)
+│  └─ coin.gd             # เก็บเหรียญด้วย signal
+└─ .vscode/mcp.json       # ตั้งค่า Godot MCP สำหรับ VS Code
 ```
 
-## การเปิดโปรเจกต์
+## ระบบที่ฝึกจากโปรเจกต์นี้
 
-1. ติดตั้ง Godot Engine
-2. เปิด Godot Project Manager
-3. เลือก **Import**
-4. เลือกไฟล์ `project.godot` ในโฟลเดอร์โปรเจกต์
-5. กด **Run Project** เพื่อเริ่มโปรเจกต์
+- Input Map และ `Input.get_vector()` — ควบคุมทิศทางลื่น ๆ
+- `move_and_slide()` — เดินแล้วเลื่อนตามกำแพงอัตโนมัติ
+- Area2D + `body_entered` — ตรวจการชนเหรียญ
+- Signal — เหรียญส่งข่าวไปฉากหลักเพื่อเพิ่มคะแนน โดยไม่ผูกติดกัน
+- `randf_range` — สุ่มตำแหน่งวางเหรียญไม่ให้ซ้อนกัน
+- HUD (CanvasLayer + Label) — แสดงคะแนนบนหน้าจอ
 
-หรือเปิดโฟลเดอร์นี้ด้วย Godot โดยตรงจากคำสั่ง:
+## การเปิดโปรเจกต์และเล่น
+
+1. ติดตั้ง Godot Engine รุ่น 4.x
+2. เปิด Godot Project Manager → **Import** → เลือกไฟล์ `project.godot`
+3. กด **F5** (Run Project) เล่นได้ทันที (main scene คือ `scenes/main.tscn`)
+
+หรือผ่านคำสั่ง:
 
 ```text
 godot --editor --path .
@@ -38,121 +46,43 @@ godot --editor --path .
 
 ## Godot MCP
 
-โปรเจกต์นี้ตั้งค่า Godot MCP ไว้ใน `.vscode/mcp.json` เพื่อช่วยให้ AI agent สามารถโต้ตอบกับ Godot ได้ เช่น:
+โปรเจกต์ตั้งค่า `@coding-solo/godot-mcp` ไว้ที่ `.vscode/mcp.json` — ใช้ AI ช่วยสร้างฉาก / เพิ่ม Node / ตรวจ debug ได้
 
-- เปิด Godot Editor
-- เรียกใช้โปรเจกต์
-- ตรวจสอบ debug output
-- สร้างและจัดการฉาก
-- เพิ่ม Node ในฉาก
-- จัดการ UID ของไฟล์ Godot
-
-หลังจากเปิดโปรเจกต์ใน VS Code ให้ Reload Window หาก MCP ยังไม่แสดงในทันที
-
-## แนวทางการจัดเก็บไฟล์
-
-- เก็บไฟล์ฉากทั้งหมดไว้ใน `scenes/`
-- เก็บสคริปต์ GDScript ไว้ใน `scripts/`
-- เก็บปลั๊กอินหรือส่วนเสริมไว้ใน `addons/`
-- ตั้งชื่อไฟล์และโฟลเดอร์ให้สื่อความหมาย
+> ต้องแก้ `GODOT_PATH` ในไฟล์นั้นให้ตรงกับเครื่องคุณ ดูขั้นตอนใน `HOME_SETUP.md`
 
 ## สถานะการพัฒนา
 
-โปรเจกต์อยู่ในขั้นตอนเริ่มต้น สามารถเพิ่มฉาก ตัวละคร ระบบเกม และทรัพยากรต่าง ๆ ได้ตามต้องการ
+- [x] Player เคลื่อนที่ + ชนกำแพง
+- [x] ระบบเหรียญที่เก็บได้
+- [x] HUD score + จอชนะ
+- [ ] เสียงเก็บเหรียญ
+- [ ] จับเวลา countdown
+- [ ] ศัตรู / อุปสรรค
 
-## การนำโปรเจกต์ไปทำต่อที่คอมพิวเตอร์ที่บ้าน
+หัวข้อฝึกชุดต่อไปดูส่วน "โจทย์ฝึกหัด" ที่คอมเมนต์ในไฟล์ `scripts/*.gd`
 
-โปรเจกต์ปลายทางบน GitHub คือ:
+## การทำต่อที่คอมพิวเตอร์ที่บ้าน
+
+Repository:
 
 `https://github.com/nattawutvisayataksin/m-simple-game.git`
-
-ขณะนี้ repository ดังกล่าวยังว่างอยู่ จึงสามารถใช้เป็น remote สำหรับเก็บโปรเจกต์นี้ได้
-
-### วิธีส่งโปรเจกต์ขึ้น GitHub จากเครื่องนี้
-
-เปิด Terminal ที่โฟลเดอร์ `m-sample-game` แล้วรันคำสั่งต่อไปนี้:
-
-```text
-git init
-git add .
-git commit -m "Initial Godot project setup"
-git branch -M main
-git remote add origin https://github.com/nattawutvisayataksin/m-simple-game.git
-git push -u origin main
-```
-
-หากมีการตั้งค่า remote ไว้แล้ว ให้ใช้คำสั่งนี้แทนคำสั่ง `git remote add origin`:
-
-```text
-git remote set-url origin https://github.com/nattawutvisayataksin/m-simple-game.git
-```
-
-> หาก GitHub ขอรหัสผ่าน ให้ใช้ Personal Access Token (PAT) แทนรหัสผ่านบัญชี GitHub
-
-### วิธีดาวน์โหลดและทำต่อที่บ้าน
-
-ติดตั้งโปรแกรมเหล่านี้บนคอมพิวเตอร์ที่บ้านก่อน:
-
-- Godot Engine รุ่น 4.x
-- Git
-- Node.js รุ่น 18 ขึ้นไป หากต้องการใช้ Godot MCP
-- Visual Studio Code หากต้องการใช้ MCP ผ่าน VS Code
-
-จากนั้นเปิด Terminal แล้วรัน:
 
 ```text
 git clone https://github.com/nattawutvisayataksin/m-simple-game.git
 cd m-simple-game
-```
-
-เปิดโปรเจกต์ด้วย Godot:
-
-```text
 godot --editor --path .
 ```
 
-หรือเปิดโฟลเดอร์ `m-simple-game` ใน VS Code แล้วเปิดไฟล์ `project.godot` ผ่าน Godot
+คู่มือเตรียมเครื่องฉบับเต็มอยู่ที่ `HOME_SETUP.md`
 
-### ตั้งค่า Godot MCP ที่เครื่องบ้าน
-
-ไฟล์ `.vscode/mcp.json` ถูกเก็บไว้ในโปรเจกต์แล้ว แต่ค่า `GODOT_PATH` อาจแตกต่างกันตามตำแหน่งติดตั้ง Godot ของแต่ละเครื่อง ให้แก้ path ในไฟล์นี้ให้ตรงกับเครื่องบ้าน เช่น:
-
-```json
-{
-   "servers": {
-      "godot": {
-         "command": "npx",
-         "args": ["-y", "@coding-solo/godot-mcp"],
-         "env": {
-            "GODOT_PATH": "C:\\Path\\To\\Godot.exe"
-         }
-      }
-   }
-}
-```
-
-ตรวจสอบ path ของ Godot บน Windows ได้ด้วยคำสั่ง:
-
-```powershell
-Get-Command godot
-```
-
-หลังแก้ไขไฟล์ MCP แล้ว ให้ Reload Window หรือเปิด VS Code ใหม่
-
-### ขั้นตอนการทำงานประจำวัน
-
-ก่อนเริ่มทำงาน:
+## ขั้นตอนการทำงานประจำวัน
 
 ```text
 git pull origin main
-```
-
-หลังแก้ไขงานเสร็จ:
-
-```text
+# แก้โค้ด
 git add .
-git commit -m "Describe your changes"
+git commit -m "อธิบายสิ่งที่แก้ไข"
 git push origin main
 ```
 
-ควร commit งานเป็นระยะ และตรวจสอบว่าไฟล์สำคัญ เช่น `project.godot`, `scenes/`, `scripts/`, `docs/` และ `.vscode/mcp.json` ถูกส่งขึ้น GitHub ครบถ้วน
+> หาก push ขอรหัสผ่าน ให้ใช้ GitHub Personal Access Token (PAT) แทน

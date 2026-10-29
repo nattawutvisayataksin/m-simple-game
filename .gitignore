@@ -1,0 +1,16 @@
+# Godot 4 cache and temporary files
+.godot/
+*.tmp
+
+# Import cache
+.import/
+*.translation
+
+# Export artifacts
+*.export
+export.cfg
+export/
+
+# OS junk
+Thumbs.db
+.DS_Store
