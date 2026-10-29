@@ -2,6 +2,10 @@
 .godot/
 *.tmp
 
+# Local AI/tooling config (not part of the game)
+.mcp.json
+.opencode/
+
 # Import cache
 .import/
 *.translation

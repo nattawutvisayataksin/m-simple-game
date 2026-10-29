@@ -13,13 +13,17 @@ m-sample-game/
 ├─ HOME_SETUP.md          # คู่มือเตรียมเครื่องที่บ้าน
 ├─ docs/GDD.md            # Game Design Document
 ├─ scenes/
-│  ├─ main.tscn           # ฉากหลัก: กำแพง + Player + HUD
+│  ├─ main.tscn           # ฉากหลัก: กำแพง + Player + ศัตรู + HUD
 │  ├─ player.tscn         # CharacterBody2D (นักเก็บเหรียญ)
-│  └─ coin.tscn           # Area2D (เหรียญที่เก็บได้)
+│  ├─ coin.tscn           # Area2D (เหรียญที่เก็บได้)
+│  └─ enemy.tscn          # Area2D (ลูกเหล็กเด้ง — โดนชน = แพ้)
 ├─ scripts/
-│  ├─ main.gd             # จัดการ score / spawn เหรียญ / ชนะ
+│  ├─ main.gd             # คะแนน / นับเวลา / สถานะเกม / เสียง
 │  ├─ player.gd           # การเคลื่อนที่ (move_and_slide)
-│  └─ coin.gd             # เก็บเหรียญด้วย signal
+│  ├─ coin.gd             # เก็บเหรียญด้วย signal
+│  └─ enemy.gd            # ศัตรูเด้งไปมาในสนาม
+├─ assets/audio/          # เสียง .wav สร้างด้วยสคริปต์ (ดู tools/)
+├─ tools/generate_sfx.ps1 # สคริปต์สังเคราะห์เสียงเอฟเฟกต์
 └─ .vscode/mcp.json       # ตั้งค่า Godot MCP สำหรับ VS Code
 ```
 
@@ -27,10 +31,19 @@ m-sample-game/
 
 - Input Map และ `Input.get_vector()` — ควบคุมทิศทางลื่น ๆ
 - `move_and_slide()` — เดินแล้วเลื่อนตามกำแพงอัตโนมัติ
-- Area2D + `body_entered` — ตรวจการชนเหรียญ
-- Signal — เหรียญส่งข่าวไปฉากหลักเพื่อเพิ่มคะแนน โดยไม่ผูกติดกัน
+- Area2D + `body_entered` — ตรวจการชนเหรียญและศัตรู
+- Signal — เหรียญ/ศัตรูส่งข่าวไปฉากหลักโดยไม่ผูกติดกัน
+- สถานะเกม (state machine) — `PLAYING / WON / LOST`
+- นับเวลาถอยหลังด้วย `delta` — หมดเวลา = แพ้
 - `randf_range` — สุ่มตำแหน่งวางเหรียญไม่ให้ซ้อนกัน
-- HUD (CanvasLayer + Label) — แสดงคะแนนบนหน้าจอ
+- HUD (CanvasLayer + Label) — คะแนน, เวลา, จอชนะ/แพ้
+- เสียงเอฟเฟกต์ — AudioStreamPlayer + ไฟล์ .wav ที่สังเคราะห์เอง
+
+## กติกา
+
+- เก็บเหรียญให้ครบ 10 อันภายใน 30 วิ = **ชนะ**
+- โดนลูกเหล็กสีแดงชน = **แพ้**
+- กด **R** เริ่มเกมใหม่ได้ตลอดเวลา
 
 ## การเปิดโปรเจกต์และเล่น
 
@@ -54,10 +67,13 @@ godot --editor --path .
 
 - [x] Player เคลื่อนที่ + ชนกำแพง
 - [x] ระบบเหรียญที่เก็บได้
-- [x] HUD score + จอชนะ
-- [ ] เสียงเก็บเหรียญ
-- [ ] จับเวลา countdown
-- [ ] ศัตรู / อุปสรรค
+- [x] HUD score + จอชนะ/จอแพ้
+- [x] เสียงเก็บเหรียญ (+ เสียงชนะและแพ้)
+- [x] นับเวลาถอยหลัง 30 วิ
+- [x] ศัตรูลูกเหล็กเด้ง 2 ตัว
+- [ ] ระดับความยาก (เกม level เพิ่มศัตรู)
+- [ ] sprite จริงแทน Polygon2D
+- [ ] เก็บ hi-score ลงไฟล์
 
 หัวข้อฝึกชุดต่อไปดูส่วน "โจทย์ฝึกหัด" ที่คอมเมนต์ในไฟล์ `scripts/*.gd`
 
