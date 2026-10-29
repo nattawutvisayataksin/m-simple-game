@@ -6,7 +6,7 @@ extends Node2D
 
 const EnemyScript := preload("res://scripts/enemy.gd")
 const FROG_TEX := preload("res://assets/art/gen/frog.png")
-const LIZARD_TEX := preload("res://assets/art/gen/lizard.png")
+const LIZARD_TEX := preload("res://assets/art/gen/lizard_front.png")
 const FROG_SHEET := preload("res://assets/art/gen/frog_sheet.png")
 const LIZARD_SHEET := preload("res://assets/art/gen/lizard_sheet.png")
 
@@ -72,15 +72,17 @@ func _spawn_point_clear() -> bool:
 	return true
 
 func _spawn_next() -> void:
-	# สลับชนิดวน: กบ / กิ้งก่า + ไลน์เลื่อนข้างสลับซ้าย/ขวา กันเดินซ้อน
-	var kind := (_spawn_seq % 2) == 0
-	var lane := LANE_OFFSET if (_spawn_seq % 2) == 0 else -LANE_OFFSET
+	# ออกทีละชุดละ 3 ตัว (กบ 3 -> กิ้งก่า 3 ...) ความไล่เฉดเส้นทางข้างสลับ ซ้าย/ขวา/กลาง
+	var batch := int(_spawn_seq / 3.0)
+	var kind := (batch % 2) == 0
+	var lanes := [-13.0, 13.0, 0.0]
+	var lane: float = lanes[_spawn_seq % 3]
 	_spawn_seq += 1
-	var jitter := randf_range(0.92, 1.08)   # สุ่มความเร็วบาง ๆ ตัดรอบเดินเป๊ะกัน
+	var jitter := randf_range(0.94, 1.06)   # สุ่มความเร็วบาง ๆ กันเดินเป๊ะมืดเป๊ะ
 	if kind:
-		_spawn_enemy(FROG_TEX, FROG_SHEET, _shift_path(PATH_A, lane), FROG_SPEED * jitter, true, false)
+		_spawn_enemy(FROG_TEX, FROG_SHEET, _shift_path(PATH_A, lane), FROG_SPEED * jitter, true, false, 59)
 	else:
-		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, false, true)
+		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56)
 
 func _shift_path(path: Array[Vector2], off: float) -> Array[Vector2]:
 	# เลื่อน waypoint ทั้งเส้นตามแนวตั้งฉากของแต่ละช่วง (สายเดินข้างกันไม่ทับถนนกลาง)
@@ -99,7 +101,7 @@ func _shift_path(path: Array[Vector2], off: float) -> Array[Vector2]:
 			out.append(path[i] + Vector2(off, 0))   # ช่วงเดินตั้ง -> เลื่อนตามแกน x
 	return out
 
-func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], speed: float, no_flip: bool, faces_left: bool) -> void:
+func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], speed: float, no_flip: bool, faces_left: bool, bottom_row: int) -> void:
 	var e := EnemyScript.new()
 	e.sheet = sheet          # เฟรมเดินจริงถ้ามี sheet (fallback texture นิ่ง)
 	e.texture = texture
@@ -107,6 +109,7 @@ func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], sp
 	e.speed = speed
 	e.no_flip = no_flip
 	e.faces_left = faces_left
+	e.body_bottom_row = bottom_row  # แถวเท้าจริงในเฟรม (กบ 59 / กิ้งก่าเดิม 43)
 	add_child(e)
 	e.reached_castle.connect(_on_enemy_leak)
 

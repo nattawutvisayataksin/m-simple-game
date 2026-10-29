@@ -15,6 +15,7 @@ var speed := 60.0
 var base_scale := 1.5
 var no_flip := false
 var faces_left := false   # สไปรต์หันข้างเกิดหัวไปทางไหน (กิ้งก่า = ซ้าย)
+var body_bottom_row := 59  # แถวเท้าล่างสุดในเฟรม 64px (กบ=59) - จาก tools/measure_feet.ps1
 var texture: Texture2D        # ภาพนิ่ง (fallback)
 var sheet: Texture2D          # spritesheet แถวเดียว (เลือกใช้ถ้ามี)
 
@@ -30,7 +31,8 @@ func _ready() -> void:
 	if sheet != null and sheet.get_width() > FRAME_SIZE:
 		_sprite.hframes = sheet.get_width() / FRAME_SIZE
 	_sprite.scale = Vector2(base_scale, base_scale)
-	_sprite.offset = Vector2(0, -22)  # จุด reference อยู่เท้า ไม่ใช่กึ่งกลางตัว
+	# จุด reference อยู่เท้า: เลื่อนตามแถวเท้าจริงของแต่ละสายพันธุ์ (กันเหาะเหนือถนน)
+	_sprite.offset = Vector2(0, 2.0 / base_scale - (body_bottom_row - 32))
 	add_child(_sprite)
 	# ยืนจุดแรกของเส้นทาง
 	if waypoints.size() > 0:
