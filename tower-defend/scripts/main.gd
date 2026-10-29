@@ -17,6 +17,9 @@ const ICON_BOW := preload("res://assets/art/icons/bow.png")
 const ICON_CANNON := preload("res://assets/art/icons/cannon.png")
 const ICON_COIN := preload("res://assets/art/icons/coin.png")
 const ICON_HEART := preload("res://assets/art/icons/heart.png")
+const ICON_UPG_BOW := preload("res://assets/art/icons/upg_bow.png")       # T5 ไอคอนอัปเกรดป้อมธนู
+const ICON_UPG_HAMMER := preload("res://assets/art/icons/upg_hammer.png") # T5 ไอคอนอัปเกรดปืนใหญ่
+const HeroScript := preload("res://scripts/hero.gd")                     # T5 ฮีโร่ Kubi
 
 # ตารางป้อม (T3): ค่าบาลานซ์รวมที่เดียวจูนง่าย - ราคา/ดาเมจ/คูลดาวน์/รัศมี/ความเร็วกระสุน/ระเบิดกระจุก
 const TOWER_DEFS := {
@@ -24,13 +27,20 @@ const TOWER_DEFS := {
 		"name": "ป้อมธนู", "cost": 90, "kind": TowerScript.ARCHER,
 		"tex": TOWER_ARCHER_TEX, "icon": ICON_BOW,
 		"dmg": 9.0, "interval": 0.75, "range": 170.0, "shot": 300.0, "splash": 0.0,
+		# T5: อัปเกรด Lv2 (ยิงเร็วไกลขึ้น)
+		"upg_cost": 70, "upg_icon": ICON_UPG_BOW,
+		"upg": {"dmg": 15.0, "interval": 0.6, "range": 200.0, "shot": 330.0, "splash": 0.0},
 	},
 	"cannon": {
 		"name": "ปืนใหญ่", "cost": 150, "kind": TowerScript.CANNON,
 		"tex": TOWER_CANNON_TEX, "icon": ICON_CANNON,
 		"dmg": 30.0, "interval": 1.7, "range": 200.0, "shot": 220.0, "splash": 70.0,
+		# T5: อัปเกรด Lv2 (ระเบิดหนัก บอดใหญ่)
+		"upg_cost": 110, "upg_icon": ICON_UPG_HAMMER,
+		"upg": {"dmg": 50.0, "interval": 1.45, "range": 225.0, "shot": 220.0, "splash": 85.0},
 	},
 }
+const SELL_REFUND := 0.6   # T5 ขายป้อมคืน 60% ของเงินที่ลงไป (สร้าง + อัปเกรด)
 
 # หมุดโลก (ฉากเดียว 1152x648): ประตูม่วงบนซ้าย (261, 250) ; ประตูปราสาท (816, 495)
 const PATH_A: Array[Vector2] = [
@@ -97,15 +107,23 @@ var _gold := 180            # ทุนเริ่มพอสร้างน�
 var _lives_label: Label
 var _gold_label: Label
 var _hud: CanvasLayer
-var _built: Array[bool] = [false, false, false, false]   # ลานที่ปูป้อมแล้ว
+var _towers: Array = [null, null, null, null]   # T5: node ป้อมต่อลาน (null = ว่าง, แทน _built เดิม)
+var _lvl: Array[int] = [0, 0, 0, 0]             # T5: เลเวลต่อลาน (0=ว่าง 1 2)
+var _inv: Array[int] = [0, 0, 0, 0]             # T5: เงินที่ลงทุนต่อลาน (สร้าง+อัปเกรด ใช้คิดคืนขาย)
 var _menu: Control            # แผงเลือกป้อม (เปิดเมื่อคลิกลานว่าง)
 var _menu_spot := -1          # ลานที่เมนูกำลังเปิด (สำหรับปุ่ม 1/2 เลือกป้อม)
+var _menu_mode := ""          # T5: "build" = เลือกสร้าง / "built" = อัปเกรด-ขาย
+var _hero                     # T5: ฮีโร่ Kubi (คลิกขวาสั่งเดิน)
 var _wave_label: Label        # แถวข้อมูลคลื่นบน HUD (T4)
 var _wave_btn: Button         # ปุ่มเรียกคลื่นถัดไปก่อนพร้อมโบนัส (T4)
 
 func _ready() -> void:
 	y_sort_enabled = true  # มอนวาดเรียงตามแนวระดับ (ตัวล่างจอบนตัวบนจอ - แก้ทับซ้อนดูลอย)
 	_build_lives_label()
+	# ฮีโร่ Kubi (T5): เกิดข้างปราสาท คลิกขวาสั่งเดิน ฟาดศัตรูใกล้ตัวเอง
+	_hero = HeroScript.new()
+	_hero.position = Vector2(760, 400)
+	add_child(_hero)
 	queue_redraw()
 
 func _process(delta: float) -> void:
@@ -399,7 +417,11 @@ func _restart() -> void:
 
 # ---------- เมนูสร้างป้อม (T3) ----------
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
+	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
+		# ฮีโร่ (T5): คลิกขวาบนพื้น = สั่ง Kubi เดินไปหมุดนั้น
+		if _hero != null and not _hero._dead:
+			_hero.move_to(get_global_mouse_position())
+	elif event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		# NB: พิกัดคลิกมี 2 ระบบขึ้นกับ DPI - จอ 125% ย่อหน้าต่างจริงเป็น 921x518
 		# เช็คทั้งพิกัดโลก, event.position ดิบ (หน้าต่าง=สเกลเดียว), และ event.position ยืดตามสเกลหน้าต่าง
 		var candidates: Array[Vector2] = [event.position]
@@ -412,7 +434,8 @@ func _unhandled_input(event: InputEvent) -> void:
 		var hit := -1
 		for p in candidates:
 			for i in range(TOWER_SPOTS.size()):
-				if not _built[i] and p.distance_to(TOWER_SPOTS[i]) <= 32.0:
+				# T5: ลานที่มีป้อมแล้วก็คลิกได้ -> เมนูอัปเกรด/ขาย (เดิมกรองเฉพาะลานว่าง)
+				if p.distance_to(TOWER_SPOTS[i]) <= 32.0:
 					hit = i
 					break
 			if hit >= 0:
@@ -423,7 +446,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif _menu != null:
 			_close_menu()
 	elif event is InputEventKey and event.pressed and not event.echo:
-		# ทางลัดคีย์บอร์ด (ปลอดภัยกับ DPI เสมอ): 1-4 เปิดเมนูลาน, 1/2 เลือกป้อม, Esc/X ปิด
+		# ทางลัดคีย์บอร์ด (ปลอดภัยกับ DPI เสมอ): 1-4 เปิดเมนูลาน, 1/2 ใช้ของในเมนู, Esc/X ปิด
 		var code: int = event.keycode
 		if _state == "prep" and code == KEY_N:
 			# ทางลัดเรียกคลื่นก่อน = เหมือนกดปุ่มมุมขวาบน (ได้โบนัสตามวินาทีคงเหลือ)
@@ -431,51 +454,49 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif _menu == null:
 			if code >= KEY_1 and code <= KEY_4:
 				var idx := code - KEY_1
-				if not _built[idx]:
-					print("OPEN_MENU spot=", idx, " (key)")  # DEBUG (console)
-					_open_menu(idx)
+				print("OPEN_MENU spot=", idx, " (key)")  # DEBUG (console)
+				_open_menu(idx)
 		else:
-			if code == KEY_1:
-				_build_tower(_menu_spot, "archer")
-			elif code == KEY_2:
-				_build_tower(_menu_spot, "cannon")
-			elif code == KEY_ESCAPE or code == KEY_X:
+			if _menu_mode == "build":
+				if code == KEY_1:
+					_build_tower(_menu_spot, "archer")
+				elif code == KEY_2:
+					_build_tower(_menu_spot, "cannon")
+			elif _menu_mode == "built":
+				if code == KEY_1 and _menu_spot >= 0 and _towers[_menu_spot] != null and _lvl[_menu_spot] < 2:
+					_upgrade_tower(_menu_spot)
+				elif code == KEY_2:
+					_sell_tower(_menu_spot)
+			if code == KEY_ESCAPE or code == KEY_X:
 				_close_menu()
 	elif event.is_action_pressed("ui_cancel") and _menu != null:
 		_close_menu()
 
 func _open_menu(spot_idx: int) -> void:
-	if _built[spot_idx]:
-		return
 	_close_menu()
 	_menu_spot = spot_idx
+	# T5: เมนู 2 โหมด - ลานว่าง = สร้างป้อม / ลานที่มีป้อม = อัปเกรด + ขาย
+	_menu_mode = "build" if _towers[spot_idx] == null else "built"
 	var panel := PanelContainer.new()
 	var hb := HBoxContainer.new()
 	hb.add_theme_constant_override("separation", 14)
 	panel.add_child(hb)
-	for key in ["archer", "cannon"]:
-		var def: Dictionary = TOWER_DEFS[key]
-		var col := VBoxContainer.new()
-		col.alignment = BoxContainer.ALIGNMENT_CENTER
-		var btn := TextureButton.new()
-		btn.texture_normal = def["icon"]
-		btn.custom_minimum_size = Vector2(52, 52)
-		btn.ignore_texture_size = true
-		btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
-		btn.tooltip_text = "%s (รัศมี %d, ดาเมจ %.0f)" % [def["name"], def["range"], def["dmg"]]
-		btn.pressed.connect(_build_tower.bind(spot_idx, key))
-		col.add_child(btn)
-		var cost := Label.new()
-		cost.text = "%d" % def["cost"]
-		cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		var cst := LabelSettings.new()
-		cst.font_size = 15
-		cst.font_color = Color(1.0, 0.85, 0.2)
-		cst.outline_size = 5
-		cst.outline_color = Color(0.15, 0.09, 0.02)
-		cost.label_settings = cst
-		col.add_child(cost)
-		hb.add_child(col)
+	if _menu_mode == "build":
+		for key in ["archer", "cannon"]:
+			var def: Dictionary = TOWER_DEFS[key]
+			var tip: String = "%s (รัศมี %d, ดาเมจ %.0f)" % [def["name"], def["range"], def["dmg"]]
+			_menu_entry(hb, def["icon"], int(def["cost"]), tip, _build_tower.bind(spot_idx, key))
+	else:
+		var t: Node2D = _towers[spot_idx]
+		var def: Dictionary = TOWER_DEFS[_tower_def_key(t)]
+		if _lvl[spot_idx] < 2:
+			# อัปเกรด Lv2: ไอคอนประจำป้อม + ราคาต่ำงาน
+			var upg: Dictionary = def["upg"]
+			var tip2: String = "อัปเกรด %s Lv2 (ดาเมจ %.0f, รัศมี %d)" % [def["name"], upg["dmg"], upg["range"]]
+			_menu_entry(hb, def["upg_icon"], int(def["upg_cost"]), tip2, _upgrade_tower.bind(spot_idx))
+		# ขายคืน 60% ของเงินที่ลงไป (ไอคอนเหรียญ Kubi เดิม)
+		var refund := _refund(spot_idx)
+		_menu_entry(hb, ICON_COIN, refund, "ขายคืน 60%% ของเงินที่ลงไป (%d)" % refund, _sell_tower.bind(spot_idx))
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.10, 0.07, 0.03, 0.9)
 	style.set_corner_radius_all(8)
@@ -490,13 +511,50 @@ func _open_menu(spot_idx: int) -> void:
 	_menu = panel
 	add_child(panel)
 
+func _menu_entry(hb: HBoxContainer, icon: Texture2D, price: int, tip: String, pressed: Callable) -> void:
+	# T5: แถวเมนูชิ้นเดียว (ปุ่มภาพ + ราคาใต้ตัว) - ใช้ทั้งโหมดสร้างและอัปเกรด/ขาย
+	var col := VBoxContainer.new()
+	col.alignment = BoxContainer.ALIGNMENT_CENTER
+	var btn := TextureButton.new()
+	btn.texture_normal = icon
+	btn.custom_minimum_size = Vector2(52, 52)
+	btn.ignore_texture_size = true
+	btn.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
+	btn.tooltip_text = tip
+	btn.pressed.connect(pressed)
+	col.add_child(btn)
+	var cost := Label.new()
+	cost.text = "%d" % price
+	cost.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var cst := LabelSettings.new()
+	cst.font_size = 15
+	cst.font_color = Color(1.0, 0.85, 0.2)
+	cst.outline_size = 5
+	cst.outline_color = Color(0.15, 0.09, 0.02)
+	cost.label_settings = cst
+	col.add_child(cost)
+	hb.add_child(col)
+
 func _close_menu() -> void:
 	if _menu != null:
 		_menu.queue_free()
 		_menu = null
 	_menu_spot = -1
+	_menu_mode = ""
+
+func _tower_def_key(t: Node2D) -> String:
+	# T5: หาแถว def ของป้อมต่อลาน (จาก kind) สำหรับอัปเกรด/ขาย
+	for key in TOWER_DEFS:
+		if t.kind == int(TOWER_DEFS[key]["kind"]):
+			return key
+	return "archer"
+
+func _refund(spot_idx: int) -> int:
+	return int(round(float(_inv[spot_idx]) * SELL_REFUND))
 
 func _build_tower(spot_idx: int, key: String) -> void:
+	if spot_idx < 0 or _towers[spot_idx] != null:
+		return
 	var def: Dictionary = TOWER_DEFS[key]
 	if _gold < int(def["cost"]):
 		_flash_gold()
@@ -507,7 +565,43 @@ func _build_tower(spot_idx: int, key: String) -> void:
 	t.setup(def["kind"], def["tex"], def["dmg"], def["interval"], def["range"], def["shot"], def["splash"])
 	t.position = TOWER_SPOTS[spot_idx]
 	add_child(t)
-	_built[spot_idx] = true
+	# T5: จำสถานะต่อลาน (node / เลเวล / เงินที่ลงไป ใช้คิดคืนขาย)
+	_towers[spot_idx] = t
+	_lvl[spot_idx] = 1
+	_inv[spot_idx] = int(def["cost"])
+	_close_menu()
+	queue_redraw()
+
+func _upgrade_tower(spot_idx: int) -> void:
+	var t: Node2D = _towers[spot_idx]
+	if t == null or _lvl[spot_idx] >= 2:
+		return
+	var def: Dictionary = TOWER_DEFS[_tower_def_key(t)]
+	var upg: Dictionary = def["upg"]
+	var cost := int(def["upg_cost"])
+	if _gold < cost:
+		_flash_gold()
+		return
+	_gold -= cost
+	_inv[spot_idx] += cost
+	_update_gold()
+	t.apply_upgrade(float(upg["dmg"]), float(upg["interval"]), float(upg["range"]), float(upg["shot"]), float(upg["splash"]))
+	_lvl[spot_idx] = 2
+	_close_menu()
+	queue_redraw()
+
+func _sell_tower(spot_idx: int) -> void:
+	var t: Node2D = _towers[spot_idx]
+	if t == null:
+		return
+	var refund := _refund(spot_idx)
+	_gold += refund
+	_update_gold()
+	_gold_popup(refund, TOWER_SPOTS[spot_idx])
+	t.queue_free()
+	_towers[spot_idx] = null
+	_lvl[spot_idx] = 0
+	_inv[spot_idx] = 0
 	_close_menu()
 	queue_redraw()
 
@@ -523,7 +617,7 @@ func _draw() -> void:
 	draw_circle(Vector2(816, 495), 12.0, CASTLE_COLOR)
 	# ลานจุดวางป้อม: วงทอง + ขอบเข้ม + เลขปุ่มลัด (ลานที่ปูแล้วไม่วาด)
 	for i in range(TOWER_SPOTS.size()):
-		if _built[i]:
+		if _towers[i] != null:
 			continue
 		draw_circle(TOWER_SPOTS[i], 26.0, SPOT_FILL)
 		draw_arc(TOWER_SPOTS[i], 26.0, 0.0, TAU, 32, SPOT_EDGE, 2.0, true)

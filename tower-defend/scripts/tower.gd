@@ -16,6 +16,7 @@ var range_r := 180.0
 var splash_r := 0.0         # >0 = ยิงแบบกระจุกระเบิด (ปืนใหญ่)
 var shot_speed := 260.0
 var image: Texture2D        # โครงป้อม (tower_archer/cannon)
+var level := 1              # ระดับป้อม (T5): อัปเกรดเลือด/ยิงหนักขึ้นแล้วกายใหญ่ + ป้าย "II"
 
 var _cooldown := 0.0
 var _sprite: Sprite2D
@@ -28,6 +29,18 @@ func setup(tower_kind: int, tex: Texture2D, dmg: float, interval: float, rng: fl
 	range_r = rng
 	shot_speed = shot
 	splash_r = splash
+
+func apply_upgrade(dmg: float, interval: float, rng: float, shot: float, splash: float) -> void:
+	# T5: อัปเกรด Lv1 -> Lv2 ครั้งเดียว - ดาเมจ/จังหวะ/รัศมี/กระสุนตามตาราง + กายใหญ่ขึ้น
+	damage = dmg
+	fire_interval = interval
+	range_r = rng
+	shot_speed = shot
+	splash_r = splash
+	level = 2
+	if _sprite != null:
+		_sprite.scale = Vector2(1.75, 1.75)
+	queue_redraw()
 
 func _ready() -> void:
 	_sprite = Sprite2D.new()
@@ -42,6 +55,10 @@ func _draw() -> void:
 	# วงรัศมียิง (ฟาดบาง ๆ ให้ผู้เล่นเห็นขอบเขต)
 	draw_circle(Vector2.ZERO, range_r, Color(1.0, 0.9, 0.6, 0.05))
 	draw_arc(Vector2.ZERO, range_r, 0.0, TAU, 64, Color(1.0, 0.85, 0.4, 0.30), 1.5, true)
+	# ป้ายเลเวล (T5): "II" ยอดป้อมสีทอง - ผู้เล่นแยกออกจากป้อมธรรมดา
+	if level >= 2:
+		var font := ThemeDB.fallback_font
+		draw_string(font, Vector2(14.0, -78.0), "II", HORIZONTAL_ALIGNMENT_CENTER, 18, 14, Color(1.0, 0.85, 0.2))
 
 func _pick_target() -> Node2D:
 	var best: Node2D = null

@@ -25,11 +25,11 @@ func _process(_delta: float) -> bool:
 			return true
 		_press(KEY_2)
 	if _f >= 6:
-		var ok: bool = _main._built[3] and _main._menu == null and _main._gold == 30
+		var ok: bool = _main._towers[3] != null and _main._menu == null and _main._gold == 30
 		if ok:
 			print("TEST_KEYS PASS tower_built_gold=", _main._gold)
 			quit(0)
 		else:
-			print("TEST_KEYS FAIL built=", _main._built[3], " menu=", _main._menu, " gold=", _main._gold)
+			print("TEST_KEYS FAIL built=", _main._towers[3], " menu=", _main._menu, " gold=", _main._gold)
 			quit(1)
 	return false
