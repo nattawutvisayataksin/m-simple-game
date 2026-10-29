@@ -1,9 +1,5 @@
 extends Node3D
-## เมือง Kubi (T1.1) — สนามใหม่มีเอกลักษณ์ของเกม
-## วาดวงถนนเมือง (city-kit-roads) ระดับ 7 ม./เซลล์ + ตึกเมือง (city-kit-industrial)
-## + กล่องกีดขวาง/เป้าโบนัส (blaster-kit) + เหล่า Kubi เดิน/รั้ว/ต้นไม้ (platformer-kit)
-## วางถนนเป็นโหนดตรง ๆ (ไม่พึ่ง GridMap) — GLB ของ Kenney นอนแบนพร้อมใช้แล้ว
-## วัดแล้วด้วย probe: road-straight = X 1 × Y 0.02 (ผิว) × Z 1 — ผิวบนอยู่เหนือ 0 ถึง +0.02
+## เมือง Kubi: สนามแข่งล้อมด้วยย่านเมืองและสวนสาธารณะตรงกลาง
 
 const TILE_SCALE := 7.0          # 1 เซลล์ถนน = 7 ม. (กว้างพอ 2 เลน)
 const RING_W := 14               # ความกว้างวงถนน (เซลล์)
@@ -51,6 +47,7 @@ func _ready() -> void:
 	_bend_scene = load(ROAD_BEND)
 	_paint_ring()
 	_city_blocks()
+	_central_park()
 	_start_line_decor()
 	_track_props()
 	_bonus_props()
@@ -131,6 +128,7 @@ func _paint_road_tile(cell: Vector3i, along_x: bool, corner: bool) -> void:
 	surface.mesh = asphalt
 	surface.position = _cell_world(cell.x, cell.z) + Vector3(0, ROAD_TOP + 0.025, 0)
 	add_child(surface)
+	_paint_outer_sidewalk(cell)
 
 	if corner:
 		return
@@ -149,63 +147,169 @@ func _paint_road_tile(cell: Vector3i, along_x: bool, corner: bool) -> void:
 	surface.add_child(marking)
 
 
-## พื้นตัวรับเมืองทั้งผืน (ขับชื่นในเมืองระหว่างตึกได้ ไม่ตกฉาก) + อาณาเขตใหญ่
+func _paint_outer_sidewalk(cell: Vector3i) -> void:
+	var center := _cell_world(cell.x, cell.z)
+	var outward := Vector3(center.x - 49.0, 0, center.z - 31.5).normalized()
+	var is_corner := (cell.x == 0 or cell.x == RING_W - 1) \
+		and (cell.z == 0 or cell.z == RING_H - 1)
+	if not is_corner:
+		if cell.z == 0:
+			outward = Vector3(0, 0, -1)
+		elif cell.z == RING_H - 1:
+			outward = Vector3(0, 0, 1)
+		elif cell.x == 0:
+			outward = Vector3(-1, 0, 0)
+		else:
+			outward = Vector3(1, 0, 0)
+	var tangent := Vector3(-outward.z, 0, outward.x)
+	var paving := BoxMesh.new()
+	paving.size = Vector3(1.7, 0.14, 6.5)
+	var material := StandardMaterial3D.new()
+	material.albedo_color = Color(0.58, 0.56, 0.49)
+	material.roughness = 0.95
+	paving.material = material
+	var sidewalk := MeshInstance3D.new()
+	sidewalk.name = "Sidewalk_%d_%d" % [cell.x, cell.z]
+	sidewalk.mesh = paving
+	sidewalk.position = center + outward * 4.2 + Vector3(0, 0.07, 0)
+	sidewalk.rotation.y = atan2(tangent.x, tangent.z)
+	add_child(sidewalk)
+
+
+## Large, neutral paved city block with a soft green park as the focal point.
 func _ground_catcher() -> void:
+	var city_center := Vector3(49.0, 0, 31.5)
 	var body := StaticBody3D.new()
 	body.name = "CityGround"
 	var cs := CollisionShape3D.new()
 	var shape := BoxShape3D.new()
-	shape.size = Vector3(240, 0.2, 180)
+	shape.size = Vector3(300, 0.2, 260)
 	cs.shape = shape
 	cs.position = Vector3(0, ROAD_TOP - 0.12, 0)
 	body.add_child(cs)
+	body.position = city_center
 	add_child(body)
-	# พื้นหญ้าของเมือง (เอกลักษณ์สีธรรมชาติ Kenney)
+
 	var mi := MeshInstance3D.new()
+	mi.name = "CityGroundVisual"
 	var plane := PlaneMesh.new()
-	plane.size = Vector2(240, 180)
+	plane.size = Vector2(300, 260)
 	var mat := StandardMaterial3D.new()
-	mat.albedo_color = Color(0.36, 0.70, 0.42)
+	mat.albedo_color = Color(0.48, 0.46, 0.40)
+	mat.roughness = 1.0
 	plane.material = mat
 	mi.mesh = plane
-	mi.position = Vector3(0, ROAD_TOP - 0.05, 0)
+	mi.position = Vector3(city_center.x, ROAD_TOP - 0.05, city_center.z)
 	add_child(mi)
 
 # --- ตึกเมือง (ชนได้) ---
 
 func _city_blocks() -> void:
-	var spots := [
-		[4, 3], [8, 3], [11, 3],
-		[4, 5], [8, 5], [11, 5],
-		[3, 4], [7, 4], [12, 4],
+	var perimeter := [
+		[Vector3(20.0, 0, -20.0), 0],
+		[Vector3(48.0, 0, -22.0), 1],
+		[Vector3(77.0, 0, -20.0), 2],
+		[Vector3(20.0, 0, 83.0), 3],
+		[Vector3(49.0, 0, 85.0), 4],
+		[Vector3(78.0, 0, 83.0), 0],
+		[Vector3(-19.0, 0, 14.0), 1],
+		[Vector3(-21.0, 0, 48.0), 2],
+		[Vector3(116.0, 0, 14.0), 3],
+		[Vector3(118.0, 0, 48.0), 4],
 	]
-	for i in spots.size():
-		var path: String = BUILDINGS[i % BUILDINGS.size()][0]
-		var target: float = BUILDINGS[i % BUILDINGS.size()][1]
-		var c: Array = spots[i]
-		var p := _cell_world(c[0], c[1])
-		_spawn_static_prop(path, Vector3(p.x, ROAD_TOP, p.z), target, deg_to_rad(90 * (i % 4)))
-	# อาคารขนาดใหญ่รอบขอบสนาม ทำให้เห็นเมืองได้จากกล้องขับรถ
-	var skyline := [
-		Vector3(24.5, 0, -13.5), Vector3(49.5, 0, -15.0), Vector3(75.5, 0, -13.5),
-		Vector3(24.5, 0, 76.5), Vector3(49.5, 0, 78.0), Vector3(75.5, 0, 76.5),
-		Vector3(-13.0, 0, 20.5), Vector3(-15.0, 0, 42.5),
-		Vector3(108.0, 0, 20.5), Vector3(110.0, 0, 42.5),
-	]
-	for i in skyline.size():
+	for i in perimeter.size():
 		var building: Array = BUILDINGS[i % BUILDINGS.size()]
-		var structure := _spawn_static_prop(building[0], skyline[i], building[1], deg_to_rad(90 * (i % 4)))
+		var placement: Array = perimeter[i]
+		var structure := _spawn_static_prop(building[0], placement[0], building[1], deg_to_rad(90 * placement[1]))
 		if structure != null:
-			structure.name = "CitySkyline_%02d" % i
-	# กังหันลม + แท้งค์น้ำมุมเมือง
-	_spawn_static_prop("res://models/town/industrial/windmill.glb", _cell_world(6, 4) + Vector3(3.5, 0, 3.5), 14.0, 0.0)
-	_spawn_static_prop("res://models/town/industrial/water-tower.glb", _cell_world(13, 6) + Vector3(3.5, 0, 3.5), 13.0, deg_to_rad(180))
-	# คอนเทนเนอร์กองข้ามถนนข้างซ้าย
-	for cz in [4, 5]:
-		var p := _cell_world(-2, cz)
-		_spawn_static_prop("res://models/town/industrial/shipping-container-a.glb", Vector3(p.x, ROAD_TOP, p.z), 3.4, deg_to_rad(90))
-	# ปล่องโรงงานโผล่หลังซ้ายบน
-	_spawn_static_prop("res://models/town/industrial/chimney-large.glb", _cell_world(0, 6) + Vector3(-4, 0, -6), 12.0, 0.0)
+			structure.name = "CityPerimeter_%02d" % i
+
+
+func _central_park() -> void:
+	var park := Node3D.new()
+	park.name = "CentralPark"
+	add_child(park)
+	var center := Vector3(49.0, 0, 31.5)
+
+	var lawn := PlaneMesh.new()
+	lawn.size = Vector2(48, 32)
+	var lawn_material := StandardMaterial3D.new()
+	lawn_material.albedo_color = Color(0.30, 0.39, 0.27)
+	lawn_material.roughness = 1.0
+	lawn.material = lawn_material
+	var lawn_mesh := MeshInstance3D.new()
+	lawn_mesh.name = "ParkLawn"
+	lawn_mesh.mesh = lawn
+	lawn_mesh.position = center + Vector3(0, 0.015, 0)
+	park.add_child(lawn_mesh)
+
+	var path_material := StandardMaterial3D.new()
+	path_material.albedo_color = Color(0.70, 0.66, 0.56)
+	path_material.roughness = 0.9
+	_add_park_path(park, "ParkPathEastWest", center, Vector2(43, 2.6), path_material)
+	_add_park_path(park, "ParkPathNorthSouth", center, Vector2(2.6, 27), path_material)
+
+	var fountain := CylinderMesh.new()
+	fountain.top_radius = 4.0
+	fountain.bottom_radius = 4.5
+	fountain.height = 0.55
+	var fountain_material := StandardMaterial3D.new()
+	fountain_material.albedo_color = Color(0.72, 0.69, 0.60)
+	fountain.material = fountain_material
+	var fountain_mesh := MeshInstance3D.new()
+	fountain_mesh.name = "ParkFountain"
+	fountain_mesh.mesh = fountain
+	fountain_mesh.position = center + Vector3(0, 0.30, 0)
+	park.add_child(fountain_mesh)
+
+	var water := CylinderMesh.new()
+	water.top_radius = 3.3
+	water.bottom_radius = 3.3
+	water.height = 0.12
+	var water_material := StandardMaterial3D.new()
+	water_material.albedo_color = Color(0.22, 0.55, 0.63)
+	water_material.metallic = 0.18
+	water_material.roughness = 0.22
+	water.material = water_material
+	var water_mesh := MeshInstance3D.new()
+	water_mesh.mesh = water
+	water_mesh.position = center + Vector3(0, 0.62, 0)
+	park.add_child(water_mesh)
+
+	for i in 8:
+		var angle := TAU * float(i) / 8.0
+		var tree_pos := center + Vector3(cos(angle) * 20.0, 0, sin(angle) * 13.0)
+		var tree := _spawn_static_prop("res://models/town/deco/tree-pine-small.glb",
+			tree_pos, 5.0, angle)
+		if tree != null:
+			tree.name = "ParkTree_%02d" % i
+
+	for i in 4:
+		var angle := PI / 4.0 + TAU * float(i) / 4.0
+		var planter := CylinderMesh.new()
+		planter.top_radius = 2.3
+		planter.bottom_radius = 2.5
+		planter.height = 0.35
+		var planter_material := StandardMaterial3D.new()
+		planter_material.albedo_color = Color(0.38, 0.46, 0.31)
+		planter.material = planter_material
+		var bed := MeshInstance3D.new()
+		bed.name = "ParkPlanter_%02d" % i
+		bed.mesh = planter
+		bed.position = center + Vector3(cos(angle) * 14.0, 0.19, sin(angle) * 10.0)
+		park.add_child(bed)
+
+
+func _add_park_path(parent: Node3D, node_name: String, center: Vector3,
+		size: Vector2, material: StandardMaterial3D) -> void:
+	var path_mesh := PlaneMesh.new()
+	path_mesh.size = size
+	path_mesh.material = material
+	var path := MeshInstance3D.new()
+	path.name = node_name
+	path.mesh = path_mesh
+	path.position = center + Vector3(0, 0.04, 0)
+	parent.add_child(path)
 
 # --- จุดสตาร์ต/เส้นชัย: รั้ว + เหล่า Kubi เดิน + ต้นไม้ใบไม้ ---
 

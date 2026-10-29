@@ -5,16 +5,12 @@ extends Node3D
 
 const LAPS_TO_WIN := 3          # ครบ 3 รอบ = ชนะ
 const COIN_STEP := 2            # วางเหรียญทุก N จุดของเส้นทาง
-const POLE_STEP := 5            # เสาไฟฟ้าทุก N จุด (ด้านนอกสนาม)
-const BARRIER_STEP := 9         # แบร์ริเออร์ทุก N จุด
 const COIN_DUP_ANGLE := 0.13    # มุมต่างขั้นต่ำระหว่างจุด (กันเหรียญซ้อนวงขนาน)
 const FALL_Y := -8.0            # ต่ำกว่านี้ = ร่วงสนาม -> respawn
 
 const PROP_TARGET_HEIGHT := {
-	"res://models/props/electricity-pole.glb": 4.2,
 	"res://models/props/traffic-light.glb": 2.6,
 	"res://models/props/sign-highway.glb": 2.0,
-	"res://models/props/road-side-barrier.glb": 0.9,
 	"res://models/props/construction-cone.glb": 0.7,
 }
 
@@ -172,12 +168,6 @@ func _build_track_and_spawnables() -> void:
 		center += p
 	center /= _path_points.size()
 	_set_center_hint(center)
-	for i in range(0, _path_points.size(), POLE_STEP):
-		_spawn_prop("res://models/props/electricity-pole.glb"
-			, _path_points[i], -1)
-	for i in range(3, _path_points.size(), BARRIER_STEP):
-		_spawn_prop("res://models/props/road-side-barrier.glb"
-			, _path_points[i], -1)
 	_spawn_kart_fleet(center)
 
 var _center_hint := Vector3.ZERO

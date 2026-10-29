@@ -85,6 +85,23 @@ func _stage_structure() -> void:
 					decorations_clear = false
 	_check("ของตกแต่ง 24 ชิ้นอยู่นอกเลนแข่ง", decoration_count == 24 and decorations_clear,
 		"count=%d clear=%s" % [decoration_count, decorations_clear])
+	var sidewalk_count := 0
+	var sidewalks_aligned := true
+	if town != null:
+		for child in town.get_children():
+			if not child.name.begins_with("Sidewalk_"):
+				continue
+			sidewalk_count += 1
+			var cell := child.name.trim_prefix("Sidewalk_").split("_")
+			var cell_x := int(cell[0])
+			var cell_z := int(cell[1])
+			if (cell_z == 0 or cell_z == 8) and cell_x > 0 and cell_x < 13:
+				sidewalks_aligned = sidewalks_aligned and absf(child.position.x - (cell_x + 0.5) * 7.0) < 0.01
+			elif (cell_x == 0 or cell_x == 13) and cell_z > 0 and cell_z < 8:
+				sidewalks_aligned = sidewalks_aligned and absf(child.position.z - (cell_z + 0.5) * 7.0) < 0.01
+	_check("ทางเท้าขนานขอบถนน ไม่ยื่นเข้าเลน",
+		sidewalk_count == 42 and sidewalks_aligned,
+		"count=%d aligned=%s" % [sidewalk_count, sidewalks_aligned])
 	var road: Node3D = town.get_node_or_null("Road_1_0") if town != null else null
 	_check("โมเดลถนนขยายตามขนาดช่อง 7 ม.", road != null and road.scale.is_equal_approx(Vector3.ONE * 7.0))
 	var road_surface: MeshInstance3D = town.get_node_or_null("RoadSurface_1_0") if town != null else null
@@ -101,12 +118,28 @@ func _stage_structure() -> void:
 		and road_collision.position.y == 0.0
 		and is_equal_approx(box_shape.size.x, 7.0)
 		and is_equal_approx(box_shape.size.z, 7.0))
-	var skyline_count := 0
+	var perimeter_count := 0
 	if town != null:
 		for child in town.get_children():
-			if child.name.begins_with("CitySkyline_"):
-				skyline_count += 1
-	_check("มีอาคารเมืองล้อมรอบสนาม", skyline_count == 10, "buildings=%d" % skyline_count)
+			if not child.name.begins_with("CityPerimeter_"):
+				continue
+			perimeter_count += 1
+			var outside_track: bool = (child.position.x < 0.0 or child.position.x > 98.0
+				or child.position.z < 0.0 or child.position.z > 63.0)
+			if not outside_track:
+				perimeter_count = -100
+	_check("อาคารทั้งหมดอยู่นอกวงสนาม", perimeter_count == 10, "buildings=%d" % perimeter_count)
+	var park := town.get_node_or_null("CentralPark") if town != null else null
+	_check("กลางสนามเป็นสวนสาธารณะ มีลานและน้ำพุ",
+		park != null and park.get_node_or_null("ParkPathEastWest") != null
+		and park.get_node_or_null("ParkFountain") != null)
+	var ground: MeshInstance3D = town.get_node_or_null("CityGroundVisual") if town != null else null
+	var ground_material := ground.mesh.surface_get_material(0) if ground != null else null
+	_check("พื้นเมืองใช้โทนหินธรรมชาติแทนเขียวสด",
+		ground_material is StandardMaterial3D
+		and (ground_material as StandardMaterial3D).albedo_color.is_equal_approx(Color(0.48, 0.46, 0.40)))
+	_check("ไม่มีเสาไฟฟ้าหรือสิ่งกีดขวางกลางเลน",
+		props != null and props.get_child_count() == 6)
 	_check("Coins ถูกสร้าง", coins != null and coins.get_child_count() > 0,
 		"children=%s" % (coins.get_child_count() if coins else -1))
 	_check("Gates ครบ 3 ประตู", gates != null and gates.get_child_count() == 3,
