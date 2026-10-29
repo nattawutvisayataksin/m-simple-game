@@ -61,8 +61,9 @@ func _spawn_burst() -> void:
 	tween.chain().tween_callback(burst.queue_free)
 
 
-## ปิดเหรียญเมื่อจบรอบ (ชนะแล้ว/หมดเวลา) — ไม่ให้เก็บต่อได้อีก
+## ปิดเหรียญเมื่อจบรอบ (ชนะแล้ว/หมดเวลา/โดนจับ) — ไม่ให้เก็บต่อได้อีก
+## set_deferred ต้องใช้: ฟังก์ชันนี้ถูกเรียกจาก callback สัญญาณฟิสิกส์ ซึ่งห้ามตั้ง monitoring ตรง ๆ
 func disable() -> void:
 	_taken = true
-	monitoring = false
+	set_deferred("monitoring", false)
 	set_process(false)
