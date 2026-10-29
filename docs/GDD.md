@@ -119,10 +119,11 @@ m-sample-game/
 "ตัดสินได้ว่าสนุกขึ้นจริงไหม" ก่อนไปต่อ
 
 ### ระยะ A: Polish ความรู้สึกการเล่น (game-feel) — ทำก่อน เพราะถูกและได้ผลเร็ว
-- [ ] เหรียญหมุนอยู่ตลอด (โจทย์ค้างใน coin.gd) + วิ่งเร็วเมื่อกด Shift (โจทย์ค้างใน player.gd)
-- [ ] เหรียญทองพิเศษ โผล่ 1 อันต่อรอบ ให้คะแนน 3 เหรียญ (export var value) — สร้างการตัดสินใจ "แค่ไหนคุ้มเสี่ยง"
-- [ ] หลังจบรอบ ซ่อนเหรียญ/หยุดเหรียญไม่ให้เก็บได้ (ตอนนี้เหรียญยังตอบ body_entered แม้เกมจบแล้ว)
-- [ ] เวลาเหลือ ≤ 10 วิ ให้ตัวเลขเวลาเปลี่ยนสีแดงทุกวินาที — สร้างแรงกดดันแบบฟรี
+- [x] เหรียญหมุนอยู่ตลอด ✅ (spritesheet 9f อยู่แล้ว + coin.gd เลื่อนเฟรม) + วิ่งเร็วเมื่อกด Shift ✅ 2026-10-29 (player.gd SPRINT_MULT 1.5 + เฟรมก้าวเร็วตาม)
+- [x] เหรียญทองพิเศษ โผล่ 1 อันต่อรอบ ให้คะแนน 3 เหรียญ (export var value) — สร้างการตัดสินใจ "แค่ไหนคุ้มเสี่ยง" — 2026-10-29: coin_gold.tscn + value ผ่าน signal, สุ่ม 1 ใน 10 ตำแหน่ง, sprite: coin_kub_gold (edit_image_pixen) + sheets 9f (pixminimax), วาบแสงใน coin.gd
+- [x] หลังจบรอบ ซ่อนเหรียญ/หยุดเหรียญไม่ให้เก็บได้ — 2026-10-29: coin.disable() + monitoring=false จาก _end_round
+- [x] เวลาเหลือ ≤ 10 วิ ให้ตัวเลขเวลาเปลี่ยนสีแดงทุกวินาที — สร้างแรงกดดันแบบฟรี — 2026-10-29: _update_time_label สลับแดงกระพริบ
+- [x] ✨ เพลิดบอนัส: เอฟเฟกต์ประกายทองตอนเก็บเหรียญ (burst_gold.png gen 1 จาก **Key B** + ตัดพื้นหลังด้วย make_transparent.ps1, tween scale+fade ใน coin.gd)
 
 ### ระยะ B: Level และความยาก (โจทย์ค้างใน readme)
 - [ ] ระบบ level: ศัตรูเพิ่มทีละด่าน (2 → 3 → 4 ตัว) เหรียญถูกสุ่มวางใหม่ทุกด่าน
@@ -162,4 +163,5 @@ m-sample-game/
 | 2026-10-29 | **แอนิเมชัน 3 ชุดเสร็จสมบูรณ์**: coin/player/enemy spritesheet 9f ผูกในฉากครบ (commit `aefa239` push GitHub แล้ว) + แก้ bugs ที่ Godot 4.7.2 พบ (คอมเมนต์ใน .tscn ไม่รองรับ → ลบ, coin.gd ประกาศซ้ำ → แก้, enemy.tscn texture เก่า → ชี้ sheet) — **ทดสอบรันจริงบนเครื่องผู้ใช้ผ่าน ไม่มี error** (Godot 4.7.2 จาก winget ติดตั้งแล้ว; GODOT_PATH ใน .mcp.json แก้สมบูรณ์) |
 | 2026-10-29 | **tileset กำแพง/พื้น KUB เสร็จ** (ระยะ C ข้อ 3): gen 1 ครั้งด้วย **Key A daily bonus** (bonus ใช้ได้จริง 5→4, job `d54165fd`, 16 tiles 32×32) → `assets/art/gen/kub_arena_sheet.png` + เจอ metadata .json (bbox พื้น 64,32 / กำแพง 0,96) แทนที่ใน main.tscn: พื้น ColorRect → Sprite2D tile + กำแพง 4 ด้าน Polygon2D 40px → Sprite2D tile 32px ยึด grid (collision 1152×32 / 32×648) — headless import + รัน 30f ผ่าน ไม่มี error |
 | 2026-10-29 | **ระยะ C ครบทุกข้อ**: (1) เพลง chiptune loop สังเคราะห์ PowerShell เอง `tools/generate_music.ps1` → music.wav 13.7s seamless (loop_mode ใน .import, autoplay, bus Music) + bus SFX เก็บ SFX 3 เสียง (2) HUD เหรียญ icon ใช้ coin_kub.png ซ้ำ + LabelSettings ทอง KUB/outline (ไม่ทำฟอนต์จริง — create_font Latin-only จนไม่มีไทย) (3) ⚠️ known-benign: quit ระหว่างเพลงเล่น → ObjectDB leak warning (AudioServer teardown, ไม่มีผล) — ทั้งหมดทดสอบ headless ผ่าน |
-| 2026-10-29 | **สถานะสำหรับเซสชันถัดไป**: ระยะ C ครบ 100% — ถัดไป: ระยะ A polish (เหรียญทอง 3pts, เวลา ≤10 วิ ตัวเลขแดง, ปิดเหรียญหลังจบรอบ) → ระยะ B (ไวรัสเพิ่มตามเวลา) → ระยะ D (hi-score user://) — โควตา: Key A bonus เหลือ 4 +5/คืน, Key B เหลือ 37/40 ใช้ได้อิสระ (ผู้ใช้ตัดสินใจแล้ว: ยังไม่สลับ Key B เป็น MCP — ใช้ daily bonus ของ Key A ให้หมดก่อน) |
+| 2026-10-29 | **ระยะ C ครบ + ระยะ A ผ่าน 3/4 ข้อ**: (1) เหรียญทองจาก `edit_image_pixen` (1 gen, ใช้ bonus Key A) + sheet หมุน 9f (1 gen) → coin_gold.tscn ให้ value=3, วาบแสง, สุ่ม 1 อันต่อรอบ / (2) หลังจบรอบปิดเหรียญ `coin.disable()` / (3) เวลา ≤10 วิ ตัวเลขแดงกระพริบ — + gen ไวรัสสีเขียว/น้ำเงิน (2 gen) เก็บไว้ระยะ B — ข้อค้าง: ผู้เล่นยังไม่ได้ทดสอบมือจริง (ค้างตาม GDD นี้), โบนัส เหลือ 0 จนรุ่งรัตติกาล |
+| 2026-10-29 | **สถานะสำหรับเซสชันถัดไป**: ระยะ C ครบ 100%, ระยะ A ครบโจทย์ code (เหลือเฉพาะ: ผู้เล่นเทสรจริง, วิ่งเร็วด้วย Shift ยังไม่ทำ) — ถัดไป: ระยะ B (ไวรัส 2 สีพร้อมใช้) → ระยะ D (hi-score) — โควตา: Key A plan หมด+bonus วันนี้หมด (used 50/40, รอ +5 คืนถัดไป) **Key B เหลือ 37/40 ยังใช้อิสระผ่าน REST**; ผู้ใช้อนุมัติเพิ่ม MCP `pixellab-b` (Key B) ใน config ส่วน global → อนาคตหลังรีสตาร์ท จะเรียก pixellab แบบ 2 คีย์คู่ได้ทันที |

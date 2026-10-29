@@ -78,6 +78,9 @@
 | Arena tileset | `assets/art/gen/kub_arena_sheet.png` (+`.json` metadata) | topdown tileset gen เดียว (2026-10-29, **daily bonus ของ Key A**) job `d54165fd-...`, 16 tiles 32×32, bbox: พื้น=(64,32) กำแพง=(0,96) | ✅ ผู้ใช้เห็นภาพอนุมัติ + ผูกใน main.tscn แล้ว (create_topdown_tileset standard) |
 | HUD เหรียญ icon | `assets/art/sprites/coin_kub.png` (ใช้ซ้ำจากตัวเกม ไม่ gen เพิ่ม) | Sprite2D แดน HUD ข้าง ScoreLabel (2026-10-29) | ✅ ในฉากแล้ว |
 | เพลง chiptune loop | `assets/audio/music.wav` | **สังเคราะห์ PowerShell เอง** `tools/generate_music.ps1` (ฟรี ไม่ใช้ gen; square-wave lead+bass, 8 บาร์ 140 BPM C-G-Am-F, 13.7s seamless, loop=forward ตั้งใน .import) | ✅ ผูกในฉากแล้ว bus Music autoplay |
+| เหรียญทองของพิเศษ | `assets/art/sprites/coin_kub_gold.png` + `assets/art/gen/goldcoin_sheet.png` (9f) | recolor จาก coin_kub ผ่าน `edit_image_pixen` (1 gen) + animate `pixminimax` 8f (1 gen) ทั้งหมด = bonus Key A 2026-10-29, job `aba8727d-abb` / `9a1c3deb` | ✅ ใช้ในฉากแล้ว (coin_gold.tscn, value=3, วาบแสง) |
+| เอฟเฟกต์เก็บเหรียญ | `assets/art/gen/burst_gold.png` | pixflux **Key B** (1 gen) + ตัดพื้นหลังมืดด้วย `tools/make_transparent.ps1` (ฟรี) | ✅ ในฉากแล้ว (coin.gd tween scale+fade) |
+| ไวรัสสีต่าง (ระยะ B) | `assets/art/sprites/enemy_glitch_green.png` / `enemy_glitch_blue.png` | recolor จาก enemy_glitch ผ่าน `edit_image_pixen` ตัวละ 1 gen (2026-10-29), job `8f1a2e57` / `288e6dbe` — **ยังไม่ผูกฉาก เก็บไว้ใช้ตอน ระยะ B (ไวรัสเพิ่มตามเวลา)** | 🗄️ เตรียมไว้ — ระยะ B จะแยกตัวศัตรูตาม tier ด้วยสี |
 | ฟอนต์ HUD | — (ไม่ผลิต) | pixellab `create_font` รองรับเฉพาะ Latin 80 glyph ไม่มีไทย → เลือกใช้ LabelSettings (สีทอง KUB + outline เข้ม) กับ default font แทน | ✅ ตัดสินใจแล้ว สามารถเปลี่ยน font จริงภายหลังถ้าต้องจ่าย gen |
 | Coin anim | `assets/art/gen/coin_frames_*.png` | animate-pixminimax (REST, 8 เฟรม) | 🔄 กำลัง gen |
 | Player anim | `assets/art/gen/player_frames_*.png` | animate-pixminimax (REST, 6 เฟรม) | 🔄 กำลัง gen |

@@ -7,7 +7,9 @@
   "anim_cost_record": "2026-10-29: coin 8f + player 8f + enemy 8f = 3 gen (Key B ok, เหลือ 37/40) — เฟรมจริง 9 ไฟล์/ชุด + spritesheet ผูกในฉากแล้ว",
   "tileset_cost_record": "2026-10-29: kub_arena_sheet (16 tiles 32×32) = 1 gen (Key A daily bonus, available-เหลือ 4 วันนี้) — ผูกใน main.tscn (พื้น + กำแพง 4 ด้าน, กำแพง เข้าตา 40→32px ยึด grid) ทดสอบ headless ผ่าน",
   "music_record": "2026-10-29: music.wav chiptune loop 13.7s สังเคราะห์เองใน tools/generate_music.ps1 (ฟรี ไม่ใช้ gen) + bus Music/SFX (default_bus_layout.tres) + HUD icon ใช้ coin_kub.png ซ้ำ — ฟอนต์จริง process: หยุด (create_font Latin-only, ใช้ LabelSettings)",
-  "session_handoff": "2026-10-29: ระยะ C ครบทุกข้อแล้ว (sprite+anim+tileset+HUD+เพลง+bus) ถัดไป: ระยะ A polish → ระยะ B → ระยะ D save",
+  "gold_record": "2026-10-29: coin_gold (edit 1 gen) + goldcoin_sheet 9f (anim 1 gen) + ไวรัสเขียว/น้ำเงิน (edit ตัวละ 1 gen) = 4 gen รวม — หมด daily bonus Key A วันนี้ (used 50/40; ยืนยันด้วยการยิงจริงคืน error 'no generations or credits') ; ไวรัส 2 สีเก็บไว้ใช้ระยะ B",
+  "keyb_record": "2026-10-29: MCP `pixellab-b` (Key B) ทำงานใน session ได้โดยไม่ต้องรีสตาร์ท — ใช้แล้ว 1 gen (burst_gold sparkle เอฟเฟกต์เก็บเหรียญ) เหลือ 36/40 + bonus 2; burst พื้นหลังดำตัดโปร่งเองด้วย tools/make_transparent.ps1 (ฟรี)",
+  "session_handoff": "2026-10-29: ระยะ C ครบ + ระยะ A ครบ 3/4 (เหรียญหมุน overlap-ยังค้าง: coin หมุนแล้ว/รอผู้ใช้เล่นจริง และ Shift ยังไม่ทำ) — โค้ด ระยะ A เขียนและผ่าน headless, ทดลองเล่นจริงรอผู้ใช้ — ถัดไป: ระยะ B (มีไวรัส 2 สีรออยู่) → ระยะ D save",
   "next_steps": [
     "Phase A polish: เหรียญทอง 3 คะแนน (edit coin image ลด gen), เวลา ≤10 วิ ตัวเลขแดง, ปิดเหรียญหลังจบรอบ",
     "Phase B: ความยาก เพิ่มไวรัสตามเวลา",

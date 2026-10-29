@@ -11,6 +11,9 @@ extends Node2D
 ## จำนวนเหรียญทั้งหมดที่ต้องเก็บให้ครบ
 const COIN_COUNT := 10
 
+## เหรียญทองพิเศษต่อรอบ — ให้ 3 คะแนน (โผล่แบบสุ่มตำแหน่งเโสงเดียวกับเหรียญปกติ สร้างแคตตาลินอจให้เลือกไป "แค่ไหนคุ้มเสี่ยง")
+const GOLD_COINS := 1
+
 ## เวลาเล่นรอบนี้ (วินาที) — ทำให้เกมมีเงื่อนไขแพ้
 const TIME_LIMIT := 30.0
 
@@ -32,6 +35,7 @@ var state := GameState.PLAYING
 @onready var win_label: Label = $HUD/WinLabel
 @onready var gameover_label: Label = $HUD/GameoverLabel
 @onready var coin_scene: PackedScene = preload("res://scenes/coin.tscn")
+@onready var coin_gold_scene: PackedScene = preload("res://scenes/coin_gold.tscn")
 @onready var sfx_pickup: AudioStreamPlayer = $SfxPickup
 @onready var sfx_win: AudioStreamPlayer = $SfxWin
 @onready var sfx_lose: AudioStreamPlayer = $SfxLose
@@ -77,13 +81,18 @@ func _input(event: InputEvent) -> void:
 			get_tree().reload_current_scene()
 
 
-## สุ่มวางเหรียญให้เกมพร้อมเล่น
+## สุ่มวางเหรียญให้เกมพร้อมเล่น — ในชุดมีเหรียญทอง GOLD_COINS อัน (คะแนน 3) เจืออยู่
 func _spawn_coins() -> void:
 	var placed_positions: Array[Vector2] = []
 	placed_positions.append(player.position)
 
+	# สุ่มสโปนให้อันไหนเป็นเหรียญทอง (อย่างเติมแบบชิ้นข้างกันซรอนตำแหน่งซ้ำ)
+	var gold_slots := {}
+	for i in range(GOLD_COINS):
+		gold_slots[randi() % COIN_COUNT] = true
+
 	for i in range(COIN_COUNT):
-		var coin := coin_scene.instantiate()
+		var coin := (coin_gold_scene if gold_slots.has(i) else coin_scene).instantiate()
 
 		var pos := _pick_coin_position(placed_positions)
 		placed_positions.append(pos)
@@ -119,11 +128,12 @@ func _pick_coin_position(taken: Array[Vector2]) -> Vector2:
 
 
 ## เมื่อเก็บเหรียญ (signal จาก coin.tscn)
-func _on_coin_collected() -> void:
+func _on_coin_collected(coin_value: int) -> void:
 	if state != GameState.PLAYING:
 		return
 
-	score += 1
+	# เก็บเหรียญได้ = ได้คะแนนตามชนิดเหรียญ (ปกติ 1 / ทอง 3)
+	score += coin_value
 	_update_score_label()
 	sfx_pickup.play()
 
@@ -157,6 +167,10 @@ func _end_round() -> void:
 	player.set_physics_process(false)
 	for enemy in enemies_container.get_children():
 		enemy.set_physics_process(false)
+	# เหรียญที่ยังอยู่บนสนามปิดรับการเก็บทันที (โจทย์ระยะ A: จบรอบแล้วห้ามเก็บ)
+	for coin in coins_container.get_children():
+		if coin.has_method("disable"):
+			coin.disable()
 
 
 func _update_score_label() -> void:
@@ -164,4 +178,12 @@ func _update_score_label() -> void:
 
 
 func _update_time_label() -> void:
-	time_label.text = "เวลา: %d วิ" % int(ceil(time_left))
+	var seconds := int(ceil(time_left))
+	time_label.text = "เวลา: %d วิ" % seconds
+	if time_left <= 10.0:
+		# โจทย์ระยะ A: 10 วิสุดท้ายตัวเลขเปลี่ยนแดงกระพริบทุกวินาที
+		var flash := seconds % 2 == 0
+		time_label.add_theme_color_override(
+			"font_color",
+			Color(1.0, 0.35, 0.35) if flash else Color(1.0, 0.55, 0.2)
+		)
