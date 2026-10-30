@@ -363,6 +363,7 @@ func _load_level(idx: int) -> void:
 	for c in enemies_container.get_children(): c.queue_free()
 	for c in hazards_container.get_children(): c.queue_free()
 	for c in moving_container.get_children(): c.queue_free()
+	var tints: Array = _tile_tints_for(lvl)
 	# ground (1 piece by default; levels can split it into ravine segments)
 	var grounds: Array = lvl.get("grounds", [{"pos": Vector2(float(lvl["width"]) / 2.0, 680), "size": Vector2(float(lvl["width"]), 80)}])
 	for g in grounds:
@@ -373,7 +374,7 @@ func _load_level(idx: int) -> void:
 		gshape.size = g["size"]
 		gcol.shape = gshape
 		gbody.add_child(gcol)
-		_build_platform(gbody, g["size"])
+		_build_platform(gbody, g["size"], tints[0], tints[1])
 		platforms.add_child(gbody)
 	# platforms
 	for p in lvl["platforms"]:
@@ -384,7 +385,7 @@ func _load_level(idx: int) -> void:
 		shape.size = p["size"]
 		col.shape = shape
 		body.add_child(col)
-		_build_platform(body, p["size"])
+		_build_platform(body, p["size"], tints[0], tints[1])
 		platforms.add_child(body)
 	# moving
 	for m in lvl["moving"]:
@@ -791,7 +792,7 @@ func _update_time_label() -> void:
 func _update_level_label() -> void:
 	level_label.text = "ด่าน %d / %d" % [current_level + 1, LEVELS.size()]
 
-func _build_platform(body: StaticBody2D, size: Vector2) -> void:
+func _build_platform(body: StaticBody2D, size: Vector2, tint_top := Color(1, 1, 1), tint_fill := Color(1, 1, 1)) -> void:
 	# dark rim around the whole block so every platform pops on the bright sky
 	var outline := ColorRect.new()
 	outline.color = Color(0.25, 0.14, 0.05)
@@ -812,6 +813,7 @@ func _build_platform(body: StaticBody2D, size: Vector2) -> void:
 	top.region_enabled = true
 	top.region_rect = Rect2(0, 0, size.x + 4.0, top_h)
 	top.position = Vector2(-size.x / 2.0 - 2.0, -size.y / 2.0)
+	top.self_modulate = tint_top
 	body.add_child(top)
 	# dirt fill below the cap (ground blocks only)
 	if size.y - top_h > 0.0:
@@ -822,7 +824,19 @@ func _build_platform(body: StaticBody2D, size: Vector2) -> void:
 		fill.region_enabled = true
 		fill.region_rect = Rect2(0, 0, size.x + 4.0, size.y - top_h)
 		fill.position = Vector2(-size.x / 2.0 - 2.0, -size.y / 2.0 + top_h)
+		fill.self_modulate = tint_fill
 		body.add_child(fill)
+
+func _tile_tints_for(lvl: Dictionary) -> Array:
+	# [สียอดพื้น, สีดิน] ต่อธีม — ใช้ self_modulate บนไทล์เดิม (ไม่ gen ใหม่)
+	var far: String = str(lvl.get("bg", ""))
+	if far.contains("sewer"):
+		return [Color(0.55, 0.95, 0.9), Color(0.45, 0.72, 0.78)]
+	if far.contains("bg_sky"):
+		return [Color(1.0, 1.0, 1.0), Color(1.0, 1.0, 1.0)]
+	if far.contains("castle"):
+		return [Color(0.8, 0.72, 1.0), Color(0.6, 0.52, 0.8)]
+	return [Color(1.0, 1.0, 1.0), Color(1.0, 1.0, 1.0)]
 
 func _update_stats_label() -> void:
 	var fastest_text := "%.1f วิ" % float(stats["best_win_time"]) if float(stats["best_win_time"]) > 0.0 else "—"
