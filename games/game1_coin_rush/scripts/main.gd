@@ -3,6 +3,7 @@ extends Node2D
 
 const LEVELS := [
 	{
+		"name": "ถนนสายเอิ้น", "sub": "ฝูงไวรัสล่องหนขโมยเหรียญกองทุนเมือง — ตามไปเก็บคืน!",
 		"width": 2400.0, "height": 720.0, "time": 120.0, "start": Vector2(120, 600),
 		"platforms": [
 			{"pos": Vector2(1200, 680), "size": Vector2(2400, 80)},
@@ -17,10 +18,12 @@ const LEVELS := [
 		"coins": [Vector2(420,524), Vector2(720,434), Vector2(1020,344), Vector2(1320,464), Vector2(1620,384), Vector2(1920,304), Vector2(2180,444), Vector2(900,616), Vector2(1500,616)],
 		"gold_index": 2,
 		"enemies": [Vector2(600,626), Vector2(1100,354), Vector2(1700,394), Vector2(2050,454)],
+		"hoppers": [],
 		"hazards": [Vector2(860,632), Vector2(1450,632), Vector2(1980,632)],
 		"moving": [],
 	},
 	{
+		"name": "ทุ่งเหรียญเขียว", "sub": "เหรียญทองมูลค่าสูงพอตยับ — เด่แพลตฟอร์มที่เควิ่งน้ำ",
 		"width": 3200.0, "height": 720.0, "time": 120.0, "start": Vector2(120, 600),
 		"platforms": [
 			{"pos": Vector2(1600, 680), "size": Vector2(3200, 80)},
@@ -38,10 +41,12 @@ const LEVELS := [
 		"coins": [Vector2(400,524), Vector2(680,444), Vector2(960,364), Vector2(1240,464), Vector2(1520,384), Vector2(1800,304), Vector2(2080,444), Vector2(2360,364), Vector2(2640,464), Vector2(2920,384), Vector2(1100,616), Vector2(2000,616)],
 		"gold_index": 5,
 		"enemies": [Vector2(520,626), Vector2(1000,374), Vector2(1600,394), Vector2(2200,454), Vector2(2800,394)],
+		"hoppers": [Vector2(1700,626)],
 		"hazards": [Vector2(820,632), Vector2(1400,632), Vector2(1960,632), Vector2(2520,632), Vector2(3080,632)],
 		"moving": [{"a": Vector2(1380, 460), "b": Vector2(1560, 460), "speed": 70.0}],
 	},
 	{
+		"name": "ป่าไวรัสหนา", "sub": "ยิ่งยตมไปยิ่งพบไวรัสหนาแล้ว — เหยียบด้วยหัวจะได้แบ่งขึ้น",
 		"width": 4000.0, "height": 720.0, "time": 150.0, "start": Vector2(120, 600),
 		"platforms": [
 			{"pos": Vector2(2000, 680), "size": Vector2(4000, 80)},
@@ -63,10 +68,76 @@ const LEVELS := [
 		"coins": [Vector2(400,524), Vector2(660,434), Vector2(920,344), Vector2(1180,454), Vector2(1440,364), Vector2(1700,274), Vector2(1960,394), Vector2(2220,304), Vector2(2480,424), Vector2(2740,334), Vector2(3000,454), Vector2(3260,364), Vector2(3520,274), Vector2(3780,404), Vector2(1000,616), Vector2(2200,616), Vector2(3400,616)],
 		"gold_index": 8,
 		"enemies": [Vector2(500,626), Vector2(900,354), Vector2(1500,374), Vector2(2100,314), Vector2(2700,344), Vector2(3300,374)],
+		"hoppers": [Vector2(1150,626), Vector2(2600,626)],
 		"hazards": [Vector2(780,632), Vector2(1320,632), Vector2(1860,632), Vector2(2400,632), Vector2(2940,632), Vector2(3480,632)],
 		"moving": [
 			{"a": Vector2(1280, 450), "b": Vector2(1440, 450), "speed": 80.0},
 			{"a": Vector2(2380, 420), "b": Vector2(2560, 420), "speed": 90.0},
+		],
+	},
+	{
+		"name": "หุบเหวแตกร้าว", "sub": "พื้นไม่เชื่อมกันแล้ว! ห้ามหล่นสู่เหว อาศัยแพลตฟอร์มเควิ่น",
+		"width": 3600.0, "height": 720.0, "time": 140.0, "start": Vector2(120, 600),
+		"grounds": [
+			{"pos": Vector2(600, 680), "size": Vector2(1200, 80)},
+			{"pos": Vector2(1790, 680), "size": Vector2(580, 80)},
+			{"pos": Vector2(2960, 680), "size": Vector2(1280, 80)},
+		],
+		"platforms": [
+			{"pos": Vector2(380, 560), "size": Vector2(180, 24)},
+			{"pos": Vector2(700, 470), "size": Vector2(180, 24)},
+			{"pos": Vector2(1040, 390), "size": Vector2(180, 24)},
+			{"pos": Vector2(1370, 480), "size": Vector2(180, 24)},
+			{"pos": Vector2(1560, 330), "size": Vector2(200, 24)},
+			{"pos": Vector2(2080, 440), "size": Vector2(180, 24)},
+			{"pos": Vector2(2400, 350), "size": Vector2(180, 24)},
+			{"pos": Vector2(2700, 470), "size": Vector2(180, 24)},
+			{"pos": Vector2(3050, 400), "size": Vector2(180, 24)},
+			{"pos": Vector2(3350, 320), "size": Vector2(220, 24)},
+		],
+		"coins": [Vector2(380,524), Vector2(700,434), Vector2(1040,354), Vector2(1370,444), Vector2(1560,294), Vector2(2080,404), Vector2(2400,314), Vector2(2700,434), Vector2(3050,364), Vector2(3350,284), Vector2(760,616), Vector2(2350,616), Vector2(3320,616)],
+		"gold_index": 5,
+		"enemies": [Vector2(500,626), Vector2(2100,414), Vector2(3100,374)],
+		"hoppers": [Vector2(1850,626), Vector2(2650,626)],
+		"hazards": [Vector2(940,632), Vector2(1650,632), Vector2(2790,632), Vector2(3150,632)],
+		"moving": [
+			{"a": Vector2(1980, 560), "b": Vector2(1980, 340), "speed": 90.0},
+			{"a": Vector2(1200, 560), "b": Vector2(1520, 560), "speed": 85.0},
+		],
+	},
+	{
+		"name": "ยอดเขาโรงหล่อเหรียญ", "sub": "บทสุดท้าย! ไต่ขึ้นยอดเขาเพื่อคืนเหรียญทั้งหมดสู่โรงหล่อ",
+		"width": 4200.0, "height": 720.0, "time": 160.0, "start": Vector2(120, 600),
+		"grounds": [
+			{"pos": Vector2(700, 680), "size": Vector2(1400, 80)},
+			{"pos": Vector2(2000, 680), "size": Vector2(700, 80)},
+			{"pos": Vector2(3100, 680), "size": Vector2(2200, 80)},
+		],
+		"platforms": [
+			{"pos": Vector2(400, 560), "size": Vector2(160, 24)},
+			{"pos": Vector2(660, 460), "size": Vector2(160, 24)},
+			{"pos": Vector2(930, 360), "size": Vector2(160, 24)},
+			{"pos": Vector2(1200, 470), "size": Vector2(180, 24)},
+			{"pos": Vector2(1450, 360), "size": Vector2(160, 24)},
+			{"pos": Vector2(1690, 260), "size": Vector2(180, 24)},
+			{"pos": Vector2(1980, 420), "size": Vector2(180, 24)},
+			{"pos": Vector2(2260, 320), "size": Vector2(160, 24)},
+			{"pos": Vector2(2530, 440), "size": Vector2(180, 24)},
+			{"pos": Vector2(2800, 340), "size": Vector2(180, 24)},
+			{"pos": Vector2(3120, 240), "size": Vector2(200, 24)},
+			{"pos": Vector2(3420, 380), "size": Vector2(180, 24)},
+			{"pos": Vector2(3700, 280), "size": Vector2(260, 24)},
+			{"pos": Vector2(4020, 400), "size": Vector2(200, 24)},
+		],
+		"coins": [Vector2(400,524), Vector2(660,424), Vector2(930,324), Vector2(1200,434), Vector2(1450,324), Vector2(1690,224), Vector2(1980,384), Vector2(2260,284), Vector2(2530,404), Vector2(2800,304), Vector2(3120,204), Vector2(3420,344), Vector2(3700,244), Vector2(4020,364), Vector2(1050,616), Vector2(2850,616), Vector2(3900,616)],
+		"gold_index": 10,
+		"enemies": [Vector2(560,626), Vector2(1350,444), Vector2(2150,394), Vector2(3350,354), Vector2(4000,374)],
+		"hoppers": [Vector2(1750,626), Vector2(2900,626), Vector2(3550,626), Vector2(1150,444)],
+		"hazards": [Vector2(980,632), Vector2(1290,632), Vector2(1900,632), Vector2(2470,632), Vector2(3000,632), Vector2(3620,632)],
+		"moving": [
+			{"a": Vector2(1050, 560), "b": Vector2(1050, 300), "speed": 95.0},
+			{"a": Vector2(2050, 500), "b": Vector2(2200, 500), "speed": 80.0},
+			{"a": Vector2(3770, 300), "b": Vector2(3770, 560), "speed": 100.0},
 		],
 	},
 ]
@@ -90,6 +161,7 @@ var _hit_stop_id := 0
 var _camera: Camera2D
 var _bg_far: Sprite2D
 var _bg_near: Sprite2D
+var _banner: Label
 
 @onready var player: CharacterBody2D = $Player
 @onready var platforms: Node2D = $Platforms
@@ -108,6 +180,7 @@ var _bg_near: Sprite2D
 @onready var coin_scene: PackedScene = preload("res://scenes/coin.tscn")
 @onready var coin_gold_scene: PackedScene = preload("res://scenes/coin_gold.tscn")
 @onready var enemy_scene: PackedScene = preload("res://scenes/enemy.tscn")
+@onready var hopper_scene: PackedScene = preload("res://scenes/hopper.tscn")
 @onready var hazard_scene: PackedScene = preload("res://scenes/hazard.tscn")
 @onready var moving_scene: PackedScene = preload("res://scenes/moving_platform.tscn")
 @onready var sfx_pickup: AudioStreamPlayer = $SfxPickup
@@ -120,8 +193,12 @@ func _ready() -> void:
 	_setup_background()
 	_setup_camera()
 	_setup_sfx()
+	_setup_banner()
 	goal.reached.connect(_on_goal_reached)
-	_load_level(0)
+	# dev: `godot ... scenes/main.tscn -- 3` jumps straight to level 3 (1-based)
+	var ua := OS.get_cmdline_user_args()
+	var start_idx := int(ua[0]) - 1 if ua.size() > 0 and ua[0].is_valid_int() else 0
+	_load_level(clampi(start_idx, 0, LEVELS.size() - 1))
 
 func _exit_tree() -> void:
 	if has_node("Music"):
@@ -133,6 +210,9 @@ func _process(delta: float) -> void:
 		_update_time_label()
 		if time_left <= 0.0:
 			_lose("หมดเวลา!")
+		# fell into a ravine (levels with split ground)
+		if player.global_position.y > float(LEVELS[current_level]["height"]) + 90.0:
+			_lose("ตกหุบเหว!")
 	# camera follow
 	if is_instance_valid(_camera) and is_instance_valid(player):
 		var lvl: Dictionary = LEVELS[current_level]
@@ -169,6 +249,18 @@ func _load_level(idx: int) -> void:
 	for c in enemies_container.get_children(): c.queue_free()
 	for c in hazards_container.get_children(): c.queue_free()
 	for c in moving_container.get_children(): c.queue_free()
+	# ground (1 piece by default; levels can split it into ravine segments)
+	var grounds: Array = lvl.get("grounds", [{"pos": Vector2(float(lvl["width"]) / 2.0, 680), "size": Vector2(float(lvl["width"]), 80)}])
+	for g in grounds:
+		var gbody := StaticBody2D.new()
+		gbody.position = g["pos"]
+		var gcol := CollisionShape2D.new()
+		var gshape := RectangleShape2D.new()
+		gshape.size = g["size"]
+		gcol.shape = gshape
+		gbody.add_child(gcol)
+		_build_platform(gbody, g["size"])
+		platforms.add_child(gbody)
 	# platforms
 	for p in lvl["platforms"]:
 		var body := StaticBody2D.new()
@@ -203,13 +295,19 @@ func _load_level(idx: int) -> void:
 		e.position = pos
 		enemies_container.add_child(e)
 		e.caught_player.connect(_on_player_caught)
+	# hoppers (jumping glitch bugs)
+	for pos in lvl.get("hoppers", []):
+		var hpos: CharacterBody2D = hopper_scene.instantiate()
+		hpos.position = pos
+		enemies_container.add_child(hpos)
+		hpos.caught_player.connect(_on_player_caught)
 	# hazards
 	for pos in lvl["hazards"]:
 		var h: Area2D = hazard_scene.instantiate()
 		h.position = pos
 		hazards_container.add_child(h)
 	# goal
-	goal.position = Vector2(float(lvl["width"]) - 120.0, 600.0)
+	goal.position = Vector2(float(lvl["width"]) - 120.0, float(lvl.get("goal_y", 600.0)))
 	# player
 	player.position = lvl["start"]
 	player.velocity = Vector2.ZERO
@@ -231,6 +329,7 @@ func _load_level(idx: int) -> void:
 	_update_time_label()
 	_update_level_label()
 	_update_stats_label()
+	_show_banner()
 
 func _setup_camera() -> void:
 	var cam := Camera2D.new()
@@ -302,6 +401,27 @@ func _setup_sfx() -> void:
 		p.bus = &"SFX"
 		add_child(p)
 
+func _setup_banner() -> void:
+	_banner = Label.new()
+	_banner.name = "LevelBanner"
+	_banner.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_banner.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_banner.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_banner.add_theme_font_size_override("font_size", 40)
+	_banner.add_theme_color_override("font_color", Color(1.0, 0.85, 0.3))
+	_banner.add_theme_color_override("font_outline_color", Color(0.16, 0.09, 0.03))
+	_banner.add_theme_constant_override("outline_size", 10)
+	_banner.modulate.a = 0.0
+	$HUD.add_child(_banner)
+
+func _show_banner() -> void:
+	var lvl: Dictionary = LEVELS[current_level]
+	_banner.text = "ด่าน %d · %s\n%s" % [current_level + 1, str(lvl.get("name", "")), str(lvl.get("sub", ""))]
+	var tw := create_tween()
+	tw.tween_property(_banner, "modulate:a", 1.0, 0.35)
+	tw.tween_interval(2.2)
+	tw.tween_property(_banner, "modulate:a", 0.0, 0.6)
+
 func _on_coin_collected(coin_value: int) -> void:
 	if state != GameState.PLAYING:
 		return
@@ -371,7 +491,7 @@ func _record_win(time_used: float) -> void:
 	stats["level"] = current_level
 	_save_stats()
 	_update_stats_label()
-	win_label.text = "คุณชนะทุกด่าน! (%.1f วิ)\nคะแนน: %d · กด R เล่นใหม่ · Esc กลับเมนู" % [time_used, score]
+	win_label.text = "คุณคืนเหรียญของเมืองครบแล้ว! (%.1f วิ)\nคะแนน: %d · กด R เล่นใหม่ · Esc กลับเมนู" % [time_used, score]
 
 func _record_loss() -> void:
 	stats["plays"] = int(stats["plays"]) + 1
