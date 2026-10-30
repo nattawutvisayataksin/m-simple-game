@@ -16,6 +16,7 @@
   "external_pack_record2": "2026-10-29: แพ็กเสริมอีก 3 ชุดใน download_asset_opengameart/ (gitignored): **Atlas** terrain_atlas (LPC/Sharm, CC-BY-SA 3.0 — หญ้า/ถนนดิน/ต้นสนใหญ่/แท่นบ้าน/ฟาร์ม/สะพาน, atlas 1024px; ให้ credit LPC authors), **hyptosis_tile_art** (OpenGameArt ฟรี 5 batch ป่ามืดละเอียด — ต้นไม้ใหญ่/กำแพง/อาคารเก่า, ใช้เป็นขอบโลกแนวป่าเข้ม), **randomcc0bgsbyzanin** (CC0, ระบุชัด 'ไม่มี AI' — ภาพถ่ายแปลงพิกเซลพาเลตต์ Lost Century 25 ภาพ ขนาด 3439–5184px เช่น RollingFields/SunnyRanch/MiningSite/HillyVillage) — ทิศทางการใช้: Atlas/Hyptosis = ทดลองฉากใหญ่ 4 เท่า (งบ: ไม่ใช้ gen จนกว่าจะอนุมัติ), zanin = เมนู/จอโหลด/พาโรลแลกซ์ดินแดนไกล",
   "game2_record": "2026-10-29: T1 กองพลศิลป์เกมที่ 2 (หอคอยคู่ฟ้า) อนุมัติครบ 6 ชิ้น — ไฟล์ทั้งหมดใน tower-defend/assets/art/ (พื้นหลัง kub_kingdom_map.png 1152×648 ขยาย nearest 3× จาก gen 384×216; gen/* 64px; แผนที่ gen พื้นขาวตัดโปร่งด้วย tools/cut_white_bg.ps1 ใหม่) + mockup_field_v2.png ประกอบตำแหน่งจริง",
   "session_handoff": "2026-10-29: แผน 4 ระยะครบ + **ผู้เล่นยืนยันเซฟได้จริงบนเครื่อง (เทสบนเครื่องจริงผ่าน)** — จบ normal ของโปรเจกต์; ทางต่อยอดเลือกได้: (1) ผูก Input Map sprint (2) จูนค่าไวรัสหลังเล่นเยอะ (3) export build Windows แจกเพื่อน (4) เอาลง itch.io; พรุ่งนี้: Key A bonus +5 ใช้ให้หมดก่อน จึง Key B",
+  "game1_theme_record": "2026-10-30: **ธีม/มอนสเตอร์ใหม่เกม 1 สร้างฟรี 0 gen** — สังเคราะห์เองด้วย PowerShell System.Drawing (แผนที่พิกเซล ASCII + upscale nearest): tools/generate_theme_art.ps1 → sprites enemy_bat.png / enemy_charger.png (16→32px) + ฉากไกล bg_sewer/bg_sky/bg_castle.png (400×224) + แถบใกล้ hills_sewer/sky/castle.png (240×224) ทั้งหมดใน assets/art/gen/ · tools/generate_skins.ps1 → kubi_hero_run_sheet_cyan/_ember.png (576×64, hue-shift จากชีตเดิม) — ผูกใน main.gd/bat.tscn/charger.tscn/player.gd/title.gd แล้ว · headless import + smoke + เทส test_game1.gd 94 PASS ผ่าน; บทเรียน PS 5.1: hash literal case-insensitive → ใช้ Dictionary แบบ Ordinal, เขียน UTF-8 แบบไม่มี BOM",
   "next_steps": [
     "เกมที่ 2 T3 เสร็จแล้ว (ป้อมนักธนู/ปืนใหญ่ยิงได้ + ทองต่อฆ่า + เทสอัตโนมัติ tools/test_t3.gd ผ่าน) — รอเฟดแบ็คเล่นจริงไปจูนบาลานซ์ราคา/ดาเมจ",
     "เกมที่ 2 T4 เสร็จแล้ว (คลื่น 10 รอบ + เรียกก่อนได้โบนัส + โบนัสจบคลื่น + จอชนะ/แพ้ + เริ่มใหม่ — เทส headless test_t4.gd ผ่าน) — รอผู้อำนวยการเล่นจริงจูนบาลานซ์ราคา/โบนัส/จำนวนมอนต่อคลื่น",
@@ -88,6 +89,54 @@
       "path": "assets/art/concept/coin_kub_gold.png",
       "license": "derived",
       "approval": "not-started"
+    },
+    {
+      "id": "enemy_bat",
+      "role": "deadly-obstacle",
+      "size": "32x32",
+      "pivot": "center",
+      "frames": 1,
+      "note": "บัตบิต flying enemy — บินลอย sine ด่าน 6-8, wired in scenes/bat.tscn",
+      "source": "tools/generate_theme_art.ps1 (procedural ASCII pixel map, 0 gen)",
+      "path": "assets/art/gen/enemy_bat.png",
+      "license": "self-generated",
+      "approval": "approved-by-agent 2026-10-30 (visual check)"
+    },
+    {
+      "id": "enemy_charger",
+      "role": "deadly-obstacle",
+      "size": "32x32",
+      "pivot": "center",
+      "frames": 1,
+      "note": "ชาร์เจอร์ dash enemy — วิ่งรุกเมื่อเห็นผู้เล่นระดับเดียว, wired in scenes/charger.tscn",
+      "source": "tools/generate_theme_art.ps1 (procedural ASCII pixel map, 0 gen)",
+      "path": "assets/art/gen/enemy_charger.png",
+      "license": "self-generated",
+      "approval": "approved-by-agent 2026-10-30 (visual check)"
+    },
+    {
+      "id": "game1_theme_bgs",
+      "role": "backgrounds",
+      "size": "400x224 far / 240x224 near",
+      "pivot": "top-left (strips)",
+      "frames": "3+3",
+      "note": "ธีมด่าน 6-8: bg_sewer/sky/castle.png + hills_sewer/sky/castle.png — สลับด้วย _apply_level_look() ใน main.gd",
+      "source": "tools/generate_theme_art.ps1 (procedural, 0 gen)",
+      "paths": ["assets/art/gen/bg_sewer.png", "assets/art/gen/bg_sky.png", "assets/art/gen/bg_castle.png", "assets/art/gen/hills_sewer.png", "assets/art/gen/hills_sky.png", "assets/art/gen/hills_castle.png"],
+      "license": "self-generated",
+      "approval": "approved-by-agent 2026-10-30 (visual check)"
+    },
+    {
+      "id": "kubi_hero_skins",
+      "role": "character-skins",
+      "size": "576x64 (9f sheet)",
+      "pivot": "center",
+      "frames": 9,
+      "note": "สกินสายน้ำฟ้า (cyan) + อัคคีราช (ember) — hue-shift จากชีตเดิม; เลือกในหน้าเมนู ◀/▶, เก็บ 'skin' ใน save",
+      "source": "tools/generate_skins.ps1 (derived from kubi_hero_run_sheet.png, 0 gen)",
+      "paths": ["assets/art/gen/kubi_hero_run_sheet_cyan.png", "assets/art/gen/kubi_hero_run_sheet_ember.png"],
+      "license": "self-generated (derived)",
+      "approval": "approved-by-agent 2026-10-30 (visual check)"
     }
   ],
   "placeholders_in_scenes": [
