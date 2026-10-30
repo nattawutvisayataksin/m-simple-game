@@ -9,6 +9,11 @@ var _phase := 0
 func _initialize() -> void:
 	_main = load("res://scenes/main.tscn").instantiate()
 	root.add_child(_main)
+	if _main._gold != 0:
+		_fail("game should start with zero gold")
+		return
+	_main._gold = 180
+	_main._update_gold()
 
 func _fail(message: String) -> void:
 	print("TEST_T6 FAIL ", message)

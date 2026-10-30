@@ -1,10 +1,10 @@
 # Game 2 — Handoff to OpenCode
 
-Updated: 2026-10-29
+Updated: 2026-10-30
 
 ## Current state
 
-Game 2 is paused at the user's request after the latest build was opened for playtesting. Wait for the user's observations before changing gameplay or generating more assets.
+The latest Game Director request is implemented in the existing Godot 4.7.2 project. No new art generation was needed.
 
 The current build includes:
 
@@ -12,15 +12,16 @@ The current build includes:
 - The stone golem, which has high physical resistance.
 - A separate, smoothly rotating weapon layer on each tower. It tracks the selected enemy, waits until aimed, and spawns the projectile at the weapon muzzle; the tower base stays in place.
 - The earlier fixes for the hidden third build site, build pads, purchase menu, and hero attack feedback.
+- Kubi starts at 0 gold; kills award bounty. Right-click ground to move smoothly and right-click an enemy to pursue it.
+- The road now runs from the upper-left portal through a longer serpentine route to the castle entrance at the upper-right side of the map.
+- Press **B**, then click valid grass to place a tower away from roads, gates, fixed pads, and other towers. Click any placed tower to upgrade or sell it.
 
-The automated aiming test checks the rotation of all three weapon types. It does not replace a visual playtest of the artwork, turning feel, muzzle alignment, and combat balance.
+The automated tests cover zero starting gold, hero kill income, free placement and overlap rejection, tower upgrade/sale, and respawn. A visual playtest is still useful for confirming the route overlay and hero movement feel.
 
 ## Resume checklist
 
-1. Ask what the user noticed while playing, especially weapon turning, shot origin, tower visibility, and purchase flow.
-2. Reproduce the reported issue in the running game or with a focused Godot test.
-3. Make only the requested, relevant changes; update this folder's docs and tests.
-4. Run all eight headless tests listed in [ARCHITECTURE.md](ARCHITECTURE.md).
+1. Run all eight headless tests listed in [ARCHITECTURE.md](ARCHITECTURE.md).
+2. Play the game and tune the new path/placement bounds if the Director reports visual or balance issues.
 
 ## Run the game
 

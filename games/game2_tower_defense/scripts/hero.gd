@@ -5,12 +5,13 @@ extends Node2D
 
 const WALK_TEX := preload("res://assets/art/gen/kubi_hero_sheet.png")
 const IDLE_TEX := preload("res://assets/art/gen/kubi_hero_neutral.png")
-const GATE := Vector2(816, 470)   # จุดเกิดใหม่ (หน้าปราสาท)
+const GATE := Vector2(810, 450)   # จุดเกิดใหม่ (ประตูปราสาทขวาบน)
 
-var speed := 110.0
-var attack_range := 130.0
-var attack_dmg := 18.0
-var attack_interval := 0.9
+var speed := 155.0
+var acceleration := 900.0
+var attack_range := 120.0
+var attack_dmg := 24.0
+var attack_interval := 0.72
 var max_hp := 100.0
 var contact_dmg := 7.0      # ความเจ็บจากศัตรูแนมตัววนจนอยู่ติดกัน (จังหวะ 0.9 วิ)
 var respawn_time := 8.0
@@ -20,6 +21,8 @@ var _dead := false
 var _respawn_t := 0.0
 var _target := Vector2.ZERO
 var _moving := false
+var _velocity := Vector2.ZERO
+var _combat_target: Node2D
 var _attack_cd := 0.0
 var _hurt_cd := 0.0
 var _regen_cd := 0.0
@@ -41,8 +44,17 @@ func _ready() -> void:
 func move_to(pos: Vector2) -> void:
 	if _dead:
 		return
-	_target = pos
-	_moving = true
+	_combat_target = null
+	_target = Vector2(clampf(pos.x, 28.0, 1124.0), clampf(pos.y, 28.0, 620.0))
+	_moving = position.distance_to(_target) > 4.0
+	_command_marker_t = 0.75
+
+func attack_target(target: Node2D) -> void:
+	if _dead or target == null or not is_instance_valid(target) or target.dead:
+		return
+	_combat_target = target
+	_target = target.position
+	_moving = position.distance_to(_target) > attack_range * 0.72
 	_command_marker_t = 0.75
 
 func take_damage(amount: float) -> void:
@@ -57,6 +69,8 @@ func _die() -> void:
 	_hp = 0.0
 	_respawn_t = respawn_time
 	_moving = false
+	_velocity = Vector2.ZERO
+	_combat_target = null
 	_sprite.texture = IDLE_TEX
 	_sprite.hframes = 1
 	_sprite.frame = 0
@@ -67,10 +81,11 @@ func _respawn() -> void:
 	_hp = max_hp
 	position = GATE
 	_moving = false
+	_velocity = Vector2.ZERO
 	_sprite.modulate = Color.WHITE
 
-func _process(delta: float) -> void:
-	queue_redraw()   # แถบเลือดอยู่ใน _draw ต้องวาดใหม่ทุกเฟรม
+func _physics_process(delta: float) -> void:
+	queue_redraw()
 	_attack_flash_t = maxf(_attack_flash_t - delta, 0.0)
 	_command_marker_t = maxf(_command_marker_t - delta, 0.0)
 	if _dead:
@@ -85,23 +100,43 @@ func _process(delta: float) -> void:
 	if _regen_cd >= 1.0:
 		_regen_cd = 0.0
 		_hp = minf(_hp + 3.0, max_hp)
-	# เดินไปหมุดที่สั่ง
-	if _moving:
-		var to := _target - position
-		var step := speed * delta
-		if to.length() <= step:
-			position = _target
-			_moving = false
+	if _combat_target != null and (not is_instance_valid(_combat_target) or _combat_target.dead):
+		_combat_target = null
+	if _combat_target != null:
+		var to_enemy := _combat_target.position - position
+		if to_enemy.length() > attack_range * 0.72:
+			_target = _combat_target.position - to_enemy.normalized() * attack_range * 0.72
+			_moving = true
 		else:
-			position += to.normalized() * step
-			if absf(to.x) > 0.05:
-				_sprite.flip_h = to.x > 0.0   # ยืนกายหันตามทางที่เดิน
-	# ภาพเฟรมเดิน/ยืน (sheet เดิน 8 ช่อง)
+			_moving = false
+
+	var desired_velocity := Vector2.ZERO
+	var arrived := false
 	if _moving:
+		var to_target := _target - position
+		if to_target.length() <= 5.0:
+			if _combat_target == null:
+				position = _target
+			_moving = false
+			_velocity = Vector2.ZERO
+			arrived = true
+		else:
+			desired_velocity = to_target.normalized() * speed
+	_velocity = _velocity.move_toward(desired_velocity, acceleration * delta)
+	if not arrived:
+		position += _velocity * delta
+	position.x = clampf(position.x, 24.0, 1128.0)
+	position.y = clampf(position.y, 24.0, 624.0)
+	if absf(_velocity.x) > 1.0:
+		_sprite.flip_h = _velocity.x > 0.0
+	_sprite.rotation = clampf(_velocity.x / speed * 0.08, -0.08, 0.08)
+	_sprite.offset.y = -14.0 + sin(_anim_t * 0.5) * (1.2 if _velocity.length() < 5.0 else 0.0)
+
+	if _velocity.length() > 5.0:
 		if _sprite.texture != WALK_TEX:
 			_sprite.texture = WALK_TEX
 			_sprite.hframes = 8
-		_anim_t += delta * 10.0
+		_anim_t += delta * lerpf(8.0, 13.0, clampf(_velocity.length() / speed, 0.0, 1.0))
 		_sprite.frame = int(_anim_t) % 8
 	else:
 		_sprite.texture = IDLE_TEX
@@ -119,8 +154,13 @@ func _process(delta: float) -> void:
 	if best != null and _attack_cd <= 0.0:
 		_attack_cd = attack_interval
 		_attack_direction = (best.position - position).normalized()
-		_attack_flash_t = 0.2
+		_attack_flash_t = 0.24
+		_sprite.scale = Vector2(1.55, 1.12)
+		var attack_tween := create_tween()
+		attack_tween.tween_property(_sprite, "scale", Vector2(1.35, 1.35), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		best.take_damage(attack_dmg)
+		if best.dead and _combat_target == best:
+			_combat_target = null
 	# โดนรุม: ตัวใดยืนติดกันนานจนเย็น 0.9 วิ = บีบเลือดหนึ่งจังหวะ
 	if _hurt_cd <= 0.0:
 		for e2 in get_tree().get_nodes_in_group("enemies"):
@@ -139,9 +179,9 @@ func _draw() -> void:
 		draw_line(marker + Vector2(-5.0, 0.0), marker + Vector2(5.0, 0.0), Color(1.0, 0.92, 0.58, alpha), 2.0, true)
 		draw_line(marker + Vector2(0.0, -5.0), marker + Vector2(0.0, 5.0), Color(1.0, 0.92, 0.58, alpha), 2.0, true)
 	if _attack_flash_t > 0.0:
-		var slash_center := Vector2(0.0, -18.0) + _attack_direction * 20.0
+		var slash_center := Vector2(0.0, -18.0) + _attack_direction * 25.0
 		var slash_side := _attack_direction.orthogonal()
-		var slash_alpha := clampf(_attack_flash_t / 0.2, 0.0, 1.0)
+		var slash_alpha := clampf(_attack_flash_t / 0.24, 0.0, 1.0)
 		draw_line(slash_center - slash_side * 11.0 - _attack_direction * 7.0,
 			slash_center + slash_side * 11.0 + _attack_direction * 7.0,
 			Color(1.0, 0.72, 0.24, slash_alpha), 6.0, true)

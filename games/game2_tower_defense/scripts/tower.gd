@@ -47,6 +47,7 @@ var splash_r := 0.0         # >0 = ยิงแบบกระจุกระเ
 var shot_speed := 260.0
 var image: Texture2D        # โครงป้อม (tower_archer/cannon)
 var level := 1              # ระดับป้อม (T5): อัปเกรดเลือด/ยิงหนักขึ้นแล้วกายใหญ่ + ป้าย "II"
+var invested_gold := 0
 
 var _cooldown := 0.0
 var _sprite: Sprite2D

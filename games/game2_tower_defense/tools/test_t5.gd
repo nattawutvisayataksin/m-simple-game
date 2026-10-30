@@ -1,6 +1,6 @@
 extends SceneTree
 # เทส T5 อัตโนมัติ 4 ช่วง:
-# 1) ป้อม: สร้าง archer (ทอง 180-90=90, dmg 9, lv1) -> อัปเกรด (ทอง 20, dmg 15, lv2)
+# 1) ป้อม: สร้าง archer (fixture 180-90=90, dmg 9, lv1) -> อัปเกรด (ทอง 20, dmg 15, lv2)
 #    -> อัปเกรดซ้ำ = no-op (ทอง 20 คงเดิม) -> ขายคืน 60% ของ 160 = +96 -> ทอง 116
 # 2) ฮีโร่ฟาด: กบ max_hp 10 ยืนใกล้ตายใน ~จังหวะเดียว
 # 3) ฮีโร่โดนรุม: กิ้งก่าเลือดนิรันดร์แนมตัวเลือดลด < 100
@@ -18,6 +18,12 @@ func _initialize() -> void:
 	var main_scene: Node2D = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main_scene)
 	_main = main_scene
+	if _main._gold != 0:
+		print("TEST_T5 FAIL game should start with zero gold")
+		quit(1)
+		return
+	_main._gold = 180 # ทดสอบระบบป้อมด้วยทุน fixture; เกมจริงเริ่มจาก 0
+	_main._update_gold()
 
 	# ---- ช่วง 0: คลิกจำลองทั้ง 4 ลานต้องเปิดเมนูครบ (ฟีดแบ็ค T5.1: หาจุดซื้อไม่ได้) ----
 	for i in range(4):
@@ -74,6 +80,49 @@ func _initialize() -> void:
 		quit(1)
 		return
 	print("TEST_T5 spot-3 visibility PASS background_z=", background.z_index, " tower_z=", spot3_tower.z_index)
+	var free_position := Vector2(1020.0, 580.0)
+	if not _main._valid_tower_position(free_position) or _main._valid_tower_position(_main.PATH_A[0]):
+		print("TEST_T5 FAIL free placement validation")
+		quit(1)
+		return
+	_main._gold = 300
+	_main._update_gold()
+	var build_key := InputEventKey.new()
+	build_key.keycode = KEY_B
+	build_key.pressed = true
+	_main._unhandled_input(build_key)
+	var placement_click := InputEventMouseButton.new()
+	placement_click.button_index = MOUSE_BUTTON_LEFT
+	placement_click.pressed = true
+	placement_click.position = free_position
+	_main._unhandled_input(placement_click)
+	if _main._menu == null or _main._menu_mode != "build" or _main._menu_spot != -1:
+		print("TEST_T5 FAIL B-click placement menu")
+		quit(1)
+		return
+	_main._build_free_tower(free_position, "archer")
+	if _main._free_towers.size() != 1 or _main._free_towers[0].position != free_position:
+		print("TEST_T5 FAIL free placement build")
+		quit(1)
+		return
+	var free_tower: Node2D = _main._free_towers[0]
+	if _main._valid_tower_position(free_position + Vector2(30.0, 0.0)):
+		print("TEST_T5 FAIL overlapping free placement was accepted")
+		quit(1)
+		return
+	_main._open_tower_menu(free_tower)
+	_main._upgrade_selected_tower()
+	if free_tower.level != 2 or free_tower.invested_gold != 160:
+		print("TEST_T5 FAIL free tower upgrade")
+		quit(1)
+		return
+	_main._open_tower_menu(free_tower)
+	_main._sell_selected_tower()
+	if _main._free_towers.size() != 0 or _main._gold != 236:
+		print("TEST_T5 FAIL free tower sale gold=", _main._gold)
+		quit(1)
+		return
+	print("TEST_T5 free-place+upgrade+sell PASS")
 	_phase = 1
 
 	# ---- ช่วง 2: ฮีโร่ฟาดกบ (max_hp 10 ตายในจังหวะเดียว) ----
@@ -85,9 +134,10 @@ func _initialize() -> void:
 	frog.waypoints = PackedVector2Array([Vector2(830, 470), Vector2(880, 470)])
 	frog.speed = 5.0
 	frog.max_hp = 10.0
-	frog.reward = 0
+	frog.reward = 15
 	frog.body_bottom_row = 59
 	frog.died.connect(func(_r, _at): _frog_done = true)
+	frog.died.connect(_main._on_enemy_died)
 	_main.add_child(frog)
 
 func _spawn_lizard() -> void:
@@ -109,7 +159,11 @@ func _process(_delta: float) -> bool:
 
 	if _phase == 1:
 		if _frog_done:
-			print("TEST_T5 hero-attack PASS (กบตาย sim=%.1fs)" % _sim_t)
+			if _main._gold != 251:
+				print("TEST_T5 FAIL hero kill did not award gold=", _main._gold)
+				quit(1)
+				return true
+			print("TEST_T5 hero-attack+gold PASS gold=", _main._gold)
 			_spawn_lizard()
 			_phase = 2
 	elif _phase == 2:
@@ -132,7 +186,7 @@ func _process(_delta: float) -> bool:
 				quit(1)
 				return true
 	elif _phase == 4:
-		if not hero._dead and hero._hp == hero.max_hp and hero.position == Vector2(816, 470):
+		if not hero._dead and hero._hp == hero.max_hp and hero.position == hero.GATE:
 			print("TEST_T5 hero-respawn PASS hp=%.0f pos=%s sim=%.1fs" % [hero._hp, hero.position, _sim_t])
 			print("TEST_T5 ALL PASS")
 			quit(0)
