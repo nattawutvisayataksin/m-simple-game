@@ -23,7 +23,7 @@ const LEVELS := [
 		"moving": [],
 	},
 	{
-		"name": "ทุ่งเหรียญเขียว", "sub": "เหรียญทองมูลค่าสูงพอตยับ — เด่แพลตฟอร์มที่เควิ่งน้ำ",
+		"name": "ทุ่งเหรียญเขียว", "sub": "เหรียญทองมูลค่าสูงยับ — ระวังแพลตฟอร์มที่สั่นไหว!",
 		"width": 3200.0, "height": 720.0, "time": 120.0, "start": Vector2(120, 600),
 		"platforms": [
 			{"pos": Vector2(1600, 680), "size": Vector2(3200, 80)},
@@ -46,7 +46,7 @@ const LEVELS := [
 		"moving": [{"a": Vector2(1380, 460), "b": Vector2(1560, 460), "speed": 70.0}],
 	},
 	{
-		"name": "ป่าไวรัสหนา", "sub": "ยิ่งยตมไปยิ่งพบไวรัสหนาแล้ว — เหยียบด้วยหัวจะได้แบ่งขึ้น",
+		"name": "ป่าไวรัสหนา", "sub": "ยิ่งลึกยิ่งพบไวรัสแน่น — เหยียบหัวมันเด้งขึ้นต่อ!",
 		"width": 4000.0, "height": 720.0, "time": 150.0, "start": Vector2(120, 600),
 		"platforms": [
 			{"pos": Vector2(2000, 680), "size": Vector2(4000, 80)},
@@ -76,7 +76,7 @@ const LEVELS := [
 		],
 	},
 	{
-		"name": "หุบเหวแตกร้าว", "sub": "พื้นไม่เชื่อมกันแล้ว! ห้ามหล่นสู่เหว อาศัยแพลตฟอร์มเควิ่น",
+		"name": "หุบเหวแตกร้าว", "sub": "พื้นไม่เชื่อมกันแล้ว! ห้ามหล่นสู่เหว อาศัยแพลตฟอร์มลอยน้ำ",
 		"width": 3600.0, "height": 720.0, "time": 140.0, "start": Vector2(120, 600),
 		"grounds": [
 			{"pos": Vector2(600, 680), "size": Vector2(1200, 80)},
@@ -139,6 +139,100 @@ const LEVELS := [
 			{"a": Vector2(2050, 500), "b": Vector2(2200, 500), "speed": 80.0},
 			{"a": Vector2(3770, 300), "b": Vector2(3770, 560), "speed": 100.0},
 		],
+		# --- ด่านใหม่จากระดับ 2026-10-30 (ที่นี่ยังต่อยอดธีมใหม่อีกสามด่าน) ---
+	},
+	{
+		"name": "ท่อระบายบิต", "sub": "กองเหรียญหายไปอยู่ในท่อระบายเมือง! ระวังบัตบิตกับชาร์เจอร์ที่ดุร้าย",
+		"width": 3200.0, "height": 720.0, "time": 140.0, "start": Vector2(120, 600),
+		"bg": "res://assets/art/gen/bg_sewer.png", "near": "res://assets/art/gen/hills_sewer.png",
+		"platforms": [
+			{"pos": Vector2(1600, 680), "size": Vector2(3200, 80)},
+			{"pos": Vector2(420, 560), "size": Vector2(180, 24)},
+			{"pos": Vector2(700, 470), "size": Vector2(180, 24)},
+			{"pos": Vector2(960, 380), "size": Vector2(180, 24)},
+			{"pos": Vector2(1220, 490), "size": Vector2(200, 24)},
+			{"pos": Vector2(1480, 400), "size": Vector2(180, 24)},
+			{"pos": Vector2(1780, 320), "size": Vector2(200, 24)},
+			{"pos": Vector2(2080, 430), "size": Vector2(180, 24)},
+			{"pos": Vector2(2350, 350), "size": Vector2(180, 24)},
+			{"pos": Vector2(2620, 470), "size": Vector2(200, 24)},
+			{"pos": Vector2(2920, 390), "size": Vector2(180, 24)},
+		],
+		"coins": [Vector2(420,524), Vector2(700,434), Vector2(960,344), Vector2(1220,454), Vector2(1480,364), Vector2(1780,284), Vector2(2080,394), Vector2(2350,314), Vector2(2620,434), Vector2(2920,354), Vector2(1050,616), Vector2(1900,616), Vector2(2520,616), Vector2(3080,616)],
+		"gold_index": 6,
+		"enemies": [Vector2(560,626), Vector2(1350,444), Vector2(2200,384), Vector2(3000,424)],
+		"chargers": [Vector2(900,626), Vector2(2450,626)],
+		"bats": [Vector2(1150,430), Vector2(1950,420), Vector2(2780,410)],
+		"hoppers": [Vector2(1650,626)],
+		"hazards": [Vector2(820,632), Vector2(1420,632), Vector2(2000,632), Vector2(2700,632)],
+		"moving": [{"a": Vector2(1610, 470), "b": Vector2(1770, 470), "speed": 85.0}],
+	},
+	{
+		"name": "ท้องฟ้าเมฆเด้ง", "sub": "ขึ้นสู่ท้องฟ้า! แพลตฟอร์มลอยเคลื่อนไม่หยุด — บัตบิตบินคุ้มมองเรา",
+		"width": 3400.0, "height": 720.0, "time": 150.0, "start": Vector2(120, 600),
+		"bg": "res://assets/art/gen/bg_sky.png", "near": "res://assets/art/gen/hills_sky.png",
+		"platforms": [
+			{"pos": Vector2(1700, 680), "size": Vector2(3400, 80)},
+			{"pos": Vector2(400, 560), "size": Vector2(180, 24)},
+			{"pos": Vector2(680, 470), "size": Vector2(180, 24)},
+			{"pos": Vector2(940, 380), "size": Vector2(180, 24)},
+			{"pos": Vector2(1200, 490), "size": Vector2(200, 24)},
+			{"pos": Vector2(1480, 410), "size": Vector2(180, 24)},
+			{"pos": Vector2(1740, 320), "size": Vector2(180, 24)},
+			{"pos": Vector2(2020, 430), "size": Vector2(200, 24)},
+			{"pos": Vector2(2300, 350), "size": Vector2(180, 24)},
+			{"pos": Vector2(2580, 460), "size": Vector2(180, 24)},
+			{"pos": Vector2(2860, 370), "size": Vector2(200, 24)},
+			{"pos": Vector2(3140, 460), "size": Vector2(180, 24)},
+		],
+		"coins": [Vector2(400,524), Vector2(680,434), Vector2(940,344), Vector2(1200,454), Vector2(1480,374), Vector2(1740,284), Vector2(2020,394), Vector2(2300,314), Vector2(2580,424), Vector2(2860,334), Vector2(3140,424), Vector2(1000,616), Vector2(2100,616), Vector2(3260,616)],
+		"gold_index": 7,
+		"enemies": [Vector2(640,626), Vector2(1580,374), Vector2(2700,414)],
+		"chargers": [Vector2(1350,626)],
+		"bats": [Vector2(760,400), Vector2(1420,440), Vector2(2400,390), Vector2(3060,430)],
+		"hoppers": [Vector2(1130,626), Vector2(2380,626), Vector2(3220,626)],
+		"hazards": [Vector2(880,632), Vector2(1660,632), Vector2(2480,632), Vector2(3040,632)],
+		"moving": [
+			{"a": Vector2(1240, 500), "b": Vector2(1400, 500), "speed": 90.0},
+			{"a": Vector2(2140, 450), "b": Vector2(2300, 450), "speed": 95.0},
+			{"a": Vector2(2820, 520), "b": Vector2(2820, 330), "speed": 105.0},
+		],
+	},
+	{
+		"name": "ปราสาทบิตคู", "sub": "บอสไฟนาล! ไต่ปราสาทคืนกองกลางเหรียญกองทุนทั้งเมือง",
+		"width": 3800.0, "height": 720.0, "time": 160.0, "start": Vector2(120, 600),
+		"bg": "res://assets/art/gen/bg_castle.png", "near": "res://assets/art/gen/hills_castle.png",
+		"grounds": [
+			{"pos": Vector2(700, 680), "size": Vector2(1400, 80)},
+			{"pos": Vector2(1900, 680), "size": Vector2(660, 80)},
+			{"pos": Vector2(3120, 680), "size": Vector2(1360, 80)},
+		],
+		"platforms": [
+			{"pos": Vector2(400, 560), "size": Vector2(180, 24)},
+			{"pos": Vector2(700, 470), "size": Vector2(180, 24)},
+			{"pos": Vector2(960, 380), "size": Vector2(180, 24)},
+			{"pos": Vector2(1240, 480), "size": Vector2(200, 24)},
+			{"pos": Vector2(1520, 400), "size": Vector2(180, 24)},
+			{"pos": Vector2(1780, 310), "size": Vector2(180, 24)},
+			{"pos": Vector2(2100, 420), "size": Vector2(180, 24)},
+			{"pos": Vector2(2380, 340), "size": Vector2(180, 24)},
+			{"pos": Vector2(2660, 460), "size": Vector2(200, 24)},
+			{"pos": Vector2(2940, 380), "size": Vector2(180, 24)},
+			{"pos": Vector2(3260, 470), "size": Vector2(200, 24)},
+			{"pos": Vector2(3560, 400), "size": Vector2(180, 24)},
+		],
+		"coins": [Vector2(400,524), Vector2(700,434), Vector2(960,344), Vector2(1240,444), Vector2(1520,364), Vector2(1780,274), Vector2(2100,384), Vector2(2380,304), Vector2(2660,424), Vector2(2940,344), Vector2(3260,434), Vector2(3560,364), Vector2(1080,616), Vector2(2400,616), Vector2(3650,616)],
+		"gold_index": 8,
+		"enemies": [Vector2(620,626), Vector2(1480,384), Vector2(2260,374), Vector2(3700,374)],
+		"chargers": [Vector2(1000,626), Vector2(2600,626), Vector2(3300,626)],
+		"bats": [Vector2(900,410), Vector2(1700,430), Vector2(2250,380), Vector2(3100,400)],
+		"hoppers": [Vector2(1500,626), Vector2(2850,626), Vector2(3450,626)],
+		"hazards": [Vector2(900,632), Vector2(1600,632), Vector2(2100,632), Vector2(2750,632), Vector2(3180,632), Vector2(3700,606)],
+		"moving": [
+			{"a": Vector2(1350, 540), "b": Vector2(1350, 320), "speed": 100.0},
+			{"a": Vector2(2550, 470), "b": Vector2(2700, 470), "speed": 95.0},
+			{"a": Vector2(3400, 300), "b": Vector2(3400, 540), "speed": 110.0},
+		],
 	},
 ]
 
@@ -162,6 +256,13 @@ var _camera: Camera2D
 var _bg_far: Sprite2D
 var _bg_near: Sprite2D
 var _banner: Label
+var _sky_grad: Gradient
+
+# สีฟากฝากฉากของด่าน (ต่อธีม — ด่านเก่าทำใน "sky" เขียนทับได้)
+const SKY_DEFAULT := [Color("#3fa9e8"), Color("#8fd3f4"), Color("#ffe9c2")]
+const SKY_SEWER := [Color("#0d2a33"), Color("#16404b"), Color("#1e5a63")]
+const SKY_SKY := [Color("#6db9ef"), Color("#a8ddfa"), Color("#eaf6ff")]
+const SKY_CASTLE := [Color("#1c1430"), Color("#332349"), Color("#4a2a5e")]
 
 @onready var player: CharacterBody2D = $Player
 @onready var platforms: Node2D = $Platforms
@@ -183,6 +284,8 @@ var _banner: Label
 @onready var hopper_scene: PackedScene = preload("res://scenes/hopper.tscn")
 @onready var hazard_scene: PackedScene = preload("res://scenes/hazard.tscn")
 @onready var moving_scene: PackedScene = preload("res://scenes/moving_platform.tscn")
+@onready var bat_scene: PackedScene = preload("res://scenes/bat.tscn")
+@onready var charger_scene: PackedScene = preload("res://scenes/charger.tscn")
 @onready var sfx_pickup: AudioStreamPlayer = $SfxPickup
 @onready var sfx_win: AudioStreamPlayer = $SfxWin
 @onready var sfx_lose: AudioStreamPlayer = $SfxLose
@@ -301,6 +404,20 @@ func _load_level(idx: int) -> void:
 		hpos.position = pos
 		enemies_container.add_child(hpos)
 		hpos.caught_player.connect(_on_player_caught)
+	# chargers — แมลงแดงรุกไล่เมื่ออยู่ระดับเดียวกัน
+	for pos in lvl.get("chargers", []):
+		var ch: CharacterBody2D = charger_scene.instantiate()
+		ch.position = pos
+		enemies_container.add_child(ch)
+		ch.caught_player.connect(_on_player_caught)
+	# บัตบิต — ค้างคาวลอยไล่โคจรไปมาเหนือป้อมเดิม
+	for pos in lvl.get("bats", []):
+		var b: CharacterBody2D = bat_scene.instantiate()
+		b.position = pos
+		enemies_container.add_child(b)
+		b.caught_player.connect(_on_player_caught)
+	# ธีมฉาก/ฟากตามด่าน
+	_apply_level_look(lvl)
 	# hazards
 	for pos in lvl["hazards"]:
 		var h: Area2D = hazard_scene.instantiate()
@@ -348,8 +465,9 @@ func _setup_background() -> void:
 	sky.name = "SkyLayer"
 	add_child(sky)
 	var grad := Gradient.new()
+	_sky_grad = grad
 	grad.offsets = PackedFloat32Array([0.0, 0.55, 1.0])
-	grad.colors = PackedColorArray([Color("#3fa9e8"), Color("#8fd3f4"), Color("#ffe9c2")])
+	grad.colors = PackedColorArray(SKY_DEFAULT)
 	var gtex := GradientTexture2D.new()
 	gtex.gradient = grad
 	gtex.fill_from = Vector2.ZERO
@@ -371,6 +489,28 @@ func _setup_background() -> void:
 	near_layer.name = "BGNear"
 	add_child(near_layer)
 	_bg_near = _make_strip("res://assets/art/gen/hills_near.png", near_layer, 2.2, 0.45)
+
+func _apply_level_look(lvl: Dictionary) -> void:
+	# ด่านเก่าที่ไม่ใส่ "bg"/"near" จะได้ชุดภาพแสงแดดเดิม; ด่านธีมใหม่เลื่อนฉาก + สีฟ้า
+	var far_path: String = str(lvl.get("bg", "res://assets/art/gen/bg_sunny.png"))
+	var near_path: String = str(lvl.get("near", "res://assets/art/gen/hills_near.png"))
+	if is_instance_valid(_bg_far):
+		_bg_far.texture = load(far_path)
+	if is_instance_valid(_bg_near):
+		_bg_near.texture = load(near_path)
+	if not is_instance_valid(_sky_grad):
+		return
+	var sky = lvl.get("sky")
+	if sky == null:
+		if far_path.contains("sewer"):
+			sky = SKY_SEWER
+		elif far_path.contains("bg_sky"):
+			sky = SKY_SKY
+		elif far_path.contains("castle"):
+			sky = SKY_CASTLE
+		else:
+			sky = SKY_DEFAULT
+	_sky_grad.colors = PackedColorArray([sky[0], sky[1], sky[2]])
 
 func _make_strip(path: String, layer: CanvasLayer, s: float, factor: float) -> Sprite2D:
 	var tex: Texture2D = load(path)

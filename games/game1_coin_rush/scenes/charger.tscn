@@ -1,0 +1,34 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/charger.gd" id="1_charger"]
+[ext_resource type="Texture2D" path="res://assets/art/gen/enemy_charger.png" id="2_chasprite"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_cha"]
+radius = 13.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_chahit"]
+radius = 16.0
+
+[node name="Charger" type="CharacterBody2D"]
+script = ExtResource("1_charger")
+collision_layer = 4
+collision_mask = 1
+
+[node name="Visual" type="Sprite2D" parent="."]
+texture = ExtResource("2_chasprite")
+scale = Vector2(1.3, 1.3)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_cha")
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("CircleShape2D_chahit")
+
+[node name="EdgeCheck" type="RayCast2D" parent="."]
+position = Vector2(12, 0)
+target_position = Vector2(0, 24)
+enabled = true
