@@ -70,3 +70,16 @@ Run it after any change to `scripts/` or level data; it does not yet replace vis
 5. Levels 6-8, the Bat, the Charger, and the skin system are new content generated without a human playtest — prioritize playing them first.
 
 Preserve vendor license notices and asset attributions. Keep the active project at `games/game1_coin_rush`; do not confuse it with other game projects in the repository.
+
+## Session log 2026-10-30 (all commits pushed to origin/main)
+
+- `e7b8307` monsters Bat (บัตบิต) + Charger (ชาร์เจอร์), levels 6-8 (ท่อระบาย/ท้องฟ้า/ปราสาท), theme art generator, headless suite
+- `66fd2a6` hero skins (title chooser, saved in save) + per-theme weather/tint ambience
+- `848c969` PLAY.md full rewrite (story/controls/monsters/levels/skins)
+- `19d2b63` docs sync: ARCHITECTURE/HANDOFF/GDD/README/ASSET_MANIFEST
+- `1299f62` per-theme music (sewer 90bpm / sky 126bpm / castle 105bpm), `_apply_theme_music`
+- `9ab9521` skins 3→5 (ม่วงราตรี/ใบไม้ระยิบ), test watchdog hardening
+- `e20aec3` theme tile tints (`_tile_tints_for`) + visual QA screenshots (`tools/shot_themes.gd`)
+- `c1b807a` level-8 mini-boss บิตคูผู้คุม (HP 3, dive, coin burst) + `tools/shot_boss.gd`
+- `77ec8f7` finale win screen (stats + coin rain)
+- Last verified state: `test_game1.gd` 104 PASS / 0 FAIL; all headless smokes clean. New content NOT yet played by a human — see the checklist above.
