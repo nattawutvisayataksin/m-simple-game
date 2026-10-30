@@ -261,6 +261,13 @@ var _tint: CanvasModulate
 var _weather: CPUParticles2D
 
 # สีฟากฝากฉากของด่าน (ต่อธีม — ด่านเก่าทำใน "sky" เขียนทับได้)
+const THEME_MUSIC := {
+	"sunny": "res://assets/audio/music.wav",
+	"sewer": "res://assets/audio/music_sewer.wav",
+	"bg_sky": "res://assets/audio/music_sky.wav",
+	"castle": "res://assets/audio/music_castle.wav",
+}
+
 const SKY_DEFAULT := [Color("#3fa9e8"), Color("#8fd3f4"), Color("#ffe9c2")]
 const SKY_SEWER := [Color("#0d2a33"), Color("#16404b"), Color("#1e5a63")]
 const SKY_SKY := [Color("#6db9ef"), Color("#a8ddfa"), Color("#eaf6ff")]
@@ -529,6 +536,23 @@ func _apply_level_look(lvl: Dictionary) -> void:
 		else:
 			_tint.color = Color(1.0, 1.0, 1.0)
 			_apply_weather("")
+	_apply_theme_music(far_path)
+
+func _apply_theme_music(far_path: String) -> void:
+	var music := get_node_or_null("Music") as AudioStreamPlayer
+	if music == null:
+		return
+	var target: String = THEME_MUSIC["sunny"]
+	if far_path.contains("sewer"):
+		target = THEME_MUSIC["sewer"]
+	elif far_path.contains("bg_sky"):
+		target = THEME_MUSIC["bg_sky"]
+	elif far_path.contains("castle"):
+		target = THEME_MUSIC["castle"]
+	var cur: Resource = music.stream
+	if cur == null or cur.resource_path != target:
+		music.stream = load(target)
+		music.play()
 
 func _setup_weather() -> void:
 	_tint = CanvasModulate.new()

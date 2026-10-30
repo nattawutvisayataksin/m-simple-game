@@ -60,6 +60,7 @@ Tight controller first: coyote time, jump buffer, variable height, asymmetric gr
 
 ## 7. Dev log
 - **2026-10-30 (รอบสร้างสรรค์ใหญ่):** เพิ่มมอนสเตอร์ 2 ชนิด (บัตบิต / ชาร์เจอร์) · ด่าน 6-8 ธีมใหม่ (ท่อระบาย / ท้องฟ้า / ปราสาท) พร้อมฉาก+สีฟ้า+บรรยากาศรายธีม · สกินฮีโร่ 3 ชุดเลือกในเมนู (บันทึกเซฟ) · ชุดเทสอัตโนมัติ `tools/test_game1.gd` 94 ข้อ (PASS) · รีไรต์ PLAY.md · อาร์ตสร้างด้วย `tools/generate_theme_art.ps1` + `tools/generate_skins.ps1` (ไม่กิน gen)
+- **2026-10-30 (รอบ 2):** เพลงรายธีม 3 แนว สลับอัตโนมัติตามด่าน (`_apply_theme_music`) — ท่อระบาย 90 BPM บูบ / ท้องฟ้า 126 BPM สดใส / ปราสาท 105 BPM ครึ่งลังกล สร้างฟรีด้วย `tools/generate_theme_music.ps1` (0 gen, ลูปเนียน seam-crossfade)
 
 ## 8. Next steps
 - รอ playtest มนุษย์ (ด่าน 6-8 เนื้อใหม่ยังไม่เคยเล่นจริง) — จูนความยากตามฟีดแบ็ค
