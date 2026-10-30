@@ -721,8 +721,18 @@ func _win() -> void:
 	state = GameState.WON
 	_record_win(_total_time_used + float(LEVELS[current_level]["time"]) - time_left)
 	_end_round_soft()
+	win_label.text = "ภารกิจสำเร็จ! เหรียญเมือง KUB กลับบ้านครบทุกด่าน\nคะแนนสุดท้าย %d · เวลารวม %.1f วิ\nกด R เล่นอีกครั้ง · Esc กลับหน้าเมนู" % [score, _total_time_used + float(LEVELS[current_level]["time"]) - time_left]
+	_coin_celebration()
 	win_label.visible = true
 	sfx_win.play()
+
+func _coin_celebration() -> void:
+	# ฝนเหรียญฉลอง — กระจายเหนือกล้องให้ผู้เล่นกรูเก็บยิ้ม ๆ
+	var cam_center: Vector2 = _camera.get_screen_center_position()
+	for i in range(14):
+		var coin: Area2D = coin_scene.instantiate()
+		coin.position = cam_center + Vector2(randf_range(-320.0, 320.0), randf_range(-280.0, -120.0))
+		coins_container.add_child(coin)
 
 func TIME_LIMIT_TOTAL() -> float:
 	var total := 0.0
