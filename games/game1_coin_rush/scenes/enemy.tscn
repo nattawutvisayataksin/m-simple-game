@@ -1,19 +1,38 @@
 [gd_scene load_steps=4 format=3]
 
 [ext_resource type="Script" path="res://scripts/enemy.gd" id="1_enemy"]
-[ext_resource type="Texture2D" path="res://assets/art/gen/enemy_sheet.png" id="2_tex"]
+[ext_resource type="Texture2D" path="res://assets/art/sprites/enemy_glitch_side.png" id="2_sheet"]
 
-[sub_resource type="CircleShape2D" id="1_shape"]
+[sub_resource type="CircleShape2D" id="CircleShape2D_enemy"]
 radius = 14.0
 
-[node name="Enemy" type="Area2D"]
+[sub_resource type="CircleShape2D" id="CircleShape2D_hit"]
+radius = 16.0
+
+[node name="Enemy" type="CharacterBody2D"]
 script = ExtResource("1_enemy")
+collision_layer = 4
+collision_mask = 1
 
 [node name="Visual" type="Sprite2D" parent="."]
-texture = ExtResource("2_tex")
-hframes = 9
+texture = ExtResource("2_sheet")
+offset = Vector2(0, -4)
+scale = Vector2(1.3, 1.3)
+hframes = 1
+vframes = 1
+frame = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("1_shape")
+shape = SubResource("CircleShape2D_enemy")
 
-[connection signal="body_entered" from="." to="." method="_on_body_entered"]
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("CircleShape2D_hit")
+
+[node name="EdgeCheck" type="RayCast2D" parent="."]
+position = Vector2(12, 0)
+target_position = Vector2(0, 24)
+enabled = true

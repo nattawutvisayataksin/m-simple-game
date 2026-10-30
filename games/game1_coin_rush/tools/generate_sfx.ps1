@@ -64,4 +64,13 @@ Save-Wav (Join-Path $outDir 'win.wav') (Chain (Note 523 0.12) (Note 659 0.12) (N
 # เสียงแพ้: โน้ตไหลลง
 Save-Wav (Join-Path $outDir 'lose.wav') (Chain (Note 330 0.18) (Note 262 0.18) (Note 196 0.30))
 
+# เสียงกระโดด: โน้ตขึ้นสั้น
+Save-Wav (Join-Path $outDir 'jump.wav') (Chain (Note 660 0.06) (Note 880 0.08))
+
+# เสียงลงพื้น: โน้ตต่ำสั้น
+Save-Wav (Join-Path $outDir 'land.wav') (Chain (Note 220 0.07))
+
+# เสียงเหยียบศัตรู: โน้ตสูง 2 จังหวะ
+Save-Wav (Join-Path $outDir 'stomp.wav') (Chain (Note 1047 0.06) (Note 1319 0.10))
+
 Write-Host "เสร็จสิ้น"

@@ -23,7 +23,9 @@
 ## สร้างขึ้นด้วยโควตา gen ตอนไหน
 
 - ช่วงสร้างเกม 1: ไล่ใช้ Key A จนหมด (0/50) แล้วต่อด้วย Key B — บันทึกความเสียหายละเอียดใน ASSET_MANIFEST
-- นโยบายปัจจุบัน (ผู้อำนวยการสั่ง 2026-10-29): **ใช้ Key B ให้หมดก่อน (เหลือ 4/40) → Key C (40/40) → Key A รื้นรายวัน +5 สูงสุด 20**
+- นโยบายปัจจุบัน (ผู้อำนวยการสั่ง 2026-10-30): **ใช้ Key B (plan + daily bonus) ให้หมดก่อน → หมดแล้วใช้ Key A daily bonus → ค่อยใช้ Key C** (ห้ามฝัง key ในไฟล์ที่ commit)
+- **รอบชุดแสงสว่าง 30 ต.ค. 2026**: Key A daily bonus 1 gen (`bg_sunny.png` pixflux 400×224) · Key B daily bonus 2 gen (`hills_strip.png` pixen 240×224 + `kubi_hero_run.png` 64×64 บน Key C plan หลัง A/B หมดชั้น daily) · ไทล์ 4 ชิ้น (ground cap / dirt fill / plank / moving) วาด EDT ผ่าน **pixelart_workbench draw (ฟรี 0 gen)** + ตัดแถบหญ้าล่างด้วย `tools/crop_hills.gd` (Godot headless)
+- Key C คงเหลือ ~plan 39 + daily ~9 หลังรอบนี้ (สำรองไว้เกม 2/อนาคต)
 - การใช้ปัจจุบันของเกม 2 ดูที่ ASSET_MANIFEST เช่นกัน — ยังไม่มี gen มาใหม่หลัง T5.1 แล้ว
 
 ## สิ่งที่ FAIL ถูกพิสูจน์แล้ว (ห้ามซ้ำ)

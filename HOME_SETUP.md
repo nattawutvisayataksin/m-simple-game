@@ -82,7 +82,7 @@ m-simple-game/
 ├─ games/
 │  ├─ game1_coin_rush/        # เกม 1: ชิงเหรียญทอง (scenes/scripts/assets/tools + play.bat)
 │  └─ game2_tower_defense/    # เกม 2: หอคอยคู่ฟ้า (โครงเดียวกัน + สูทเทสใน tools/)
-├─ shared/                    # เครื่องมือภาพใช้ร่วม (gen_pixen.ps1, pixellab_anim*.ps1, ...)
+├─ shared/                    # เครื่องมือภาพใช้ร่วม (gen_pixen.ps1, pixellab_anim*.ps1, ... , LibreSprite)
 ├─ docs/
 │  ├─ game1_coin_rush/        # GDD · ART_DIRECTION · ARCHITECTURE · ASSETS (เกม 1)
 │  ├─ game2_tower_defense/    # GDD · ARCHITECTURE · ASSETS (เกม 2)

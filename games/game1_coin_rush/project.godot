@@ -1,7 +1,7 @@
 [application]
 
-config/name="ชิงเหรียญทอง (Coin Rush)"
-run/main_scene="res://scenes/main.tscn"
+config/name="Kubi Coin Dash (Platformer)"
+run/main_scene="res://scenes/title.tscn"
 
 [input]
 
@@ -20,6 +20,11 @@ move_up={
 move_down={
 "deadzone": 0.5,
 "events": [Object(InputEventKey,"device":-1,"physical_keycode":83), Object(InputEventKey,"device":-1,"keycode":4194322)]
+}
+
+jump={
+"deadzone": 0.5,
+"events": [Object(InputEventKey,"device":-1,"physical_keycode":32), Object(InputEventKey,"device":-1,"physical_keycode":87), Object(InputEventKey,"device":-1,"keycode":4194320)]
 }
 
 [audio]

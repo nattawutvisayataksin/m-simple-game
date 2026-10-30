@@ -1,0 +1,122 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/title.gd" id="1_title"]
+[ext_resource type="Texture2D" path="res://assets/art/gen/bg_sunny.png" id="2_bg"]
+[ext_resource type="Texture2D" path="res://assets/art/sprites/kubi_hero_run.png" id="3_hero"]
+[ext_resource type="Texture2D" path="res://assets/art/sprites/coin_kub.png" id="4_coin"]
+
+[node name="Title" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_title")
+
+[node name="BG" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_bg")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="Dim" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.05, 0.12, 0.2, 0.25)
+
+[node name="Hero" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 160.0
+offset_top = 210.0
+offset_right = 352.0
+offset_bottom = 402.0
+texture = ExtResource("3_hero")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Coin" type="TextureRect" parent="."]
+layout_mode = 1
+anchors_preset = 0
+offset_left = 60.0
+offset_top = 150.0
+offset_right = 124.0
+offset_bottom = 214.0
+rotation = -0.15
+texture = ExtResource("4_coin")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TitleLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 40.0
+offset_bottom = 126.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.8, 0.25, 1)
+theme_override_colors/font_shadow_color = Color(0.15, 0.08, 0.02, 0.6)
+theme_override_colors/font_outline_color = Color(0.164706, 0.0901961, 0.0313726, 1)
+theme_override_constants/shadow_offset_y = 4
+theme_override_constants/outline_size = 12
+theme_override_font_sizes/font_size = 58
+text = "KUBI COIN DASH"
+horizontal_alignment = 1
+
+[node name="SubLabel" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 128.0
+offset_bottom = 166.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
+theme_override_colors/font_outline_color = Color(0.164706, 0.0901961, 0.0313726, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 24
+text = "เก็บเหรียญ · หลบหนาม · เหยียบศัตรู · ไปถึงธงเพื่อชนะ"
+horizontal_alignment = 1
+
+[node name="Prompt" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 520.0
+offset_bottom = 568.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0.164706, 0.0901961, 0.0313726, 1)
+theme_override_constants/outline_size = 6
+theme_override_font_sizes/font_size = 30
+text = "กด Space เพื่อเริ่มเกม  ·  Esc ในเกม = กลับเมนู"
+horizontal_alignment = 1
+
+[node name="StatsLine" type="Label" parent="."]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -560.0
+offset_top = -56.0
+offset_right = -24.0
+offset_bottom = -18.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 0.9, 0.5, 0.9)
+theme_override_colors/font_outline_color = Color(0.16, 0.09, 0.03, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 18
+text = "สถิติ"
+horizontal_alignment = 2
