@@ -23,6 +23,13 @@ const RUN_FRAME_COUNT := 8
 const AIR_FRAME := 3
 const IDLE_FRAME := 8
 
+# สกินฮีโร่ (ดัชนีกับ title.gd: 0= คลาสสิก, 1= สายน้ำฟ้า, 2= อัคคีราช)
+const SKIN_SHEETS: Array[String] = [
+	"res://assets/art/sprites/kubi_hero_run_sheet.png",
+	"res://assets/art/gen/kubi_hero_run_sheet_cyan.png",
+	"res://assets/art/gen/kubi_hero_run_sheet_ember.png",
+]
+
 @onready var visual: Sprite2D = $Visual
 var _coyote := 0.0
 var _buffer := 0.0
@@ -135,6 +142,9 @@ func _on_landed() -> void:
 	_squash(Vector2(1.25, 0.75))
 	_play_sfx("SfxLand")
 	_dust.restart()
+
+func set_skin(idx: int) -> void:
+	visual.texture = load(SKIN_SHEETS[clampi(idx, 0, SKIN_SHEETS.size() - 1)])
 
 func _squash(target: Vector2) -> void:
 	visual.scale = _rest_scale * target

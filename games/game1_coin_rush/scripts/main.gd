@@ -238,7 +238,7 @@ const LEVELS := [
 
 const SAVE_VERSION := 1
 const SAVE_PATH := "user://kubi_coin_dash_save.json"
-const DEFAULT_STATS: Dictionary = {"hi_score": 0, "best_win_time": 0.0, "wins": 0, "plays": 0, "level": 0}
+const DEFAULT_STATS: Dictionary = {"hi_score": 0, "best_win_time": 0.0, "wins": 0, "plays": 0, "level": 0, "skin": 0}
 var stats: Dictionary = DEFAULT_STATS.duplicate(true)
 
 enum GameState { PLAYING, WON, LOST, LEVEL_DONE }
@@ -257,6 +257,8 @@ var _bg_far: Sprite2D
 var _bg_near: Sprite2D
 var _banner: Label
 var _sky_grad: Gradient
+var _tint: CanvasModulate
+var _weather: CPUParticles2D
 
 # สีฟากฝากฉากของด่าน (ต่อธีม — ด่านเก่าทำใน "sky" เขียนทับได้)
 const SKY_DEFAULT := [Color("#3fa9e8"), Color("#8fd3f4"), Color("#ffe9c2")]
@@ -293,8 +295,10 @@ const SKY_CASTLE := [Color("#1c1430"), Color("#332349"), Color("#4a2a5e")]
 func _ready() -> void:
 	randomize()
 	_load_stats()
+	player.set_skin(int(stats.get("skin", 0)))
 	_setup_background()
 	_setup_camera()
+	_setup_weather()
 	_setup_sfx()
 	_setup_banner()
 	goal.reached.connect(_on_goal_reached)
@@ -511,6 +515,78 @@ func _apply_level_look(lvl: Dictionary) -> void:
 		else:
 			sky = SKY_DEFAULT
 	_sky_grad.colors = PackedColorArray([sky[0], sky[1], sky[2]])
+	# บรรยากาศสีจอ (CanvasModulate ปรับสบายตาแนธีม) + ลูกฝนรายธีม
+	if is_instance_valid(_tint):
+		if far_path.contains("sewer"):
+			_tint.color = Color(0.78, 0.95, 0.95)
+			_apply_weather("drip")
+		elif far_path.contains("castle"):
+			_tint.color = Color(0.92, 0.80, 1.0)
+			_apply_weather("ember")
+		elif far_path.contains("bg_sky") :
+			_tint.color = Color(1.0, 1.0, 1.0)
+			_apply_weather("sparkle")
+		else:
+			_tint.color = Color(1.0, 1.0, 1.0)
+			_apply_weather("")
+
+func _setup_weather() -> void:
+	_tint = CanvasModulate.new()
+	_tint.name = "ThemeTint"
+	add_child(_tint)
+	_weather = CPUParticles2D.new()
+	_weather.name = "Weather"
+	_weather.emitting = false
+	if is_instance_valid(_camera):
+		_camera.add_child(_weather)
+		_weather.position = Vector2(0, -180)
+
+func _apply_weather(kind: String) -> void:
+	if not is_instance_valid(_weather):
+		return
+	_weather.restart()
+	match kind:
+		"drip":
+			_weather.amount = 44
+			_weather.lifetime = 2.6
+			_weather.direction = Vector2(0, 1)
+			_weather.gravity = Vector2(0, 680)
+			_weather.initial_velocity_min = 40.0
+			_weather.initial_velocity_max = 90.0
+			_weather.scale_amount_min = 0.25
+			_weather.scale_amount_max = 0.6
+			_weather.color = Color(0.35, 0.85, 0.65, 0.5)
+			_weather.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+			_weather.emission_rect_extents = Vector2(520, 6)
+			_weather.emitting = true
+		"ember":
+			_weather.amount = 30
+			_weather.lifetime = 3.2
+			_weather.direction = Vector2(0, -1)
+			_weather.gravity = Vector2(0, -30)
+			_weather.initial_velocity_min = 18.0
+			_weather.initial_velocity_max = 44.0
+			_weather.scale_amount_min = 0.3
+			_weather.scale_amount_max = 0.7
+			_weather.color = Color(1.0, 0.55, 0.2, 0.55)
+			_weather.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+			_weather.emission_rect_extents = Vector2(560, 10)
+			_weather.emitting = true
+		"sparkle":
+			_weather.amount = 24
+			_weather.lifetime = 4.0
+			_weather.direction = Vector2(0, 1)
+			_weather.gravity = Vector2(0, 14)
+			_weather.initial_velocity_min = 8.0
+			_weather.initial_velocity_max = 22.0
+			_weather.scale_amount_min = 0.2
+			_weather.scale_amount_max = 0.5
+			_weather.color = Color(1.0, 0.97, 0.75, 0.45)
+			_weather.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+			_weather.emission_rect_extents = Vector2(560, 8)
+			_weather.emitting = true
+		_:
+			_weather.emitting = false
 
 func _make_strip(path: String, layer: CanvasLayer, s: float, factor: float) -> Sprite2D:
 	var tex: Texture2D = load(path)
