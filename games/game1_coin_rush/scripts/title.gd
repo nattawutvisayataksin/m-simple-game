@@ -6,11 +6,14 @@ const MAIN_SCENE := "res://scenes/main.tscn"
 const SAVE_PATH := "user://kubi_coin_dash_save.json"
 const SAVE_VERSION := 1
 
-const SKIN_NAMES: Array[String] = ["คลาสสิก", "สายน้ำฟ้า", "อัคคีราช"]
+# สกินฮีโร่ (ดัชนีกับ player.gd: 0= คลาสสิก, 1= สายน้ำฟ้า, 2= อัคคีราช, 3= ม่วงราตรี, 4= ใบไม้ระยิบ)
+const SKIN_NAMES: Array[String] = ["คลาสสิก", "สายน้ำฟ้า", "อัคคีราช", "ม่วงราตรี", "ใบไม้ระยิบ"]
 const SKIN_SHEETS: Array[String] = [
 	"res://assets/art/sprites/kubi_hero_run_sheet.png",
 	"res://assets/art/gen/kubi_hero_run_sheet_cyan.png",
 	"res://assets/art/gen/kubi_hero_run_sheet_ember.png",
+	"res://assets/art/gen/kubi_hero_run_sheet_violet.png",
+	"res://assets/art/gen/kubi_hero_run_sheet_leaf.png",
 ]
 
 @onready var prompt: Label = $Prompt

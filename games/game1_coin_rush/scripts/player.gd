@@ -23,11 +23,13 @@ const RUN_FRAME_COUNT := 8
 const AIR_FRAME := 3
 const IDLE_FRAME := 8
 
-# สกินฮีโร่ (ดัชนีกับ title.gd: 0= คลาสสิก, 1= สายน้ำฟ้า, 2= อัคคีราช)
+		# สกินฮีโร่ (ดัชนีกับ title.gd: 0=คลาสสิก, 1=สายน้ำฟ้า, 2=อัคคีราช, 3=ม่วงราตรี, 4=ใบไม้ระยิบ)
 const SKIN_SHEETS: Array[String] = [
 	"res://assets/art/sprites/kubi_hero_run_sheet.png",
 	"res://assets/art/gen/kubi_hero_run_sheet_cyan.png",
 	"res://assets/art/gen/kubi_hero_run_sheet_ember.png",
+	"res://assets/art/gen/kubi_hero_run_sheet_violet.png",
+	"res://assets/art/gen/kubi_hero_run_sheet_leaf.png",
 ]
 
 @onready var visual: Sprite2D = $Visual

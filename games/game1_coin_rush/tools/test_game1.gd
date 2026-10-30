@@ -35,6 +35,17 @@ func _initialize() -> void:
 			_check(p != null, "ด่าน %d เหรียญทุกที่เปิดถูกต้อง" % (i + 1))
 			break
 
+	# --- ส่วนที่ 1.5: สกินฮีโร่ครบ 5 ชุด (ไฟล์ + set_skin ใน player) ---
+	var skin_paths := [
+		"res://assets/art/sprites/kubi_hero_run_sheet.png",
+		"res://assets/art/gen/kubi_hero_run_sheet_cyan.png",
+		"res://assets/art/gen/kubi_hero_run_sheet_ember.png",
+		"res://assets/art/gen/kubi_hero_run_sheet_violet.png",
+		"res://assets/art/gen/kubi_hero_run_sheet_leaf.png",
+	]
+	for p in skin_paths:
+		_check(ResourceLoader.exists(p), "สกินไฟล์อยู่จริง: %s" % p)
+
 	# --- ส่วนที่ 2: ตรวจ scenes โหลดได้ ---
 	for path in ["res://scenes/title.tscn", "res://scenes/main.tscn", "res://scenes/player.tscn", "res://scenes/coin.tscn", "res://scenes/coin_gold.tscn", "res://scenes/enemy.tscn", "res://scenes/hopper.tscn", "res://scenes/goal.tscn", "res://scenes/hazard.tscn", "res://scenes/moving_platform.tscn", "res://scenes/bat.tscn", "res://scenes/charger.tscn"]:
 		var ps: PackedScene = load(path)
@@ -55,8 +66,19 @@ func _initialize() -> void:
 func _process(_delta: float) -> bool:
 	_frames += 1
 	if _main == null or _frames < 3:
+		if _frames > 240:
+			print("FAIL: main ไม่พร้อมใน 240 เฟรม")
+			quit(1)
 		return false
 	if _phase == 0:
+		# --- สกินฮีโร่: set_skin กับผู้เล่นจริง (ต้องรอ @onready) ---
+		_main.player.set_skin(3)
+		var vtex: Texture2D = _main.player.visual.texture
+		_check(String(vtex.resource_path).contains("violet"), "set_skin(3) = ม่วงราตรีโหลดถูก")
+		_main.player.set_skin(99)
+		var ltex: Texture2D = _main.player.visual.texture
+		_check(String(ltex.resource_path).contains("leaf"), "set_skin(99) clamp เป็นใบไม้ระยิบได้")
+		_main.player.set_skin(0)
 		# --- ส่วนที่ 3: สถานะเกมหลัง _ready ---
 		_check(_main.state == _main.GameState.PLAYING, "เริ่มเกมสถานะ PLAYING")
 		_check(_main.score == 0, "คะแนนเริ่ม 0")

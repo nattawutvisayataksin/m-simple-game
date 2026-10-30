@@ -6,7 +6,7 @@ Repo นี้เก็บ **เกมฝึกพัฒนา 3 เกม (แ�
 
 | # | เกม | ไฟล์โปรเจกต์ | สรุปสั้นโครงเกม | วิธีเล่น |
 |---|---|---|---|---|
-| 1 | **Kubi Coin Dash** 🪙 | `games/game1_coin_rush/` | Platformer 8 ด่าน: วิ่ง/กระโดด, เก็บเหรียญ, ศัตรู 4 ชนิด (Walker/Hopper/บัตบิต/ชาร์เจอร์), ธีมฉาก 3 แบบใหม่ (ท่อระบาย/ท้องฟ้า/ปราสาท), สกินฮีโร่ 3 สีเลือกในเมนู · คูบี้ กระโดดเก็บเหรียญ | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game1_coin_rush` |
+| 1 | **Kubi Coin Dash** 🪙 | `games/game1_coin_rush/` | Platformer 8 ด่าน: วิ่ง/กระโดด, เก็บเหรียญ, ศัตรู 4 ชนิด (Walker/Hopper/บัตบิต/ชาร์เจอร์), ธีมฉาก 3 แบบใหม่ (ท่อระบาย/ท้องฟ้า/ปราสาท) + เพลงรายธีม, สกินฮีโร่ 5 สีเลือกในเมนู · คูบี้ กระโดดเก็บเหรียญ | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game1_coin_rush` |
 | 2 | **หอคอยคู่ฟ้า (Kub Kingdom Rush)** 🏰 | `games/game2_tower_defense/` | Tower defense: มอนเดินเส้นเดียว ซื้อ/อัปเกรด/ขายป้อม · กลิ้ง 10 คลื่น + ฮีโร่ Kubi · ปุ่ม 1-4 ลานป้อม | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game2_tower_defense` |
 | 3 | **Kubi Grand Prix ราชวงศ์ทอง** 🚗 | `games/game3_car/` | แข่งรถ 3D ในเมือง Kubi · WASD ขับ/เบรก/เลี้ยว · เก็บเหรียญและผ่านประตูให้ครบ 3 รอบ | ดับเบิลคลิก `games/game3_car/play.bat` หรือ `godot --path games/game3_car` |
 

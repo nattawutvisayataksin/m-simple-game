@@ -39,7 +39,7 @@ Tight controller first: coyote time, jump buffer, variable height, asymmetric gr
 - ชาร์เจอร์ (scripts/charger.gd): เดินปกติ แต่เห็นผู้เล่นระดับเดียว (420px, ±48px) → ดาช 330px/s; ชนกำแพงแล้วมึน 0.55 วิ (stomp target)
 - ธีมฉากต่อด่าน: `_apply_level_look()` สลับภาพไกล/ใกล้ + ไล่สีฟ้า (SKY_SEWER/SKY_SKY/SKY_CASTLE) + CanvasModulate
 - บรรยากาศ: `_setup_weather()`/`_apply_weather()` — CPUParticles2D ใต้กล้อง (หยดน้ำท่อระบาย / ประกายท้องฟ้า / ประกายไฟปราสาท)
-- สกินฮีโร่ 3 ชุด: `player.gd set_skin()` + บันทึก `skin` ใน save; เลือกใน title (◀/▶)
+- สกินฮีโร่ 5 ชุด: `player.gd set_skin()` + บันทึก `skin` ใน save; เลือกใน title (◀/▶)
 - Hazards (Area2D spikes)
 - Ravine: `_process` เช็ค y เกิน height+90 → lose "ตกหุบเหว"
 - Level banner (HUD label + tween): แสดง "ด่าน N · ชื่อ · คำใบ้" fade in/out ต่อด่าน

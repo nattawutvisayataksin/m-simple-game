@@ -64,7 +64,7 @@ Run it after any change to `scripts/` or level data; it does not yet replace vis
 1. Play through all eight levels from the title screen; verify the ordered transitions and the final win on level 8 (ปราสาทบิตคู).
 2. Verify Walker/Hopper/Bat/Charger stomps, side hits, Charger wall-stun behavior, spikes, timer loss, and ravine fall behavior (levels 4, 5, 8).
 3. Check moving-platform jumps, sprint gaps, HUD, save/stat display, restart, and return-to-title behavior.
-4. Try all three hero skins in the title chooser; confirm the choice persists after restarting the game.
+4. Try all five hero skins in the title chooser; confirm the choice persists after restarting the game.
 5. Levels 6-8, the Bat, the Charger, and the skin system are new content generated without a human playtest — prioritize playing them first.
 
 Preserve vendor license notices and asset attributions. Keep the active project at `games/game1_coin_rush`; do not confuse it with other game projects in the repository.

@@ -52,4 +52,6 @@ function From-Hsv([double]$h, [double]$s, [double]$v) {
 
 Make-Skin $src (Join-Path $dir 'kubi_hero_run_sheet_cyan.png') 165.0
 Make-Skin $src (Join-Path $dir 'kubi_hero_run_sheet_ember.png') -55.0
+Make-Skin $src (Join-Path $dir 'kubi_hero_run_sheet_violet.png') 250.0
+Make-Skin $src (Join-Path $dir 'kubi_hero_run_sheet_leaf.png') 95.0
 $src.Dispose()
