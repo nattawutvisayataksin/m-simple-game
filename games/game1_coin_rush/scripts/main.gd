@@ -226,6 +226,7 @@ const LEVELS := [
 		"enemies": [Vector2(620,626), Vector2(1480,384), Vector2(2260,374), Vector2(3700,374)],
 		"chargers": [Vector2(1000,626), Vector2(2600,626), Vector2(3300,626)],
 		"bats": [Vector2(900,410), Vector2(1700,430), Vector2(2250,380), Vector2(3100,400)],
+		"bosses": [Vector2(3420, 340)],
 		"hoppers": [Vector2(1500,626), Vector2(2850,626), Vector2(3450,626)],
 		"hazards": [Vector2(900,632), Vector2(1600,632), Vector2(2100,632), Vector2(2750,632), Vector2(3180,632), Vector2(3700,606)],
 		"moving": [
@@ -295,6 +296,7 @@ const SKY_CASTLE := [Color("#1c1430"), Color("#332349"), Color("#4a2a5e")]
 @onready var moving_scene: PackedScene = preload("res://scenes/moving_platform.tscn")
 @onready var bat_scene: PackedScene = preload("res://scenes/bat.tscn")
 @onready var charger_scene: PackedScene = preload("res://scenes/charger.tscn")
+@onready var boss_scene: PackedScene = preload("res://scenes/boss_kubit.tscn")
 @onready var sfx_pickup: AudioStreamPlayer = $SfxPickup
 @onready var sfx_win: AudioStreamPlayer = $SfxWin
 @onready var sfx_lose: AudioStreamPlayer = $SfxLose
@@ -428,6 +430,13 @@ func _load_level(idx: int) -> void:
 		b.position = pos
 		enemies_container.add_child(b)
 		b.caught_player.connect(_on_player_caught)
+	# มินิบอส — ผู้คุมยอดปราสาท (ตอนตายทดแทนด้วยเหรียญฝนรางวัล)
+	for pos in lvl.get("bosses", []):
+		var bs: CharacterBody2D = boss_scene.instantiate()
+		bs.position = pos
+		enemies_container.add_child(bs)
+		bs.caught_player.connect(_on_player_caught)
+		bs.defeated.connect(_on_boss_defeated)
 	# ธีมฉาก/ฟากตามด่าน
 	_apply_level_look(lvl)
 	# hazards
@@ -538,6 +547,16 @@ func _apply_level_look(lvl: Dictionary) -> void:
 			_tint.color = Color(1.0, 1.0, 1.0)
 			_apply_weather("")
 	_apply_theme_music(far_path)
+
+func _on_boss_defeated(boss: Node2D) -> void:
+	# บอสพ่ายแพ้: เหรียญรางวัลฟื้นกระจายรอบจุดบอส + ฉูดฉาดสุดก่อนแตะธง
+	add_trauma(0.6)
+	hit_stop(0.12)
+	var center: Vector2 = boss.global_position
+	for i in range(6):
+		var coin: Area2D = coin_scene.instantiate()
+		coin.position = center + Vector2(-90.0 + 40.0 * i, -40.0 - (i % 3) * 30.0)
+		coins_container.add_child(coin)
 
 func _apply_theme_music(far_path: String) -> void:
 	var music := get_node_or_null("Music") as AudioStreamPlayer

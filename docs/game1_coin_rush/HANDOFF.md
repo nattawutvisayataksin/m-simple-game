@@ -6,10 +6,12 @@ Updated: 2026-10-30
 
 The project is a playable eight-level 2D platformer. The title menu starts the game and offers a
 hero-skin chooser (Left/Right, saved into the save file); levels include coins, walkers, a jumping
-Hopper enemy, a flying Bat (sine hover), and a sight-locked Charger that dashes when it sees the
-player on the same row and is stunned after hitting a wall. There are hazards, moving platforms,
-per-theme backdrops with weather particles, and fall detection in the ravine/castle stages. The
-player can stomp enemies, collect coins, restart a level, and return to the title menu.
+Hopper enemy, a flying Bat (sine hover), a sight-locked Charger that dashes when it sees the
+player on the same row and is stunned after hitting a wall, and a level-8 mini-boss (มินิบอส
+บิตคูผู้คุม: hover, periodic dive attacks, 3 stomps to defeat, coin burst reward). There are
+hazards, moving platforms, per-theme backdrops with tile tints/weather/music, and fall detection
+in the ravine/castle stages. The player can stomp enemies, collect coins, restart a level, and
+return to the title menu.
 
 Godot 4.7.2 headless editor/parse check and a 120-frame smoke run of `scenes/main.tscn` both passed. This does not replace a GUI playtest. Full-lap/level completion, visual readability, and controller feel still need human verification.
 
@@ -33,7 +35,7 @@ The project starts at `scenes/title.tscn`. Controls:
 
 - `scripts/main.gd` defines eight level layouts (levels 6-8 use the sewer/sky/castle themes) and builds platforms, pickups, enemies, hazards, moving platforms, HUD, level transitions, per-theme backgrounds/weather, win/loss, and save data.
 - `scripts/player.gd` implements acceleration-based movement, sprint, variable jump height, coyote time, jump buffering, the run/air/idle sprite animation, and `set_skin(idx)` for hero skins.
-- `scripts/enemy.gd` is the walking Glitch Bug; `scripts/enemy_hopper.gd` and `scenes/hopper.tscn` add the jumping, edge-aware Hopper; `scripts/bat.gd` + `scenes/bat.tscn` add the flying บัตบิต (sine hover, stompable); `scripts/charger.gd` + `scenes/charger.tscn` add the charging ชาร์เจอร์ (sight-locked dash, wall-stun, stompable). All can be stomped.
+- `scripts/enemy.gd` is the walking Glitch Bug; `scripts/enemy_hopper.gd` and `scenes/hopper.tscn` add the jumping, edge-aware Hopper; `scripts/bat.gd` + `scenes/bat.tscn` add the flying บัตบิต (sine hover, stompable); `scripts/charger.gd` + `scenes/charger.tscn` add the charging ชาร์เจอร์; `scripts/boss_kubit.gd` + `scenes/boss_kubit.tscn` add the level-8 mini-boss (HP 3, dive, coin burst via main's `_on_boss_defeated`). All can be stomped.
 - Levels 4, 5, and 8 have broken ground sections; falling below the level bounds causes a loss.
 - `scripts/title.gd` and `scenes/title.tscn` provide the title screen, saved-stat display, and the skin chooser (Left/Right or A/D, persisted as `skin` in the save file).
 - Saves live under `user://`; preserve the existing save behavior when changing the schema.
@@ -62,7 +64,7 @@ Run it after any change to `scripts/` or level data; it does not yet replace vis
 ## Before calling it playtested
 
 1. Play through all eight levels from the title screen; verify the ordered transitions and the final win on level 8 (ปราสาทบิตคู).
-2. Verify Walker/Hopper/Bat/Charger stomps, side hits, Charger wall-stun behavior, spikes, timer loss, and ravine fall behavior (levels 4, 5, 8).
+2. Verify Walker/Hopper/Bat/Charger stomps, side hits, Charger wall-stun behavior, the mini-boss (3 stomps + dive telegraphs + coin burst), spikes, timer loss, and ravine fall behavior (levels 4, 5, 8).
 3. Check moving-platform jumps, sprint gaps, HUD, save/stat display, restart, and return-to-title behavior.
 4. Try all five hero skins in the title chooser; confirm the choice persists after restarting the game.
 5. Levels 6-8, the Bat, the Charger, and the skin system are new content generated without a human playtest — prioritize playing them first.

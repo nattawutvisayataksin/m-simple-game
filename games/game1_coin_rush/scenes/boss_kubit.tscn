@@ -1,0 +1,38 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://scripts/boss_kubit.gd" id="1_boss"]
+[ext_resource type="Texture2D" path="res://assets/art/gen/enemy_bat.png" id="2_bossprite"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_boss"]
+radius = 38.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_bosshit"]
+radius = 46.0
+
+[node name="BossKubit" type="CharacterBody2D"]
+script = ExtResource("1_boss")
+collision_layer = 4
+collision_mask = 1
+
+[node name="Visual" type="Sprite2D" parent="."]
+texture = ExtResource("2_bossprite")
+scale = Vector2(3.2, 3.2)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_boss")
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+shape = SubResource("CircleShape2D_bosshit")
+
+[node name="BossBarHint" type="Label" parent="."]
+offset_top = -76.0
+offset_left = -40.0
+offset_right = 40.0
+text = "♥♥♥"
+horizontal_alignment = 1
+theme_override_colors/font_color = Color(1, 0.35, 0.35, 1)
+theme_override_font_sizes/font_size = 20

@@ -35,6 +35,13 @@ func _initialize() -> void:
 			_check(p != null, "ด่าน %d เหรียญทุกที่เปิดถูกต้อง" % (i + 1))
 			break
 
+	# --- ส่วนที่ 1.4: มินิบอสด่าน 8 ---
+	_check(levels[7].get("bosses", []).size() == 1, "ด่าน 8 มีมินิบอส 1 ตัวคุมยอด")
+	var boss_scene_ref: PackedScene = load("res://scenes/boss_kubit.tscn")
+	var bs: Node2D = boss_scene_ref.instantiate()
+	_check(bs != null and int(bs.hp) == 3, "บอสเกิดมา HP=3")
+	bs.free()
+
 	# --- ส่วนที่ 1.5: สกินฮีโร่ครบ 5 ชุด (ไฟล์ + set_skin ใน player) ---
 	var skin_paths := [
 		"res://assets/art/sprites/kubi_hero_run_sheet.png",
@@ -47,7 +54,7 @@ func _initialize() -> void:
 		_check(ResourceLoader.exists(p), "สกินไฟล์อยู่จริง: %s" % p)
 
 	# --- ส่วนที่ 2: ตรวจ scenes โหลดได้ ---
-	for path in ["res://scenes/title.tscn", "res://scenes/main.tscn", "res://scenes/player.tscn", "res://scenes/coin.tscn", "res://scenes/coin_gold.tscn", "res://scenes/enemy.tscn", "res://scenes/hopper.tscn", "res://scenes/goal.tscn", "res://scenes/hazard.tscn", "res://scenes/moving_platform.tscn", "res://scenes/bat.tscn", "res://scenes/charger.tscn"]:
+	for path in ["res://scenes/title.tscn", "res://scenes/main.tscn", "res://scenes/player.tscn", "res://scenes/coin.tscn", "res://scenes/coin_gold.tscn", "res://scenes/enemy.tscn", "res://scenes/hopper.tscn", "res://scenes/goal.tscn", "res://scenes/hazard.tscn", "res://scenes/moving_platform.tscn", "res://scenes/bat.tscn", "res://scenes/charger.tscn", "res://scenes/boss_kubit.tscn"]:
 		var ps: PackedScene = load(path)
 		_check(ps != null, "โหลด %s ได้" % path)
 

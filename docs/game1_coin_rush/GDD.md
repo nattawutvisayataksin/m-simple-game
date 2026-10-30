@@ -37,6 +37,7 @@ Tight controller first: coyote time, jump buffer, variable height, asymmetric gr
 - Glitch Hopper (CharacterBody2D, กระโดดเข้าหาผู้เล่นเป็นระยะ + edge-aware, stomp kills ด้วย)
 - บัตบิต (scripts/bat.gd): บินลอย sine ไปมา, ไม่มีแรงโน้มถ่วง, stomp kills, กระพือปีกแบบทวีบีบตัว
 - ชาร์เจอร์ (scripts/charger.gd): เดินปกติ แต่เห็นผู้เล่นระดับเดียว (420px, ±48px) → ดาช 330px/s; ชนกำแพงแล้วมึน 0.55 วิ (stomp target)
+- มินิบอส บิตคูผู้คุม (scripts/boss_kubit.gd, ด่าน 8 เท่านั้น): HP 3 · ลอยจูง HOVER + ทุก 4 วิ ตั้งตัวแล้วดำดิ่งใส่ผู้เล่น (DIVE 520px/s) · เหยียบแล้วมึน 1.1 วิ + แถบ ♥ ต่อเหลือ HP · ตาย = เหรียญรางวัล 6 เหรียญกระจาย + shake/hit-stop
 - ธีมฉากต่อด่าน: `_apply_level_look()` สลับภาพไกล/ใกล้ + ไล่สีฟ้า (SKY_SEWER/SKY_SKY/SKY_CASTLE) + CanvasModulate
 - บรรยากาศ: `_setup_weather()`/`_apply_weather()` — CPUParticles2D ใต้กล้อง (หยดน้ำท่อระบาย / ประกายท้องฟ้า / ประกายไฟปราสาท)
 - สกินฮีโร่ 5 ชุด: `player.gd set_skin()` + บันทึก `skin` ใน save; เลือกใน title (◀/▶)
@@ -61,6 +62,7 @@ Tight controller first: coyote time, jump buffer, variable height, asymmetric gr
 ## 7. Dev log
 - **2026-10-30 (รอบสร้างสรรค์ใหญ่):** เพิ่มมอนสเตอร์ 2 ชนิด (บัตบิต / ชาร์เจอร์) · ด่าน 6-8 ธีมใหม่ (ท่อระบาย / ท้องฟ้า / ปราสาท) พร้อมฉาก+สีฟ้า+บรรยากาศรายธีม · สกินฮีโร่ 3 ชุดเลือกในเมนู (บันทึกเซฟ) · ชุดเทสอัตโนมัติ `tools/test_game1.gd` 94 ข้อ (PASS) · รีไรต์ PLAY.md · อาร์ตสร้างด้วย `tools/generate_theme_art.ps1` + `tools/generate_skins.ps1` (ไม่กิน gen)
 - **2026-10-30 (รอบ 2):** เพลงรายธีม 3 แนว สลับอัตโนมัติตามด่าน (`_apply_theme_music`) — ท่อระบาย 90 BPM บูบ / ท้องฟ้า 126 BPM สดใส / ปราสาท 105 BPM ครึ่งลังกล สร้างฟรีด้วย `tools/generate_theme_music.ps1` (0 gen, ลูปเนียน seam-crossfade)
+- **2026-10-30 (รอบ 3):** สกินจาก 3 → 5 (ม่วงราตรี / ใบไม้ระยิบ) · สีไทล์พื้นรายธีม (`_tile_tints_for` + self_modulate) · มินิบอส **บิตคูผู้คุม** ในด่าน 8 (HP 3, ดำดิ่งใส่, เหรียญรางวัลตอนตาย) · ถ่ายภาพจอจริง QA ด้วย `tools/shot_themes.gd` + `tools/shot_boss.gd` → screenshots/ · เทสขยายเป็น 104 ข้อ (PASS)
 
 ## 8. Next steps
 - รอ playtest มนุษย์ (ด่าน 6-8 เนื้อใหม่ยังไม่เคยเล่นจริง) — จูนความยากตามฟีดแบ็ค
