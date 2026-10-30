@@ -17,7 +17,7 @@ func _process(_delta: float) -> bool:
 			pass
 	if frames == 80:
 		var img: Image = root.get_viewport() .get_texture().get_image()
-		img.save_png("C:/m-simple-game/games/game3_car/starter-kit-racing/screenshots/overview.png")
+		img.save_png(ProjectSettings.globalize_path("res://screenshots/overview.png"))
 		quit()
 	return false
 

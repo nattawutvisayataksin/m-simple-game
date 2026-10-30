@@ -7,17 +7,17 @@
 
 ## สถานะและการรัน
 
-- โปรเจกต์เกมจริง: `games/game3_car/starter-kit-racing/`
+- โปรเจกต์เกมจริง: `games/game3_car/`
 - Launcher: `games/game3_car/play.bat` เรียกโปรเจกต์เกมจริง; ต้องมี Godot 4.7.2 ที่ WinGet path ซึ่งระบุในไฟล์
 - `games/game3_car/project.godot` เป็นโปรเจกต์ placeholder 2D เก่า เปิดแล้วไม่ใช่ตัวเกม Kubi Grand Prix
 - Godot compatibility feature ที่ประกาศ: 4.6; runtime ที่ใช้ตรวจล่าสุด: Godot 4.7.2
 - Renderer: Forward+; physics: Jolt 3D
 - ฉากหลัก: `scenes/main.tscn`
-- เปิดเกมจากราก repo: `godot --path games/game3_car/starter-kit-racing`
+- เปิดเกมจากราก repo: `godot --path games/game3_car`
 - รัน regression suite จากราก repo:
 
   ```powershell
-  godot --headless --path games/game3_car/starter-kit-racing `
+  godot --headless --path games/game3_car `
     --scene res://tests/test_game3_runner.tscn
   ```
 

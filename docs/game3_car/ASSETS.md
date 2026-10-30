@@ -1,8 +1,8 @@
 # Assets — Kubi Grand Prix
 
 เอกสารนี้เป็นทะเบียนการใช้ asset ใน Game 3; รายการ source และ license แบบ vendor
-ดู [ASSETS.md ของ Starter Kit](../../games/game3_car/starter-kit-racing/ASSETS.md)
-และ [LICENSE](../../games/game3_car/starter-kit-racing/LICENSE)
+ดู [ASSETS.md ของ Starter Kit](../../games/game3_car/ASSETS.md)
+และ [LICENSE](../../games/game3_car/LICENSE)
 
 ## Asset ที่ใช้งานในเกม
 
@@ -19,7 +19,7 @@
 
 ## License และการให้เครดิต
 
-- โค้ด Starter Kit Racing ใช้ MIT; เก็บประกาศไว้ใน `games/game3_car/starter-kit-racing/LICENSE`
+- โค้ด Starter Kit Racing ใช้ MIT; เก็บประกาศไว้ใน `games/game3_car/LICENSE`
 - โมเดล/เสียงของ Kenney ที่ใช้ในชุดระบุ CC0 ตาม README และ license ที่ vendor มา
 - ไฟล์ license ที่เก็บในโฟลเดอร์เกม: `models/props/LICENSE_car-kit.txt` และ
   `models/props/LICENSE_city-kit-roads.txt`
@@ -49,7 +49,7 @@
 5. ตรวจ import และรัน regression test หลังเพิ่ม GLB/texture/audio:
 
    ```powershell
-   godot --headless --path games/game3_car/starter-kit-racing --import
-   godot --headless --path games/game3_car/starter-kit-racing `
+   godot --headless --path games/game3_car --import
+   godot --headless --path games/game3_car `
      --scene res://tests/test_game3_runner.tscn
    ```

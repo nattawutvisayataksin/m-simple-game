@@ -6,7 +6,7 @@ Updated: 2026-10-29
 
 The latest documented build fixes the curved track barriers and gaps at the outer-city road intersections. The headless regression suite passed **53/53** with Godot 4.7.2 and Jolt Physics. The user has not yet completed a full manual race playtest, so treat visual readability, driving feel, and full-lap playability as unverified.
 
-Compatibility note: `starter-kit-racing/project.godot` declares Godot feature compatibility 4.6; the latest test runtime was Godot 4.7.2. Do not describe 4.7.2 as the declared minimum version.
+Compatibility note: `project.godot` declares Godot feature compatibility 4.6; the latest test runtime was Godot 4.7.2. Do not describe 4.7.2 as the declared minimum version.
 
 ## Start here on another machine
 
@@ -19,7 +19,7 @@ git pull origin main
 Open the **actual game project**, not the old outer placeholder:
 
 ```powershell
-godot --path games/game3_car/starter-kit-racing
+godot --path games/game3_car
 ```
 
 The Windows convenience launcher is `games/game3_car/play.bat`; it expects Godot 4.7.2 installed in the current Windows user's WinGet package directory. The outer `games/game3_car/project.godot` is an old 2D placeholder and is not Kubi Grand Prix.
@@ -42,14 +42,14 @@ Run from the repository root. On a fresh checkout, import the project first:
 
 ```powershell
 $godot = (Get-Command godot -ErrorAction Stop).Source # or set the installed Godot 4.7.2 executable path
-$project = "games/game3_car/starter-kit-racing"
+$project = "games/game3_car"
 & $godot --headless --path $project --import
 if ($LASTEXITCODE -ne 0) { throw "Godot import failed" }
 & $godot --headless --path $project --scene res://tests/test_game3_runner.tscn
 if ($LASTEXITCODE -ne 0) { throw "Game 3 regression tests failed" }
 ```
 
-The runner is `starter-kit-racing/tests/test_game3_runner.tscn` with assertions in `tests/test_game3.gd`. The last recorded result is **53 PASS / 0 FAIL**. Godot reported outstanding ObjectDB/resource references during runner teardown despite exit code 0; this is a cleanup note, not a failed assertion.
+The runner is `tests/test_game3_runner.tscn` with assertions in `tests/test_game3.gd`. The last recorded result is **53 PASS / 0 FAIL**. Godot reported outstanding ObjectDB/resource references during runner teardown despite exit code 0; this is a cleanup note, not a failed assertion.
 
 ## Manual playtest still needed
 
@@ -66,6 +66,6 @@ The automated physics tests are not a substitute for these visual and hands-on c
 
 ## Project boundaries
 
-- Work in `games/game3_car/starter-kit-racing/` for the actual game. Do not mistake the outer placeholder or vendor Starter Kit README for the current game documentation.
+- The game project now lives directly at games/game3_car/ (merged from starter-kit-racing/ on 2026-10-30); the old 2D placeholder and the nested standalone project were removed.
 - Keep vendor code/license notices and asset attribution intact. Distinguish assets used in the active scene from unused vendor files in [ASSETS.md](ASSETS.md).
 - Preserve the key scene constraints in [ART_DIRECTION.md](ART_DIRECTION.md): no props in the racing lane, curved barriers must follow the road, road surfaces must meet at intersections, and gate arches must not block the lane.

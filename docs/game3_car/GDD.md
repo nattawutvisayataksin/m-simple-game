@@ -17,14 +17,14 @@
 
 | จุดเข้า | หน้าที่ |
 |---|---|
-| `games/game3_car/starter-kit-racing/project.godot` | **โปรเจกต์เกมจริง**: ฉาก 3D, ระบบแข่ง, เมือง, รถ และ regression tests |
+| `games/game3_car/project.godot` | **โปรเจกต์เกมจริง**: ฉาก 3D, ระบบแข่ง, เมือง, รถ และ regression tests |
 | `games/game3_car/play.bat` | Launcher สำหรับ Windows ที่ส่ง `--path` ไปยังโปรเจกต์เกมจริงด้านบน; ไฟล์นี้คาดว่า Godot 4.7.2 อยู่ใน WinGet path ของ Windows user ปัจจุบัน |
 | `games/game3_car/project.godot` | **โปรเจกต์ placeholder เดิม**: เปิดแล้วได้ฉาก 2D สีเทา ไม่ใช่ Kubi Grand Prix; คงไว้เป็นโครงตั้งต้น |
 
 วิธีเปิดจากราก repo:
 
 ```powershell
-godot --path games/game3_car/starter-kit-racing
+godot --path games/game3_car
 ```
 
 โปรเจกต์เกมจริงตั้ง viewport 1280×720, Forward+ และ Jolt Physics; `project.godot`
@@ -89,7 +89,7 @@ godot --path games/game3_car/starter-kit-racing
 รันจากราก repo:
 
 ```powershell
-godot --headless --path games/game3_car/starter-kit-racing `
+godot --headless --path games/game3_car `
   --scene res://tests/test_game3_runner.tscn
 ```
 
@@ -104,7 +104,7 @@ Godot แจ้ง ObjectDB 20 รายการและ resource 4 ราย�
 
 ## Starter Kit และ asset ที่มี
 
-ที่อยู่: `games/game3_car/starter-kit-racing/` — โฟลเดอร์นี้เป็นทั้งโปรเจกต์เกมจริงและที่เก็บ Starter Kit ที่นำมาต่อยอด
+- เกมจริง 3D อยู่ที่ games/game3_car/ (โครงได้รวมขึ้นเป็นชั้นเดียวเมื่อ 2026-10-30 แล้ว)
 
 | ของ | ที่เก็บ |
 |---|---|
@@ -122,7 +122,7 @@ Godot แจ้ง ObjectDB 20 รายการและ resource 4 ราย�
 | จุดเข้า | สถานะ |
 |---|---|
 | Launcher/placeholder เดิม | `games/game3_car/project.godot`, `scenes/main.tscn`, `scripts/main.gd`; เป็นฉาก 2D ตั้งต้น ไม่ใช่เกมแข่งรถปัจจุบัน |
-| โปรเจกต์เกมจริง | `games/game3_car/starter-kit-racing/`; viewport 1280×720, Forward+, Jolt |
+| โปรเจกต์เกมจริง | `games/game3_car/`; viewport 1280×720, Forward+, Jolt |
 | ทางเข้าเกม | `games/game3_car/play.bat` เปิดโปรเจกต์เกมจริง; หรือใช้คำสั่ง Godot ด้านบน |
 | แผนเทส | เก็บ test runner scene ไว้ใน `tests/` และรันด้วย Godot `--headless --scene` |
 
@@ -135,4 +135,5 @@ Godot แจ้ง ObjectDB 20 รายการและ resource 4 ราย�
 | 2026-10-29 | **T1.1 ต่อ WIP เมือง Kubi** ขยายถนนให้ตรง collider, เพิ่มแอสฟัลต์/เส้นประและอาคารขอบสนาม ปรับกล้องให้เห็นบริบทเมือง ย้ายของตกแต่งออกจากเลน และเพิ่มเทส — ใช้เฉพาะ asset CC0 จาก Kenney ไม่ได้นำโปรเจกต์ City Builder ทั้งชุดเข้ามา |
 | 2026-10-29 | **T1.0 ระบบเกม 3D**: เพิ่มเหรียญ, Gate, HUD ไทย, respawn และจอชนะ; เปลี่ยนรถผู้เล่นเป็น race-future พร้อม kart ตกแต่งเส้นชัย และเริ่มใช้ asset เมือง — headless tests เริ่มต้น 14 assertions |
 | 2026-10-29 | **T0.5 ลง Starter Kit Racing**: vendor ชุด KenneyNL (โค้ด MIT, asset ตาม license ต้นทาง); ต่อมาเลือกโปรเจกต์ 3D นี้เป็นฐานและย้ายระบบเกมจริงไปอยู่ในโฟลเดอร์นี้ |
-| 2026-10-29 | **T0 โครงตั้งต้น**: สร้าง root `games/game3_car/` พร้อม project 2D placeholder และ launcher; โปรเจกต์เกมจริงถูกเพิ่มภายหลังใน `starter-kit-racing/` |
+| 2026-10-29 | **T0 โครงตั้งต้น**: สร้าง root `games/game3_car/` พร้อม project 2D placeholder และ launcher; โปรเจกต์เกมจริงถูกเพิ่มภายหลังใน `starter-kit-racing/ (ซึ่งต่อมาถูกรวมขึ้นเป็น root เมื่อ 2026-10-30)` |
+| 2026-10-29 | **T0 โครงตั้งต้น**: สร้าง root `games/game3_car/` พร้อม project 2D placeholder และ launcher; โปรเจกต์เกมจริงถูกเพิ่มภายหลังใน `starter-kit-racing/ (ซึ่งต่อมาถูกรวมขึ้นเป็น root เมื่อ 2026-10-30)` |
