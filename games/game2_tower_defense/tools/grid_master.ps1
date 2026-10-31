@@ -1,4 +1,4 @@
-# zoom 2x ทั้ง master raw + grid ทุก 20px เพื่อตามเส้นถนนแน่ ๆ
+﻿# zoom 2x ทั้ง master raw + grid ทุก 20px เพื่อตามเส้นถนนแน่ ๆ
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $src = [System.Drawing.Bitmap]::FromFile("C:\m-simple-game\tower-defend\assets\art\gen\raw\kub_kingdom_map_v2_raw.png")

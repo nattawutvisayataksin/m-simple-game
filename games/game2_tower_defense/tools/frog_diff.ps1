@@ -1,4 +1,4 @@
-# เทียบ f0..f8 กับ frog.png (เฟรมอ้างอิงจะต่างน้อยสุด)
+﻿# เทียบ f0..f8 กับ frog.png (เฟรมอ้างอิงจะต่างน้อยสุด)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $ref = [System.Drawing.Bitmap]::FromFile("C:\m-simple-game\tower-defend\assets\art\gen\frog.png")

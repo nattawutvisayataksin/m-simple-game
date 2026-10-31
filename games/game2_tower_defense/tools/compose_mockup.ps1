@@ -1,4 +1,4 @@
-# ประกอบ mockup สนามเต็ม v2 - ตำแหน่งตามถนนจริงที่ยืนยันจากภาพ
+﻿# ประกอบ mockup สนามเต็ม v2 - ตำแหน่งตามถนนจริงที่ยืนยันจากภาพ
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $art = "C:\m-simple-game\tower-defend\assets"

@@ -1,4 +1,4 @@
-# contact sheet 3x3 ของเฟรมกิ้งก่า + เทียบกับ lizard.png เพื่อหาเฟรมอ้างอิง
+﻿# contact sheet 3x3 ของเฟรมกิ้งก่า + เทียบกับ lizard.png เพื่อหาเฟรมอ้างอิง
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $dir = "C:\m-simple-game\tower-defend\assets\art\gen\lizard_frames"

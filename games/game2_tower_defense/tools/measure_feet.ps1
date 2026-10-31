@@ -1,4 +1,4 @@
-# วัดขอบเท้า (แถวพิกเซลโปร่งล่างสุดที่มีเนื้อภาพ) ของกบ/กิ้งก่า จาก sheet เฟรมแรก
+﻿# วัดขอบเท้า (แถวพิกเซลโปร่งล่างสุดที่มีเนื้อภาพ) ของกบ/กิ้งก่า จาก sheet เฟรมแรก
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 foreach ($name in @("frog_sheet", "lizard_sheet")) {

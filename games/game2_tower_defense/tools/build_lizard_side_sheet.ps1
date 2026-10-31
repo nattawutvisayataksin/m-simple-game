@@ -1,4 +1,4 @@
-# lizard_side_sheet.png จากฟรีมเก่าประเภทหันข้าง (lizard_frames f1..f8) + วัดแถวเท้าล่างสุด
+﻿# lizard_side_sheet.png จากฟรีมเก่าประเภทหันข้าง (lizard_frames f1..f8) + วัดแถวเท้าล่างสุด
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $dir = "C:\m-simple-game\tower-defend\assets\art\gen\lizard_frames"

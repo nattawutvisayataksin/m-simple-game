@@ -1,4 +1,4 @@
-# สร้างสกินฮีโร่ (palette hue-shift) จาก kubi_hero_run_sheet.png
+﻿# สร้างสกินฮีโร่ (palette hue-shift) จาก kubi_hero_run_sheet.png
 # ผลลัพธ์: assets/art/gen/kubi_hero_run_sheet_cyan.png / _ember.png
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing

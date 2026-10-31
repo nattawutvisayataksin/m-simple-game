@@ -1,4 +1,4 @@
-# ประกอบเฟรมที่ดาวน์โหลดแล้ว (name.frames_NN.png) ให้เป็นspritesheetแถวเดียว
+﻿# ประกอบเฟรมที่ดาวน์โหลดแล้ว (name.frames_NN.png) ให้เป็นspritesheetแถวเดียว
 # ใช้: powershell -File build_sprite_sheet.ps1 -Name coin -Out coin_sheet.png
 param(
   [Parameter(Mandatory=$true)][string]$Name,

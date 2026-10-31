@@ -1,4 +1,4 @@
-# mockup v3 บนโลกใหญ่ 1152x1296: มอนเฟรมเดินจริง 2 สายพันธุ์ + ป้อม 2 สาย + ฮีโร่ + HUD strip
+﻿# mockup v3 บนโลกใหญ่ 1152x1296: มอนเฟรมเดินจริง 2 สายพันธุ์ + ป้อม 2 สาย + ฮีโร่ + HUD strip
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $art = "C:\m-simple-game\tower-defend\assets"

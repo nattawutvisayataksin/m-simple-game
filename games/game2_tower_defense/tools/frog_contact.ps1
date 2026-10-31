@@ -1,4 +1,4 @@
-# contact sheet 3x3 ของเฟรมกบ (zoom 2x) + grid เพื่อหาเฟรมอ้างอิง/เฟรมซ้ำ
+﻿# contact sheet 3x3 ของเฟรมกบ (zoom 2x) + grid เพื่อหาเฟรมอ้างอิง/เฟรมซ้ำ
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $dir = "C:\m-simple-game\tower-defend\assets\art\gen\frog_frames"

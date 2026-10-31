@@ -1,4 +1,4 @@
-# สุ่มสีหญ้าขอบรอยต่อจาก world_raw.png (master edge raw y 210-215 vs panel edge raw y 216-221)
+﻿# สุ่มสีหญ้าขอบรอยต่อจาก world_raw.png (master edge raw y 210-215 vs panel edge raw y 216-221)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $src = [System.Drawing.Bitmap]::FromFile("C:\m-simple-game\tower-defend\assets\art\gen\raw\world_raw.png")

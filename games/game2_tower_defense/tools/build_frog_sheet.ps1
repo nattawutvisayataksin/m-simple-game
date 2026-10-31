@@ -1,4 +1,4 @@
-# ประกอบ frog_sheet.png จาก f1..f8 (เฟรมเดิน 8) -> แถวเดียว 512x64
+﻿# ประกอบ frog_sheet.png จาก f1..f8 (เฟรมเดิน 8) -> แถวเดียว 512x64
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $dir = "C:\m-simple-game\tower-defend\assets\art\gen\frog_frames"

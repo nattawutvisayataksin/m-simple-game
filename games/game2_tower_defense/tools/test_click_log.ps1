@@ -1,4 +1,4 @@
-# วิเคราะห์คลิกจริง: เปิดเกม (จับ stdout), foregound, คลิกจุดที่เห็นจริง, อ่านค่าที่ Godot เห็น
+﻿# วิเคราะห์คลิกจริง: เปิดเกม (จับ stdout), foregound, คลิกจุดที่เห็นจริง, อ่านค่าที่ Godot เห็น
 $ErrorActionPreference = 'Stop'
 Add-Type @"
 using System;

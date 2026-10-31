@@ -1,4 +1,4 @@
-# สร้างเพลงรายธีม 3 ชุดของเกม 1 — chiptune square-wave loop (ฟรี ไม่ใช้ gen)
+﻿# สร้างเพลงรายธีม 3 ชุดของเกม 1 — chiptune square-wave loop (ฟรี ไม่ใช้ gen)
 # ต่อแนวจาก generate_music.ps1 แต่ตัวแปรคอร์ด/BPM/ออกเทพต่อธีม:
 #   music_sewer.wav  — 90 BPM, D-m/B♭/F/C เชื่องบู้ (บรรยากาศใต้ท่อ)
 #   music_sky.wav    — 126 BPM, C/F/G/F สดใสลอยฟ้า (เร็วกว่าเพลงหลัก)

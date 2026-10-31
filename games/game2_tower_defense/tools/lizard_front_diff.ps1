@@ -1,4 +1,4 @@
-# ปерпรยต แอนิกิ้งก่าหน้าตรง: diff เทียบ lizard_front.png หาเฟรมอ้างอิง + contact sheet
+﻿# ปерпรยต แอนิกิ้งก่าหน้าตรง: diff เทียบ lizard_front.png หาเฟรมอ้างอิง + contact sheet
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $dir = "C:\m-simple-game\tower-defend\assets\art\gen\lizard_front_frames"

@@ -1,4 +1,4 @@
-# วางสไปรต์บนพื้นสีเพื่อทดสอบความโปร่ง
+﻿# วางสไปรต์บนพื้นสีเพื่อทดสอบความโปร่ง
 param([string]$Png, [string]$Out)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing

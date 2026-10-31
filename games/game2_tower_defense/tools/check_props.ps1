@@ -1,4 +1,4 @@
-# ตัดพร็อปที่ใช้เป็นไฟล์แยก เพื่อเห็นขอบเขตจริงก่อนรีคลุกล้า
+﻿# ตัดพร็อปที่ใช้เป็นไฟล์แยก เพื่อเห็นขอบเขตจริงก่อนรีคลุกล้า
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $dl = "C:\m-simple-game\download_asset_opengameart"

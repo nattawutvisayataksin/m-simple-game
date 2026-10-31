@@ -1,4 +1,4 @@
-# mockup ฉากใหญ่ 4 เท่า 2304x1296 (อ่างทดลอง): พื้นหญ้า master + ถนนวาดมือ + master บนซ้ายเต็ม
+﻿# mockup ฉากใหญ่ 4 เท่า 2304x1296 (อ่างทดลอง): พื้นหญ้า master + ถนนวาดมือ + master บนซ้ายเต็ม
 # ตกแต่งด้วยพร็อพ Atlas (LPC CC-BY-SA 3.0) + กลุ่มต้นไม้จาก hyptosis (OpenGameArt)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing

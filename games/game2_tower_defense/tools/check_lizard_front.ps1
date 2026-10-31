@@ -1,4 +1,4 @@
-# เช็คพื้นหลังโปร่งของ lizard_front_raw แล้วตัดพื้นขาวถ้ามี
+﻿# เช็คพื้นหลังโปร่งของ lizard_front_raw แล้วตัดพื้นขาวถ้ามี
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $b = [System.Drawing.Bitmap]::FromFile("C:\m-simple-game\tower-defend\assets\art\gen\raw\lizard_front_raw.png")

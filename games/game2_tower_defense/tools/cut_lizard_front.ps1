@@ -1,4 +1,4 @@
-# ตัดพื้นหลัง lizard_front_raw (โปร่ง) - flood fill จากขอบด้วยสีมุม (รองรับเช็คเกอร์ 2 สี)
+﻿# ตัดพื้นหลัง lizard_front_raw (โปร่ง) - flood fill จากขอบด้วยสีมุม (รองรับเช็คเกอร์ 2 สี)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $srcPath = "C:\m-simple-game\tower-defend\assets\art\gen\raw\lizard_front_raw.png"

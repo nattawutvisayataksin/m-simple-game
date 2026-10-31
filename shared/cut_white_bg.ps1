@@ -1,4 +1,4 @@
-# ตัดพื้นหลังขาว/สว่างของภาพ gen ที่ gen มาบนพื้นขาว
+﻿# ตัดพื้นหลังขาว/สว่างของภาพ gen ที่ gen มาบนพื้นขาว
 # วิธี: flood-fill จากโพิกเซลริมขอบ เดินทะลุเฉพาะพิกเซลสว่าง (lum >= threshold)
 # กันตัดทับลึก: พิกเซลภายในที่แยกจากขอบด้วยเส้น outline เข้มไม่โดน
 # ใช้: powershell -File tools/cut_white_bg.ps1 -SrcPng a.png -DstPng b.png [-LumThreshold 150]

@@ -1,4 +1,4 @@
-# สุ่มสีจาก master v2 raw (384x216) ที่จุดถนน/หญ้า เพื่อสร้าง palette วาดถนนแผงล่าง
+﻿# สุ่มสีจาก master v2 raw (384x216) ที่จุดถนน/หญ้า เพื่อสร้าง palette วาดถนนแผงล่าง
 # ใช้: powershell -File tools/sample_master_colors.ps1
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing

@@ -1,4 +1,4 @@
-# lizard_sheet.png จาก f0..f7 (8 เฟรม, f8 = ซ้ำ f0 เพื่อปิดลูป) -> 512x64
+﻿# lizard_sheet.png จาก f0..f7 (8 เฟรม, f8 = ซ้ำ f0 เพื่อปิดลูป) -> 512x64
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $dir = "C:\m-simple-game\tower-defend\assets\art\gen\lizard_frames"

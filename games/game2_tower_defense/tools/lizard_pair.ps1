@@ -1,4 +1,4 @@
-# pairwise diff เฟรมกิ้งก่า (หาเฟรม ref ที่ซ้ำ/ใกล้ต้นฉบับมากสุด)
+﻿# pairwise diff เฟรมกิ้งก่า (หาเฟรม ref ที่ซ้ำ/ใกล้ต้นฉบับมากสุด)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $dir = "C:\m-simple-game\tower-defend\assets\art\gen\lizard_frames"

@@ -1,4 +1,4 @@
-# Resume: poll job เหรียญที่ส่งไปแล้ว แล้ว gen ผู้เล่น/ศัตรู ต่อ (ทำงานให้ ID ถูกต้อง)
+﻿# Resume: poll job เหรียญที่ส่งไปแล้ว แล้ว gen ผู้เล่น/ศัตรู ต่อ (ทำงานให้ ID ถูกต้อง)
 $ErrorActionPreference = 'Continue'
 $KEY = (Get-Content -Raw "$PSScriptRoot\..\.mcp.json" | ConvertFrom-Json).mcpServers.pixellab.headers.Authorization -replace '^Bearer ', ''
 $api = "https://api.pixellab.ai/v2"

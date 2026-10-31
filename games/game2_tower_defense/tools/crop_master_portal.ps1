@@ -1,4 +1,4 @@
-# crop โซนประตูม่วงใน master raw + ซูม 4x เพื่อหา bbox แน่ ๆ
+﻿# crop โซนประตูม่วงใน master raw + ซูม 4x เพื่อหา bbox แน่ ๆ
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $src = [System.Drawing.Bitmap]::FromFile("C:\m-simple-game\tower-defend\assets\art\gen\raw\kub_kingdom_map_v2_raw.png")

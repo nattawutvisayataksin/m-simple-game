@@ -1,4 +1,4 @@
-# ตัดพื้นหลังสีมืดของภาพเอฟเฟกต์ให้โปร่งใส — เหมาะกับภาพทองอำพันบนพื้นเกือบดำล้วน
+﻿# ตัดพื้นหลังสีมืดของภาพเอฟเฟกต์ให้โปร่งใส — เหมาะกับภาพทองอำพันบนพื้นเกือบดำล้วน
 # ใช้งาน: powershell -File tools/make_transparent.ps1 -SrcPng a.png -DstPng b.png [-LumThreshold 70]
 param(
   [Parameter(Mandatory=$true)][string]$SrcPng,

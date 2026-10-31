@@ -1,4 +1,4 @@
-# lizard_front_sheet.png จาก f1..f8 + วัดแถวเท้าล่างสุด (สำหรับ feet align)
+﻿# lizard_front_sheet.png จาก f1..f8 + วัดแถวเท้าล่างสุด (สำหรับ feet align)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $dir = "C:\m-simple-game\tower-defend\assets\art\gen\lizard_front_frames"

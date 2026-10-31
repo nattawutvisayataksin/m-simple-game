@@ -1,4 +1,4 @@
-# ขยายภาพพิกเซลแบบ nearest-neighbor (ไม่เบลอ — สำหรับภาพจาก gen ที่ต้องยกกำลัง)
+﻿# ขยายภาพพิกเซลแบบ nearest-neighbor (ไม่เบลอ — สำหรับภาพจาก gen ที่ต้องยกกำลัง)
 # ใช้: powershell -File tools/upscale_nearest.ps1 -SrcPng a.png -DstPng b.png -Scale 3
 param(
   [Parameter(Mandatory=$true)][string]$SrcPng,

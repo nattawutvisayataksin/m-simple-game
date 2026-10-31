@@ -1,4 +1,4 @@
-# ซูมตรวจ 4 โซนจาก terrain_atlas เพื่อหยิบไทล์จริง (พร้อมกริดโชว์พิกัด)
+﻿# ซูมตรวจ 4 โซนจาก terrain_atlas เพื่อหยิบไทล์จริง (พร้อมกริดโชว์พิกัด)
 $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Drawing
 $srcPath = "C:\m-simple-game\download_asset_opengameart\Atlas\terrain_atlas.png"

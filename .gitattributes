@@ -1,0 +1,3 @@
+# ไฟล์ sidecar ของ Godot (เขียนโดยเอนจินเป็น LF เสมอ) ระบุให้ชัดเพื่อไม่ให้นับเป็นแก้ไขวนกลับ
+# ดูบทเรียน eol ที่ docs/MACHINE_PATHS.md
+*.import text eol=lf

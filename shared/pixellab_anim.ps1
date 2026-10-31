@@ -1,4 +1,4 @@
-# รันแอนิเมชัน 3 ชิ้นผ่าน Pixellab REST v2 (budget 3 generations)
+﻿# รันแอนิเมชัน 3 ชิ้นผ่าน Pixellab REST v2 (budget 3 generations)
 # คัง key ไว้นอก git: อ่านจาก .mcp.json (ถูก gitignore อยู่แล้ว) ไม่ฝัง key ในไฟล์นี้
 $ErrorActionPreference = 'Stop'
 $mcpConfig = Get-Content -Raw "$PSScriptRoot\..\.mcp.json" | ConvertFrom-Json

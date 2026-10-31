@@ -1,4 +1,4 @@
-# สคริปต์สร้างไฟล์เสียง .wav สำหรับเกม โดยสังเคราะห์คลื่น sine ล้วน ๆ
+﻿# สคริปต์สร้างไฟล์เสียง .wav สำหรับเกม โดยสังเคราะห์คลื่น sine ล้วน ๆ
 # ใช้งาน:  เปิด PowerShell ที่โฟลเดอร์โปรเจกต์แล้วรัน  pwsh -File tools/generate_sfx.ps1
 # ผลลัพธ์: assets/audio/pickup.wav, win.wav, lose.wav
 
