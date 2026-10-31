@@ -14,8 +14,8 @@ func _initialize() -> void:
 	var scene: PackedScene = load("res://scenes/main.tscn")
 	_main = scene.instantiate()
 	root.add_child(_main)
-	if _main.WAVES.size() == 10:
-		print("TEST_T4 structure PASS waves=10")
+	if _main.WAVES.size() == 13:
+		print("TEST_T4 structure PASS waves=13")
 	else:
 		print("TEST_T4 FAIL waves=%d" % _main.WAVES.size())
 	# คลื่นแรกตั้งค่าผ่าน code path จริง (prep หมดเวลา -> _start_wave) ไม่เรียกแทนมือ

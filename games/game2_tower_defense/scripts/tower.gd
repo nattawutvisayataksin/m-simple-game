@@ -210,6 +210,9 @@ func _pick_target() -> Node2D:
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if not e is Node2D or e.dead or e._progress < 0.0:
 			continue
+		if kind == CANNON and e.flying:
+			# Phase C: ปืนใหญ่ยิงโค้งพื้น — ค้างคาวลอดห้าม (นักธนู/เวท ยิงได้)
+			continue
 		var d: float = e.position.distance_to(position)
 		if d <= range_r and e._progress > best_prog:
 			best_prog = e._progress

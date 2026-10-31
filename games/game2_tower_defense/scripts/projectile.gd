@@ -63,7 +63,8 @@ func _explode(at: Vector2) -> void:
 	if get_parent() and get_parent().has_method("sfx"):
 		get_parent().sfx("explosion")
 	for e in get_tree().get_nodes_in_group("enemies"):
-		if e is Node2D and not e.dead and (e.position.distance_to(at) <= splash_r):
+		# Phase C: ปืนใหญ่ระเบิดพื้น — ค้างคาวบินอยู่เหนือแรงระเบิด
+		if e is Node2D and not e.dead and not e.flying and (e.position.distance_to(at) <= splash_r):
 			var dmg := damage
 			if is_instance_valid(target) and e != target:
 				dmg = damage * 0.55   # ตัวรอบ ๆ โหมเบากว่าเป้าหลัก

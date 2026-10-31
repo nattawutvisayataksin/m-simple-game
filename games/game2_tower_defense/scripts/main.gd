@@ -11,6 +11,11 @@ const LIZARD_TEX := preload("res://assets/art/gen/lizard_front.png")
 const LIZARD_SHEET := preload("res://assets/art/gen/lizard_sheet.png")
 const LIZARD_SIDE_SHEET := preload("res://assets/art/gen/lizard_side_sheet.png")  # T5.1 ชุดหันข้าง 8 ช่อง (หัวหันขวาโดยกำเนิด)
 const GOLEM_TEX := preload("res://assets/art/gen/stone_golem.png")
+# Phase C: มอนใหม่ — ค้างคาวบิน / สไลม์ปาแตก / แชแมนฮีล / บอส Kubit
+const BAT_TEX := preload("res://assets/art/gen/bat_flyer.png")
+const SLIME_TEX := preload("res://assets/art/gen/slime_splitter.png")
+const SHAMAN_TEX := preload("res://assets/art/gen/shaman_healer.png")
+const BOSS_TEX := preload("res://assets/art/gen/boss_kubit.png")
 # NB: lizard_side_sheet.png เคยเก็บเป็น stock (ตัดสิน T3.2 ใช้ชุดหน้าตรง) — ฟีดแบ็ค T5.1 สลับกลับมาใช้จริง ช่วงเดินแนวนอน
 const TOWER_ARCHER_TEX := preload("res://assets/art/gen/tower_archer.png")
 const TOWER_CANNON_TEX := preload("res://assets/art/gen/tower_cannon.png")
@@ -96,6 +101,12 @@ const LIZARD_SPEED := 60.0
 const GOLEM_SPEED := 27.0
 const GOLEM_HP := 95.0
 const GOLEM_RESIST := 0.65
+# Phase C สเตตมอนใหม่ (hp คูณ hp_mult ตามคลื่นเหมือนเดิม)
+const BAT_SPEED := 55.0
+const SLIME_SPEED := 30.0
+const SHAMAN_SPEED := 25.0
+const BOSS_SPEED := 17.0
+const BOSS_HP := 1200.0     # hp สุดท้าย ~ 1200 * hp_mult ; หัวหน้ากองคลื่นสุดท้าย
 const START_LIVES := 20
 const LANE_OFFSET := 13.0  # ระยะเลื่อนข้างถนนต่อมอน (กันซ้อนตึงตึว)
 
@@ -108,18 +119,23 @@ const FIRST_PREP := 10.0         # ก่อนคลื่นแรก: เผ�
 const EARLY_BONUS_PER_SEC := 3.0 # ทองโบนัสต่อวินาทีที่ยังเหลือตอนเรียกก่อน
 const WAVE_BONUS_BASE := 25      # โบนัสจบคลื่น = base + (คลื่นที่ * step)
 const WAVE_BONUS_STEP := 5
-# คลื่น 10 รอบ: [ชนิด, จำนวน] — ท้ายเกมกิ้งก่าเร็วจำนวนโก่งขึ้น จบกองใหญ่คลื่นสุดท้าย
+# คลื่น 13 รอบ: [ชนิด, จำนวน] — Phase C ใส่ hard-counter การแก้:
+#   คลื่น 4 ค้างคาว = ปืนใหญ่/ทหารโม้ (ต้องมีธนู/เวท) · สไลม์แตกลุกชน
+#   แชแมนฮีลกลุ่ม = ต้องเร่งเคลียร์เฟส · คลื่น 13 บอสคุ้มกันหนัก
 const WAVES: Array = [
 	[["frog", 5]],
 	[["frog", 6]],
 	[["frog", 4], ["lizard", 3]],
-	[["lizard", 5]],
-	[["frog", 6], ["lizard", 4]],
-	[["frog", 5], ["lizard", 6]],
-	[["frog", 9], ["lizard", 5], ["stone_golem", 1]],
-	[["lizard", 9], ["stone_golem", 2]],
-	[["frog", 8], ["lizard", 8]],
-	[["frog", 6], ["lizard", 12]],
+	[["bat", 5]],
+	[["frog", 5], ["slime", 3]],
+	[["lizard", 5], ["bat", 3]],
+	[["frog", 6], ["slime", 3], ["shaman", 1]],
+	[["lizard", 6], ["stone_golem", 2], ["bat", 3]],
+	[["frog", 7], ["shaman", 2], ["slime", 4]],
+	[["lizard", 8], ["stone_golem", 2], ["bat", 4]],
+	[["frog", 8], ["slime", 5], ["shaman", 2], ["lizard", 5]],
+	[["lizard", 8], ["stone_golem", 3], ["frog", 6], ["bat", 5]],
+	[["kubit_boss", 1], ["lizard", 5], ["shaman", 2], ["bat", 4], ["frog", 5]],
 ]
 
 var _state := "prep"        # prep | wave | won | lost
@@ -304,8 +320,28 @@ func _spawn_kind(kind: String) -> void:
 	elif kind == "stone_golem":
 		_spawn_enemy(GOLEM_TEX, null, _shift_path(PATH_A, lane), GOLEM_SPEED * jitter, true, false,
 			59, null, 43, GOLEM_HP * hp_mult, 35, GOLEM_RESIST, 1.7, 18.0)
+	elif kind == "bat":
+		# Phase C ค้างคาว: บินลัดฟ้า — ปืนใหญ่/ทหารเก้อ (ต้องใช้ธนู/เวท) เลือดบางเร็วแต่ลัด
+		_spawn_enemy(BAT_TEX, null, _shift_path(PATH_A, lane), BAT_SPEED * jitter, true, false,
+			52, null, 43, 30.0 * hp_mult, 20, 0.0, 1.35, 6.0, true)
+	elif kind == "slime":
+		# Phase C สไลม์: ตายแล้วแตกเป็น 2 ตัวจิ๋ววิ่งเร็วต่อ (ทหารตับมาช่วยบล็อกต่อ)
+		_spawn_enemy(SLIME_TEX, null, _shift_path(PATH_A, lane), SLIME_SPEED * jitter, true, false,
+			59, null, 43, 34.0 * hp_mult, 22, 0.0, 1.5, 9.0, false, "mini_slime")
+	elif kind == "mini_slime":
+		_spawn_enemy(SLIME_TEX, null, _shift_path(PATH_A, lane), 46.0 * jitter, true, false,
+			59, null, 43, 12.0 * hp_mult, 8, 0.0, 0.95, 5.0)
+	elif kind == "shaman":
+		# Phase C แชแมน: ฮีลออร่าระยะ 95px ทุก 2.2 วิ — เกิดหลังกอง ฆ่าเสียแค่ "ก่อนเคลียร์เฟสมอนหมด"
+		_spawn_enemy(SHAMAN_TEX, null, _shift_path(PATH_A, lane), SHAMAN_SPEED * jitter, true, false,
+			59, null, 43, 55.0 * hp_mult, 30, 0.0, 1.5, 8.0, false, "", 2, 0.045)
 	else:
-		push_error("Unknown enemy type: %s" % kind)
+		if kind == "kubit_boss":
+			# Phase C บอส Kubit: คลื่นสุดท้าย — อึดไม่มีเกราะ (เวท/ธนูลดเลือดได้เต็ม) ฟันทหารแตก
+			_spawn_enemy(BOSS_TEX, null, _shift_path(PATH_A, 0.0), BOSS_SPEED, true, false,
+				92, null, 43, BOSS_HP * hp_mult, 250, 0.0, 2.1, 45.0, false, "", 0, 0.0, true)
+		else:
+			push_error("Unknown enemy type: %s" % kind)
 
 func _spawn_point_clear() -> bool:
 	# เว้นระยะเกิด: มอนหรือศพจางยังจอดปากประตู (< 80px) = ยังไม่เกิด
@@ -350,7 +386,7 @@ func _shift_path(path: Array[Vector2], off: float) -> Array[Vector2]:
 			out.append(path[i] + Vector2(off, 0))   # ช่วงเดินตั้ง -> เลื่อนตามแกน x
 	return out
 
-func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], speed: float, no_flip: bool, faces_left: bool, bottom_row: int, s_sheet: Texture2D = null, s_bottom: int = 43, hp: float = 26.0, gold: int = 15, resist: float = 0.0, enemy_scale: float = 1.5, atk: float = 8.0) -> void:
+func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], speed: float, no_flip: bool, faces_left: bool, bottom_row: int, s_sheet: Texture2D = null, s_bottom: int = 43, hp: float = 26.0, gold: int = 15, resist: float = 0.0, enemy_scale: float = 1.5, atk: float = 8.0, fly := false, split_kind := "", split_count := 2, heal_pct := 0.0, boss := false) -> void:
 	var e := EnemyScript.new()
 	e.sheet = sheet          # เฟรมเดินจริงถ้ามี sheet (fallback texture นิ่ง)
 	e.texture = texture
@@ -366,9 +402,17 @@ func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], sp
 	e.melee_dmg = atk      # แรงฟันเมื่อสู้กับทหาร้ (Phase B)
 	e.max_hp = hp        # เลือดต่อชนิด (T3)
 	e.reward = gold      # ทองต่อการฆ่า (T3)
+	e.flying = fly               # Phase C ค้างคาว
+	e.split_kind = split_kind    # Phase C สไลม์
+	e.split_count = split_count
+	e.heal_power = heal_pct      # Phase C แชแมน
+	e.is_boss = boss
 	add_child(e)
 	e.reached_castle.connect(_on_enemy_leak)
 	e.died.connect(_on_enemy_died)
+	if e.split_kind != "":
+		# Phase C: สไลม์ตาย → แตกลูกจากจุดที่ตาย (ต่อเส้นทางที่เหลือ)
+		e.died.connect(_on_slime_died.bind(e))
 
 func _on_enemy_leak() -> void:
 	_lives -= 1
@@ -389,6 +433,21 @@ func _on_enemy_died(reward: int, at: Vector2) -> void:
 	sfx("coin")
 	_update_gold()
 	_gold_popup(reward, at)
+
+func _on_slime_died(reward: int, at: Vector2, slime: Node2D) -> void:
+	# Phase C: แตก 2 ไอจิ๋วต่อเส้นทางจากจุดตาย (ความเร็วสูงกว่าตัวใหญ่)
+	if slime == null or not is_instance_valid(slime) or slime.split_kind == "":
+		return
+	var way: PackedVector2Array = slime.waypoints
+	var seg: int = maxi(slime._wp_index, 0)
+	var rest: Array[Vector2] = []
+	rest.append(at)
+	for i in range(seg, way.size()):
+		if way[i].distance_to(at) > 4.0:
+			rest.append(way[i])
+	for _i in range(int(slime.split_count)):
+		_spawn_enemy(SLIME_TEX, null, rest, 46.0, true, false,
+			59, null, 43, 12.0 * pow(HP_GROWTH, _wave_idx), 8, 0.0, 0.95, 5.0)
 
 func _gold_popup(amount: int, at: Vector2) -> void:
 	var lb := Label.new()
@@ -423,7 +482,9 @@ func _flash_gold() -> void:
 # ---------- ระบบคลื่น + จบเกม (T4) ----------
 func _wave_text(idx: int) -> String:
 	# แต้มคลื่นอ่านง่าย: "กบ 4, กิ้งก่า 3"
-	var names := {"frog": "กบ", "lizard": "กิ้งก่า", "stone_golem": "โกเลมหิน"}
+	var names := {"frog": "กบ", "lizard": "กิ้งก่า", "stone_golem": "โกเลมหิน",
+		"bat": "ค้างคาว", "slime": "สไลม์", "mini_slime": "สไลม์จิ๋ว",
+		"shaman": "แชแมน", "kubit_boss": "☠ บอส KUBIT ☠"}
 	var parts: Array = []
 	for entry in WAVES[idx]:
 		parts.append("%s %d" % [names[entry[0]], entry[1]])
@@ -470,7 +531,18 @@ func _wave_announce(n: int) -> void:
 	st.outline_size = 10
 	st.outline_color = Color(0.15, 0.09, 0.02)
 	lb.label_settings = st
-	lb.text = "คลื่นที่ %d" % n
+	# Phase C: คลื่นบอส = สีแดงเตือนภัย (telegraph ก่อนเจอ = สิทธิของผู้เล่น)
+	var boss_wave := false
+	for entry in WAVES[n - 1]:
+		if entry[0] == "kubit_boss":
+			boss_wave = true
+	if boss_wave:
+		lb.text = "☠ บอส KUBIT เหยียบออกจากค่าย ☠"
+		st.font_size = 46
+		st.font_color = Color(1.0, 0.35, 0.2)
+		st.outline_color = Color(0.1, 0.02, 0.02)
+	else:
+		lb.text = "คลื่นที่ %d" % n
 	lb.set_anchors_preset(Control.PRESET_TOP_WIDE)
 	lb.offset_top = 150.0
 	lb.offset_bottom = 210.0

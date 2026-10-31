@@ -10,6 +10,7 @@ signal died(reward: int, at: Vector2)   # T3: ถูกป้อมฆ่า -> 
 
 const FRAME_SIZE := 64
 const ANIM_FPS := 9.0
+const HEAL_RADIUS := 95.0    # รัศมีฮีลออร่าแชแมน (Phase C)
 
 var waypoints: PackedVector2Array = []
 var speed := 60.0
@@ -18,10 +19,17 @@ var max_hp := 30.0
 var reward := 15            # ทองที่ได้เมื่อฆ่าสำเร็จ
 var damage_resist := 0.0
 var dead := false
-var flying := false          # กลางอากาศ: ทหารบล็อกไม่ได้ (C รอค้างไว้ที่นี่)
+var flying := false          # กลางอากาศ: ปืนใหญ่/ทหารยิงไม่โดน (Phase C)
 var blocker: Node2D = null   # บล็อก: soldier ที่ยืนกั้นหน้า (null = อิสระ)
 var melee_dmg := 8.0         # แรงโจมตีที่ใช้ปะทะกับทหาร
 var _atk_cd := 0.0
+# Phase C: สไลม์ชดแตก
+var split_kind := ""         # ชนิดลูกที่แตกออกเมื่อตาย ("" = ไม่แตก)
+var split_count := 2         # จำนวนลูกที่แตก
+# Phase C: แชแมนฮีล
+var heal_power := 0.0        # 0 = ไม่ฮีล ; >0 = ฮีลเปอร์เซ็นต์เลือดของเป้ารอบตัวต่อจังหวะ
+var _heal_cd := 0.0
+var is_boss := false
 var _hp := 30.0
 var _progress := 0.0        # ระยะทางที่เดินมาแล้ว (ป้อมเลืองเป้า "ขึ้นหน้าสุด")
 var no_flip := false
@@ -36,6 +44,8 @@ var _wp_index := 0
 var _bob := 0.0
 var _anim_t := 0.0
 var _sprite: Sprite2D
+var _heal_pulse_t := 0.0    # Phase C: จับเวลาวงเขียวฮีล (วาดนาฬิกาลดลงใน _process)
+var _fly_bob := 0.0         # Phase C: จังหวะลอยวนของมอนกลางอากาศ
 
 func _apply_sheet(tex: Texture2D, bottom_row: int) -> void:
 	# สลับชุดสไปรต์ (หน้าตรง/หันข้าง) - ต้องเลื่อนเท้าตามแถวเท้าของชุดนั้นด้วย
@@ -62,12 +72,40 @@ func _draw() -> void:
 	# เงาใต้เท้า (วงรีโปร่งแสง) - วาดที่ position (เท้า) ; ตายแล้วไม่วาด (ตัวจางหาย)
 	if dead:
 		return
-	draw_set_transform(Vector2(0, 4), 0.0, Vector2(1.0, 0.42))
-	draw_circle(Vector2.ZERO, 17.0, Color(0.05, 0.09, 0.04, 0.35))
+	if flying:
+		# กลางอากาศ: เงาโปร่งเล็กลง ลอยห่างตัว (Phase C ค้างคาว)
+		draw_set_transform(Vector2(0, 20), 0.0, Vector2(1.0, 0.4))
+		draw_circle(Vector2.ZERO, 12.0, Color(0.05, 0.09, 0.04, 0.22))
+	else:
+		draw_set_transform(Vector2(0, 4), 0.0, Vector2(1.0, 0.42))
+		draw_circle(Vector2.ZERO, 17.0, Color(0.05, 0.09, 0.04, 0.35))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	if _heal_pulse_t > 0.0:
+		var a := 0.45 * clampf(_heal_pulse_t / 0.35, 0.0, 1.0)
+		draw_arc(Vector2.ZERO, HEAL_RADIUS, 0.0, TAU, 40, Color(0.3, 1.0, 0.45, a), 2.0, true)
+		draw_circle(Vector2.ZERO, HEAL_RADIUS * clampf(1.2 - _heal_pulse_t, 0.05, 1.0), Color(0.3, 1.0, 0.45, a * 0.18))
+	# Phase C: บอส = แถบเลือดกว้างพิเศษ (เห็นชัดว่า "อึด" จริง)
+	if is_boss and _hp < max_hp:
+		var w := 78.0
+		draw_rect(Rect2(-w / 2.0, -86.0, w, 8.0), Color(0.08, 0.05, 0.03, 0.88))
+		var frac := clampf(_hp / max_hp, 0.0, 1.0)
+		draw_rect(Rect2(-w / 2.0 + 1.0, -85.0, (w - 2.0) * frac, 6.0), Color(0.92, 0.32, 0.18))
+
+func _heal_flash() -> void:
+	# เป้าที่โดนฮีล: ฟลาชเขียวสั้น ๆ บนตัวมอน (ผู้เล่นจับได้ว่าแชแมนฮีล)
+	if _sprite == null or not is_instance_valid(_sprite):
+		return
+	_sprite.modulate = Color(0.5, 1.0, 0.55)
+	var t := create_tween()
+	t.tween_property(_sprite, "modulate", Color.WHITE, 0.4)
+
+func _pulse_green() -> void:
+	# แชแมน: วงเขียวลูปปั้ดตอนฮีล (วาดตอน _draw)
+	_heal_pulse_t = 0.35
+	queue_redraw()
 
 func set_blocker(soldier: Node2D) -> void:
-	if dead:
+	if dead or flying:      # กลางอากาศ: บล็อกไม่ได้ (Phase C ค้างคาว)
 		return
 	blocker = soldier
 
@@ -103,6 +141,15 @@ func _die() -> void:
 func _process(delta: float) -> void:
 	if dead or _wp_index >= waypoints.size() - 1:
 		return
+	# Phase C: แชแมนฮีลออร่า — ฮีลเป้าหมายรอบตัวเป็นจังหวะ (บินยืนพื้นก็ฮีลได้)
+	if heal_power > 0.0:
+		_heal_pulse_t -= delta
+		if _heal_pulse_t < 0.0:
+			_heal_pulse_t = 0.0
+		_heal_cd -= delta
+		if _heal_cd <= 0.0:
+			_heal_cd = 2.2
+			_heal_nearby()
 	# โดนทหารบล็อก: หยุดเดิน + ฟันทหารเป็นจังหวะ (Kingdom Rush style)
 	if blocker != null and (not is_instance_valid(blocker) or blocker.dead):
 		blocker = null
@@ -162,3 +209,26 @@ func _process(delta: float) -> void:
 		_bob += delta * 9.0
 		var s := base_scale * (1.0 + 0.05 * sin(_bob))
 		_sprite.scale = Vector2(s, s)
+	# Phase C: กลางอากาศ — ตัวลอยวนขึ้นลงบนถนน (เงาใต้ตัวยังอยู่พื้น)
+	if flying:
+		_fly_bob += delta * 3.4
+		_sprite.position = Vector2(0.0, -18.0 + 5.0 * sin(_fly_bob))
+	if heal_power > 0.0 and _heal_pulse_t > 0.0:
+		queue_redraw()
+
+func _heal_nearby() -> void:
+	# Phase C: ฮีลเพื่อนรอบตัว (รวมใส่บอส) — เป้าฟื้นพร้อม "ฟลาชเขียว"
+	if dead:
+		return
+	for e in get_tree().get_nodes_in_group("enemies"):
+		if e == self or not e is Node2D or e.dead:
+			continue
+		if e.position.distance_to(position) > HEAL_RADIUS:
+			continue
+		# ฟื้นเป็น % ของเลือดเป้า + พื้นเล็ก (ค้างคาวเลือดบางก็ยังฟื้ได้)
+		var missing: float = e.max_hp - e._hp
+		if missing <= 0.0:
+			continue
+		e._hp += minf(missing, e.max_hp * heal_power + 2.0)
+		e._heal_flash()
+	_pulse_green()
