@@ -60,6 +60,8 @@ func _hit() -> void:
 
 func _explode(at: Vector2) -> void:
 	# ระเบิดกระจุก: เป้าเต็ม + มอนรอบ ๆ ในรัศมีได้รับบางส่วน
+	if get_parent() and get_parent().has_method("sfx"):
+		get_parent().sfx("explosion")
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if e is Node2D and not e.dead and (e.position.distance_to(at) <= splash_r):
 			var dmg := damage

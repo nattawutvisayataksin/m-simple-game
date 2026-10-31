@@ -146,5 +146,11 @@ func _process(delta: float) -> void:
 	p.speed = shot_speed
 	p.splash_r = splash_r
 	p.kind = kind
+	var SND: String = "arrow"
+	match kind:
+		1: SND = "cannon"
+		2: SND = "mage"
+	if get_parent() and get_parent().has_method("sfx"):
+		get_parent().sfx(SND)
 	get_parent().add_child(p)
 	p.global_position = _weapon_pivot.to_global(Vector2(0, -31))

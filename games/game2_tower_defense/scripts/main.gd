@@ -23,6 +23,9 @@ const ICON_HEART := preload("res://assets/art/icons/heart.png")
 const ICON_UPG_BOW := preload("res://assets/art/icons/upg_bow.png")       # T5 ไอคอนอัปเกรดป้อมธนู
 const ICON_UPG_HAMMER := preload("res://assets/art/icons/upg_hammer.png") # T5 ไอคอนอัปเกรดปืนใหญ่
 const HeroScript := preload("res://scripts/hero.gd")                     # T5 ฮีโร่ Kubi
+const SfxScript := preload("res://scripts/sfx.gd")                       # T6 ระบบเสียง
+
+var _audio                                                                # Sfx node (เรียกผ่าน method sfx())
 
 # ตารางป้อม (T3): ค่าบาลานซ์รวมที่เดียวจูนง่าย - ราคา/ดาเมจ/คูลดาวน์/รัศมี/ความเร็วกระสุน/ระเบิดกระจุก
 const TOWER_DEFS := {
@@ -194,6 +197,9 @@ class PathOverlay:
 
 func _ready() -> void:
 	y_sort_enabled = true  # มอนวาดเรียงตามแนวระดับ (ตัวล่างจอบนตัวบนจอ - แก้ทับซ้อนดูลอย)
+	_audio = SfxScript.new()
+	add_child(_audio)
+	_audio.start_music()
 	_build_lives_label()
 	_path_layer = PathOverlay.new()
 	_path_layer.points = PackedVector2Array(PATH_A)
@@ -211,6 +217,11 @@ func _ready() -> void:
 	_spots_layer.busy = _towers   # อ้างอิงสด — สร้างป้อมที่ลานไหน วงลานนั้นเงียบ
 	add_child(_spots_layer)
 	queue_redraw()
+
+## จุดเรียกเสียงจากโหนดลูก (tower/hero/projectile เรียก get_parent().sfx("arrow"))
+func sfx(kind: String) -> void:
+	if _audio != null:
+		_audio.play(kind)
 
 func _process(delta: float) -> void:
 	if _spots_layer:
@@ -256,6 +267,9 @@ func _remaining() -> int:
 func _start_wave() -> void:
 	_wave_idx += 1
 	_state = "wave"
+	sfx("horn")
+	if _audio != null:
+		_audio.set_wave_theme(true)
 	_queue.clear()
 	for entry in WAVES[_wave_idx]:
 		for _i in range(int(entry[1])):
@@ -304,6 +318,8 @@ func _wave_cleared() -> void:
 	else:
 		_state = "prep"
 		_prep_t = WAVE_PREP
+		if _audio != null:
+			_audio.set_wave_theme(false)
 	queue_redraw()
 
 func _shift_path(path: Array[Vector2], off: float) -> Array[Vector2]:
@@ -344,6 +360,7 @@ func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], sp
 
 func _on_enemy_leak() -> void:
 	_lives -= 1
+	sfx("leak")
 	_update_lives()
 	if _lives_label:
 		_lives_label.modulate = Color(1.0, 0.4, 0.25)
@@ -356,6 +373,8 @@ func _on_enemy_leak() -> void:
 func _on_enemy_died(reward: int, at: Vector2) -> void:
 	# ทองรางวัลต่อการฆ่า + จุดป๊อบเงินลอยขึ้น (T3)
 	_gold += reward
+	sfx("die")
+	sfx("coin")
 	_update_gold()
 	_gold_popup(reward, at)
 
@@ -456,6 +475,8 @@ func _game_over(won: bool) -> void:
 	if _state == "won" or _state == "lost":
 		return
 	_state = "won" if won else "lost"
+	if _audio != null:
+		_audio.game_over(won)
 	get_tree().paused = true   # หยุดโลกทันที (มอน/ป้อม/เกิด) — เลเยอร์จอจบเกมตั้ง ALWAYS ทำงานต่อ
 	_close_menu()
 	if _wave_btn:
@@ -608,6 +629,7 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_tower: Node2D = null) -> void:
 	_close_menu()
+	sfx("click")
 	_menu_spot = spot_idx
 	_menu_tower = selected_tower
 	if _menu_tower == null and spot_idx >= 0 and _towers[spot_idx] != null:
@@ -764,6 +786,7 @@ func _build_tower(spot_idx: int, key: String) -> void:
 	t.position = TOWER_SPOTS[spot_idx]
 	t.invested_gold = int(def["cost"])
 	add_child(t)
+	sfx("build")
 	# T5: จำสถานะต่อลาน (node / เลเวล / เงินที่ลงไป ใช้คิดคืนขาย)
 	_towers[spot_idx] = t
 	_lvl[spot_idx] = 1
@@ -787,6 +810,7 @@ func _build_free_tower(at: Vector2, key: String) -> void:
 	tower.position = at
 	tower.invested_gold = int(def["cost"])
 	add_child(tower)
+	sfx("build")
 	_free_towers.append(tower)
 	_close_menu()
 	queue_redraw()
@@ -810,6 +834,7 @@ func _upgrade_tower_node(t: Node2D, spot_idx: int) -> void:
 	if spot_idx >= 0:
 		_inv[spot_idx] += cost
 	_update_gold()
+	sfx("build")
 	t.apply_upgrade(float(upg["dmg"]), float(upg["interval"]), float(upg["range"]), float(upg["shot"]), float(upg["splash"]))
 	if spot_idx >= 0:
 		_lvl[spot_idx] = 2
@@ -826,6 +851,7 @@ func _sell_tower_node(t: Node2D, spot_idx: int) -> void:
 		return
 	var refund := _tower_refund(t)
 	_gold += refund
+	sfx("sell")
 	_update_gold()
 	_gold_popup(refund, t.position)
 	t.queue_free()

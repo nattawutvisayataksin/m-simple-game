@@ -159,6 +159,8 @@ func _physics_process(delta: float) -> void:
 		var attack_tween := create_tween()
 		attack_tween.tween_property(_sprite, "scale", Vector2(1.35, 1.35), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 		best.take_damage(attack_dmg)
+		if get_parent() and get_parent().has_method("sfx"):
+			get_parent().sfx("slash")
 		if best.dead and _combat_target == best:
 			_combat_target = null
 	# โดนรุม: ตัวใดยืนติดกันนานจนเย็น 0.9 วิ = บีบเลือดหนึ่งจังหวะ
