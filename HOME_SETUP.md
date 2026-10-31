@@ -54,19 +54,18 @@ godot --headless --path games/game2_tower_defense --import
 
 จุดตรวจหลัก **2 ไฟล์** (รายละเอียดครบที่ [`docs/MCP_SETUP.md`](docs/MCP_SETUP.md)):
 
-### 4.1 godot-mcp — อยู่ใน repo: `opencode.json` + `.vscode/mcp.json`
-
-แก้ `GODOT_PATH` ให้ชี้ตำแหน่ง Godot ติดตั้งจริงบนเครื่อง ตรวจตำแหน่งด้วย:
+### 4.1 godot-mcp — ตั้งด้วยสคริปต์ครั้งเดียว (ยกเลิกการแก้ path มือแล้ว)
 
 ```powershell
-(Get-Command godot).Source
+powershell -ExecutionPolicy Bypass -File shared\setup_machine.ps1
 ```
 
-ค่าแนะนำคือเป็น **ชุดตัวคอนโซล** (จับ stdout ได้):
+มันทำให้ครบ: หา Godot อัตโนมัติ → ตั้ง env `GODOT_PATH` (ระดับ User) → ใส่ godot-mcp ลง global config นอก repo →
+build แคช import ทุกเกม → เติมแถวเครื่องนี้ลง [`docs/MACHINE_PATHS.md`](docs/MACHINE_PATHS.md) จากนั้น **เปิด VS Code / OpenCode ใหม่อีกครั้ง** เพื่ออ่าน env
 
-```text
-C:\Users\<ชื่อผู้ใช้>\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.2-stable_win64_console.exe
-```
+- ห้าม hardcode `C:\Users\<ชื่อ>\...` ในไฟล์ที่ commit อีก — path เครื่องจริงเก็บที่ `docs/MACHINE_PATHS.md` อย่างเดียว
+- Path ตามเครื่องที่รู้จัก (เครื่องหลัก Administrator / เครื่องบ้าน admin) อยู่ในตาราง `docs/MACHINE_PATHS.md`
+- เปลี่ยนเวอร์ชัน Godot แล้ว รัน setup_machine.ps1 ใหม่ (มันเลือกเวอร์ชันสูงสุดเอง)
 
 ### 4.2 pixellab-a/b/c — อยู่ **global config นอก repo**: `~/.config/opencode/opencode.json`
 
@@ -87,8 +86,11 @@ m-simple-game/
 │  ├─ game1_coin_rush/        # GDD · ART_DIRECTION · ARCHITECTURE · ASSETS (เกม 1)
 │  ├─ game2_tower_defense/    # GDD · ARCHITECTURE · ASSETS (เกม 2)
 │  ├─ ASSET_MANIFEST.md       # สมุดบัญชี asset + โควตา key (รวมทุกเกม)
+│  ├─ MACHINE_PATHS.md        # สมุด path รายเครื่อง + ระเบียบห้ามฝัง path ตามเครื่อง
 │  └─ MCP_SETUP.md            # MCP: ใครอยู่ไหน + บทเรียน
-├─ opencode.json              # godot-mcp (โปรเจกต์นี้)
+├─ opencode.json              # MCP โครงโปรเจกต์ (godot-mcp อยู่ global config ต่อเครื่อง)
+├─ shared/find_godot.ps1      # หา Godot บนเครื่องนี้อัตโนมัติ (ใช้แทนการพิมพ์ path)
+├─ shared/setup_machine.ps1   # ตั้งค่าเครื่องครบชุดครั้งเดียว (สไตล์ 4.1 ข้างบน)
 ├─ HOME_SETUP.md              # ไฟล์นี้
 └─ README.md                  # ภาพรวม + เรียงเอกสาร
 ```
@@ -96,7 +98,7 @@ m-simple-game/
 ## 6. เทสอัตโนมัติ (เกม 2) — รันหลังแก้โค้ดเกม 2
 
 ```powershell
-$godot = "C:\Users\Administrator\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.2-stable_win64_console.exe"
+$godot = (& .\shared\find_godot.ps1)   # หา Godot บนเครื่องนี้อัตโนมัติ — ไม่ hardcode path อีกแล้ว
 foreach ($t in @('test_t3','test_t4','test_keys','test_t5')) {
   & $godot --headless --path games/game2_tower_defense --script (Join-Path (Resolve-Path .) "games\game2_tower_defense\tools\$t.gd")
 }
@@ -119,7 +121,7 @@ git status   # ก่อนปิดงาน — ต้องแสดง worki
 ## 8. การแก้ปัญหาเบื้องต้น
 
 - เปิดเกมไม่ได้: ตรวจว่ารันจาก **โฟลเดอร์ที่มี `project.godot`** (games/game1_coin_rush หรือ games/game2_tower_defense) ไม่ใช่ราก repo
-- Godot MCP หา Godot ไม่พบ: แก้ `GODOT_PATH` ใน `opencode.json` / `.vscode/mcp.json`
+- Godot MCP หา Godot ไม่พบ: รัน `shared\setup_machine.ps1` ใหม่ แล้วเปิด/รีสตาร์ต OpenCode + VS Code (ดู `docs/MACHINE_PATHS.md`)
 - pixellab ตอบ 401: ไม่ใช่ key หมด — ปัญหา `{env:...}` ไม่เผยแร้งค่า; ใช้ global config + Bearer เต็ม ๆ (`docs/MCP_SETUP.md`)
 - `git push` ขอรหัสผ่าน: ใช้ GitHub Personal Access Token (PAT) แทนรหัสผ่านบัญชี
 - มี conflict หลัง `git pull`: หยุดแก้อย่างระมัดระวัง ตรวจไฟล์สีแดง/ús ที่ Git ตกลงแก้ไข

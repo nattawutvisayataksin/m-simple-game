@@ -1,4 +1,4 @@
-# gen_pixen.ps1 - สร้างภาพ pixel-art ผ่าน Pixellab REST v2 (create-image-pixen, synchronous)
+﻿# gen_pixen.ps1 - สร้างภาพ pixel-art ผ่าน Pixellab REST v2 (create-image-pixen, synchronous)
 # ใช้: powershell -File tools\gen_pixen.ps1 -OutFile path.png -Description "..." [-W 64 -H 64] [-View "low top-down"] [-DownscaleTo 64]
 # key อ่านจาก env PIXELLAB_API_KEY_B ก่อน (ไม่เขียนลงไฟล์ใด ๆ)
 param(
@@ -16,7 +16,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $key = [Environment]::GetEnvironmentVariable('PIXELLAB_API_KEY_B')
 if (-not $key) {
-	$cfg = Get-Content "C:\Users\Administrator\.config\opencode\opencode.json" -Raw | ConvertFrom-Json
+	# สำรองอ่าน key จาก global config ของเครื่อง (ทุกเครื่องเก็บที่ %USERPROFILE%\.config\opencode — ห้าม hardcode ตามเครื่อง)
+	$cfgPath = Join-Path $HOME '.config\opencode\opencode.json'
+	$cfg = Get-Content $cfgPath -Raw -Encoding UTF8 | ConvertFrom-Json
 	$key = $cfg.mcp.servers.'pixellab-b'.headers.Authorization -replace '^Bearer ',''
 }
 $sz = @{ width = $W; height = $H }

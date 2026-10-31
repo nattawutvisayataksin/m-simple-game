@@ -6,7 +6,7 @@
 
 | เซิร์ฟเวอร์ | ตั้งค่าอยู่ที่ | หน้าที่ | เครื่องมือเด่น |
 |---|---|---|---|
-| `godot-mcp` | **repo** `opencode.json` (และ `.vscode/mcp.json` สำหรับ VS Code) | สั่ง Godot: สร้างฉาก/เพิ่มโหนด/เซฟฉาก/รันเกม | `run_project`, `get_debug_output`, `create_scene`, `add_node`, `get_uid`, `update_project_uids` |
+| `godot-mcp` | **global config นอก repo** (ตั้งโดย `shared/setup_machine.ps1` — ไฟล์ `.vscode/mcp.json` อ่าน env สำหรับ VS Code) | สั่ง Godot: สร้างฉาก/เพิ่มโหนด/เซฟฉาก/รันเกม | `run_project`, `get_debug_output`, `create_scene`, `add_node`, `get_uid`, `update_project_uids` |
 | `pixellab-a` | **global** นอก repo | gen ศิลป์ AI ชุดที่ 1 (คนละ Key กับ B/C — โควตาเดียวกันแต่แยกนับ) | `pixelart_workbench` (ฟรี วาดพิกเซลเอง), `get_balance`, `list_projects` (git clone/push เกมโปรเจกต์): 103 เครื่องมือ |
 | `pixellab-b` | **global** เดียวกัน | gen ศิลป์ AI ชุดที่ 2 — **นโยบายใช้ B ให้หมดก่อน** | เดียวกัน |
 | `pixellab-c` | **global** เดียวกัน | gen ศิลป์ AI ชุดที่ 3 | เดียวกัน |
@@ -27,19 +27,21 @@
 ## 2. ตำแหน่งไฟล์ตั้งค่า (ความเข้าใจให้ตรง)
 
 ```text
-repo/opencode.json          ← เฉพาะ godot-mcp (GODOT_PATH ชี้ไป Godot บนเครื่องนั้น)
-repo/.vscode/mcp.json       ← สำหรับใช้ MCP จาก AI ใน VS Code
-~/.config/opencode/opencode.json  ← pixellab-a/b/c (Bearer key ตรง ๆ ไม่มี {env:...})
+repo/opencode.json          ← โครง MCP โปรเจกต์เท่านั้น (ไม่ฝัง path — godot-mcp ย้ายออกแล้ว)
+repo/.vscode/mcp.json       ← สำหรับใช้ MCP จาก AI ใน VS Code (อ่าน GODOT_PATH จาก env ระดับ User)
+~/.config/opencode/opencode.json  ← pixellab-a/b/c (Bearer key ตรง ๆ ไม่มี {env:...}) + godot-mcp (ตั้งโดย shared/setup_machine.ps1 ต่อเครื่อง)
 ```
 
-> **ทำไม pixellab ต้องอยู่ global config (นอก repo):** ถ้า ceil ยังฝัง key ใน config ตัว MCP ตอนส่ง header `Authorization: Bearer {env:KEY}` จะ**ไม่ถูกแทนค่าอัตโนมัติ** ทำให้ header ว่าง → API ตอบ **401 Missing Authorization** (มันไม่ใช่ key หมด — โควตายังอยู่ครบแต่บัญชีไม่เห็นตัว key)
+> **ทำไม pixellab ต้องอยู่ global config (นอก repo):** ถ้าคีย์ยังฝัง key ใน config ตัว MCP ตอนส่ง header `Authorization: Bearer {env:KEY}` จะ**ไม่ถูกแทนค่าอัตโนมัติ** ทำให้ header ว่าง → API ตอบ **401 Missing Authorization** (มันไม่ใช่ key หมด — โควตายังอยู่ครบแต่บัญชีไม่เห็นตัว key)
 > แก้ตามเหตุจริง: ย้าย pixellab-a/b/c ไป global config + ใส่ Bearer key ตรง ๆ แล้ว ทำงานทันที ไม่ต้อง restart OpenCode (บันทึก 2026-10-29 ใน `docs/ASSET_MANIFEST.md` `mcp_fix_record`)
+>
+> **และตั้งแต่ 2026-10-31 godot-mcp ก็อยู่ global config ต่อเครื่องด้วย (เหตุผลคนละอัน):** เพราะ GODOT_PATH ต่างกันรายเครื่อง (`Administrator` vs `admin`) — hardcode ใน repo แล้วต้องแก้ไป-กลับทุกครั้งที่สลับเครื่อง ตอนนี้ตั้งโดย `shared/setup_machine.ps1` ครั้งเดียวต่อเครื่อง + สมุดรายเครื่องอยู่ที่ `docs/MACHINE_PATHS.md`
 
 **สำเนื่องเครื่องอื่น:** คัดลอก pixellab config ที่พิสูจน์แล้วรันได้ชุดสำเนา: `C:\Users\Administrator\Desktop\opencode\opencode_global_for_other_pc.json` (มี 3 key พร้อมตั้งค่า PoC) นำไปวางแทน `~/.config/opencode/opencode.json` บนเครื่องใหม่
 
 ## 3. Godot MCP — ข้อต้องรู้
 
-- `GODOT_PATH` ใน `opencode.json` ชี้ไป **เวอร์ชันคอนโซล** (จับ stdout ได้):
+- `GODOT_PATH` (ตั้งโดย `shared/setup_machine.ps1` ใน global config ต่อเครื่อง) จะชี้ **เวอร์ชันคอนโซล** อัตโนมัติ (จับ stdout ได้):
   `Godot_v4.7.2-stable_win64_console.exe` (ติดตั้งผ่าน winget ชุด `GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe`)
 - ใช้รันหน้าเกมจริงแล้วเห็น debug ผ่าน `run_project` → `get_debug_output()` — หยุดด้วย `stop_project()`
 - เตือน: `stop_project()` มองไม่เห็นเกมที่เริ่มจากภายนอก (เช่นรันเองผ่าน shell) — ปิดเองด้วย `Stop-Process -Name "Godot*"`

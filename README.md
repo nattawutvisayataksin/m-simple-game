@@ -26,10 +26,11 @@ m-sample-game/
 │  ├─ game1_coin_rush/      # GDD · ART_DIRECTION · ARCHITECTURE · ASSETS
 │  ├─ game2_tower_defense/  # GDD · ARCHITECTURE · ASSETS
 │  ├─ ASSET_MANIFEST.md     # สมุดบัญชี asset+โควตา key (รัวมทั้ง 2 เกม, พยานบันทึกทั้งหมด)
+│  ├─ MACHINE_PATHS.md      # สมุด path รายเครื่อง + ระเบียบ "ห้ามฝัง path ตามเครื่อง"
 │  └─ MCP_SETUP.md          # MCP ทั้งหมด + ตำแหน่งตั้งค่า + บทเรียน 401/422/timeout
 ├─ HOME_SETUP.md            # คู่มือเตรียมเครื่องใหม่ (ติดตั้ง → clone → เปิดเกม → MCP)
-├─ opencode.json            # MCP: godot-mcp (GODOT_PATH ชี้ตามเครื่อง)
-└─ .vscode/mcp.json         # MCP ตั้งค่าเดียวกันสำหรับ VS Code AI
+├─ opencode.json            # MCP โปรเจกต์ (godot-mcp อยู่ global config ต่อเครื่อง — ไม่ฝัง path)
+└─ .vscode/mcp.json         # MCP ตั้งค่าเดียวกันสำหรับ VS Code AI (อ่าน GODOT_PATH จาก env)
 ```
 
 ## สั่งรันเกม
@@ -50,7 +51,7 @@ godot --editor --path games/game2_tower_defense
 ## เทสอัตโนมัติ (เกม 2 — มาตรฐาน)
 
 ```powershell
-$godot = "C:\Users\Administrator\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.2-stable_win64_console.exe"
+$godot = (& .\shared\find_godot.ps1)   # หา Godot บนเครื่องนี้อัตโนมัติ (ห้าม hardcode path — docs/MACHINE_PATHS.md)
 foreach ($t in @('test_t3','test_t4','test_keys','test_t5')) {
   & $godot --headless --path games/game2_tower_defense --script (Join-Path (Resolve-Path .) "games\game2_tower_defense\tools\$t.gd")
 }
