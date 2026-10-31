@@ -4,34 +4,34 @@
 - **Name:** Kubi Coin Dash (Thai: คูบี้ กระโดดเก็บเหรียญ)
 - **Genre:** 2D Side-scrolling Platformer (vertical slice)
 - **Engine:** Godot 4.7 (GL Compatibility)
-- **Goal/Story:** ฝูงไวรัส "Glitch Bugs" ขโมยเหรียญกองทุนเมือง KUB แล้วกระจายหนีไป 3 ที่ลับ (ท่อระบาย / ท้องฟ้า / ปราสาทบิตคู) → Kubi ตามเก็บคืนทีละด่าน 8 ด่าน — แตะธงบนยอดปราสาทด่านสุดท้าย = คืนเหรียญครบ = ชนะ
-- **Status:** Playable 8 levels (run/jump, coins, 4 ชนิดศัตรู, hazards, ravine pits, moving platforms, title menu + skin chooser, level banners, per-theme ambience, save)
+- **Goal/Story:** ฝูงไวรัส "Glitch Bugs" ขโมยเหรียญกองทุนเมือง KUB แล้วกระจายหนีไป 3 ที่ลับ (ท่อระบาย / ท้องฟ้า / ปราสาทบิตคู) → Kubi ตามเก็บคืนทีละด่าน 8 ด่าน — และแตะเสาธงชัยทองบนยอดปราสาทด่านสุดท้าย = คืนเหรียญครบ = ชนะ
+- **Status:** Playable 8 levels (run/jump + double jump 2 ชั้น, coins, ศัตรู 5 ชนิด + มินิบอส, ravine pits, moving platforms, title menus สามตัว (เริ่มเล่น / วิธีเล่น · ตัวละคร & มอนสเตอร์ / Story) + skin chooser, เสาธงชัยทองอนุสาวรีย์, level banners, per-theme ambience, save)
 
 ## 2. Core loop
-Run → jump gaps → collect coins → avoid enemies/hazards → reach goal flag.
-Tight controller first: coyote time, jump buffer, variable height, asymmetric gravity.
+Run → jump gaps (กดซ้ำกลางอากาศได้อีก 2 ชั้น) → collect coins → avoid enemies → reach เสาธงชัยทอง.
+Tight controller first: coyote time, jump buffer, variable height, asymmetric gravity, double jump.
 
 ## 3. Controls
 - A/D or arrows: move
-- Space/W/Up: jump
+- Space/W/Up: jump — กดซ้ำกลางอากาศได้อีก 2 ชั้น (ดับเบิลจัมพ์สุดฟุ้ง)
 - Shift: sprint
 - R: restart · Esc: กลับเมนู
 - ←/→ หรือ A/D บนหน้าเมนู: เปลี่ยนสกิน Kubi (บันทึกลงเซฟทันที)
 
 ## 4. Levels (ครบ 8 ด่าน — มีชื่อ + คำใบ้เปิดด่าน)
-- 1 **ถนนสายเอิ้น**: 2400×720, 120วิ, 9 coins, 4 walkers, 3 spikes — พื้นต่อเนื่อง
-- 2 **ทุ่งเหรียญเขียว**: 3200×720, 120วิ, 12 coins, 5 walkers, 1 hopper, 5 spikes, 1 moving
-- 3 **ป่าไวรัสหนา**: 4000×720, 150วิ, 17 coins, 6 walkers, 2 hoppers, 6 spikes, 2 moving
+- 1 **ถนนสายเอิ้น**: 2400×720, 120วิ, 9 coins, 4 walkers — พื้นต่อเนื่อง
+- 2 **ทุ่งเหรียญเขียว**: 3200×720, 120วิ, 12 coins, 5 walkers, 1 hopper, 1 moving
+- 3 **ป่าไวรัสหนา**: 4000×720, 150วิ, 17 coins, 6 walkers, 2 hoppers, 2 moving
 - 4 **หุบเหวแตกร้าว**: 3600×720, 140วิ, 13 coins, 3 walkers, 2 hoppers, ground แตก 3 ชิ้น + ตกหุบเหวแพ้, 2 moving (สูง-ลง + นอน)
 - 5 **ยอดเขาโรงหล่อเหรียญ**: 4200×720, 160วิ, 17 coins, 5 walkers, 4 hoppers, ground แตก 3 ชิ้น, 3 moving (2 สูง-ลง + นอน) — ธงบนยอด (goal_y)
 - 6 **ท่อระบายบิต**: 3200×720, 140วิ, 14 coins, walkers + บัตบิต 3 + ชาร์เจอร์ 2, ธีมท่อระบาย (bg_sewer) + ฝนหยดเขียว
 - 7 **ท้องฟ้าเมฆเด้ง**: 3400×720, 150วิ, 14 coins, บัตบิต 4, hoppers 3, แพลตฟอร์มลอยเคลื่อนหนัก, ธีมฟ้า (bg_sky) + ประกายทอง
 - 8 **ปราสาทบิตคู**: 3800×720, 160วิ, 15 coins, ground แตก + ศัตรูครบทุกชนิด, แพลตฟอร์มลอยแนวตั้งเร็ว, ธีมปราสาทกลางคืน (bg_castle) + ประกายไฟ — ธงจบเกม
-- Lose: enemy/hazard/time/ตกหุบเหว (4, 5, 8) · Win: ธงด่าน 8
+- Lose: enemy/time/ตกหุบเหว (4, 5, 8) · Win: เสาธงชัยด่าน 8
 
 ## 5. Systems
-- CharacterBody2D platformer controller (coyote 0.12 / buffer 0.15 / cut 0.55 / fall 1.35)
-- State ผูก level → `LEVELS` data table (width/time/name/sub/bg/near/platforms/grounds/coins/enemies/hoppers/chargers/bats/hazards/moving/goal_y)
+- CharacterBody2D platformer controller (coyote 0.12 / buffer 0.15 / cut 0.55 / fall 1.35) + ดับเบิลจัมพ์กลางอากาศ 2 ชั้น (MAX_AIR_JUMPS=2, AIR_JUMP_SCALE=0.9, reset เมื่อแตะพื้น; มีวง dust แหวนใหญ่ + เสียง)
+- State ผูก level → `LEVELS` data table (width/time/name/sub/bg/near/platforms/grounds/coins/enemies/hoppers/chargers/bats/moving/goal_y)
 - Coins (Area2D): เงิน 1 แต้ม · ทอง 3 แต้ม (เรืองแสงโค้ง)
 - Glitch Walker (CharacterBody2D, เดินกลับถิ่นที่ขอบ, stomp kills)
 - Glitch Hopper (CharacterBody2D, กระโดดเข้าหาผู้เล่นเป็นระยะ + edge-aware, stomp kills ด้วย)
@@ -41,11 +41,12 @@ Tight controller first: coyote time, jump buffer, variable height, asymmetric gr
 - ธีมฉากต่อด่าน: `_apply_level_look()` สลับภาพไกล/ใกล้ + ไล่สีฟ้า (SKY_SEWER/SKY_SKY/SKY_CASTLE) + CanvasModulate
 - บรรยากาศ: `_setup_weather()`/`_apply_weather()` — CPUParticles2D ใต้กล้อง (หยดน้ำท่อระบาย / ประกายท้องฟ้า / ประกายไฟปราสาท)
 - สกินฮีโร่ 5 ชุด: `player.gd set_skin()` + บันทึก `skin` ใน save; เลือกใน title (◀/▶)
-- Hazards (Area2D spikes)
+- Goal (Area2D): `_build_monument()` ประกอบเสาธงชัยทองแบบอนุสาวรีย์จาก Polygon2D — แท่นหิน + เหรียญตรา + เสามืด + ลูกแก้วทอง + คาน + ผ้าธงสองชายหางปลาแถบแดง (โหนด Sway สั่นตามลม) + ประกายทองลอย; ไม่ใช้ภาพ goal_flag.png อีก (ไฟล์คงเก็บ)
+- หนามแดงถอดออกจากเกมแล้ว (คำขอ 2026-10-31): LEVELS ไม่มีคีย์ hazards, main.tscn ไม่มีโหนด $Hazards, hazard.tscn วางพักเฉย ๆ ไม่ถูกยิงและเทสยังเคลียร์โหลดไฟล์ได้
 - Ravine: `_process` เช็ค y เกิน height+90 → lose "ตกหุบเหว"
 - Level banner (HUD label + tween): แสดง "ด่าน N · ชื่อ · คำใบ้" fade in/out ต่อด่าน
 - Dev shortcut: `godot ... res://scenes/main.tscn -- <level 1-based>`
-- Title scene (main_scene): เมนู → Space/Enter/คลิก เข้าเกม; แสดงสถิติจาก save
+- Title scene (main_scene): เมนูสามตัวเลือก (เริ่มเล่น / วิธีเล่น · ตัวละคร & มอนสเตอร์ / Story · เนื้อเรื่อง) คุมด้วย ↑↓ + Space ยืนยัน; ←/→ เปลี่ยนสกิน; แผงข้อมูลเป็น RichTextLabel bbcode พร้อมไอคอนสปรไตร์มอนสเตอร์; ปิดแผงด้วย Esc/Space; แสดงสถิติจาก save
 - Save (user://, atomic + .bak): hi_score, best_win_time, wins, plays, level, skin
 - Camera2D smooth follow + bounds
 - HUD (coins, time, best stats)
@@ -60,6 +61,7 @@ Tight controller first: coyote time, jump buffer, variable height, asymmetric gr
 - **บล็อกที่ต้องเลิกใช้ (สอนค้างเก็บไว้)**: ColorRect แผงดำ "Background" ใน main.tscn โอบมองทับทั้ง canvas — ลบออก พาณิชย์ parallax จึงไม่มองเห็น
 
 ## 7. Dev log
+- **2026-10-31 (รอบ 4):** ตามคำขอผู้เล่น 5 ข้อ — (1) ถอดหนามแดงออกจากทุกด่าน (2) ธงชัยใหม่เป็นเสาธงชัยทองอนุสาวรีย์ (แท่นหิน+เหรียญตรา+ผ้าธงสองชายหางปลา+ประกายทอง) (3) แก้พรีวิวสกินหน้าเมนูให้ตัดเฟรมจริง AtlasTexture(512,0,64,64) (4) เมนูหน้าแรกสามตัว: เริ่มเล่น / วิธีเล่น (ปุ่ม+ตัวละคร+มอนสเตอร์ bestiary พร้อมไอคอน) / Story (เนื้อเรื่องเมือง KUB) คุม ↑↓ + Space + Esc (5) ดับเบิลจัมพ์กลางอากาศ 2 ชั้น (MAX_AIR_JUMPS=2 + วงแหวนลม + เสียง); ชุดเทสอัปเดตเป็น 124 ข้อ (124 PASS / 0 FAIL)
 - **2026-10-30 (รอบสร้างสรรค์ใหญ่):** เพิ่มมอนสเตอร์ 2 ชนิด (บัตบิต / ชาร์เจอร์) · ด่าน 6-8 ธีมใหม่ (ท่อระบาย / ท้องฟ้า / ปราสาท) พร้อมฉาก+สีฟ้า+บรรยากาศรายธีม · สกินฮีโร่ 3 ชุดเลือกในเมนู (บันทึกเซฟ) · ชุดเทสอัตโนมัติ `tools/test_game1.gd` 94 ข้อ (PASS) · รีไรต์ PLAY.md · อาร์ตสร้างด้วย `tools/generate_theme_art.ps1` + `tools/generate_skins.ps1` (ไม่กิน gen)
 - **2026-10-30 (รอบ 2):** เพลงรายธีม 3 แนว สลับอัตโนมัติตามด่าน (`_apply_theme_music`) — ท่อระบาย 90 BPM บูบ / ท้องฟ้า 126 BPM สดใส / ปราสาท 105 BPM ครึ่งลังกล สร้างฟรีด้วย `tools/generate_theme_music.ps1` (0 gen, ลูปเนียน seam-crossfade)
 - **2026-10-30 (รอบ 3):** สกินจาก 3 → 5 (ม่วงราตรี / ใบไม้ระยิบ) · สีไทล์พื้นรายธีม (`_tile_tints_for` + self_modulate) · มินิบอส **บิตคูผู้คุม** ในด่าน 8 (HP 3, ดำดิ่งใส่, เหรียญรางวัลตอนตาย) · ถ่ายภาพจอจริง QA ด้วย `tools/shot_themes.gd` + `tools/shot_boss.gd` → screenshots/ · เทสขยายเป็น 104 ข้อ (PASS)
