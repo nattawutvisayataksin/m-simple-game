@@ -5,7 +5,9 @@ extends Node2D
 
 const WALK_TEX := preload("res://assets/art/gen/kubi_hero_sheet.png")
 const IDLE_TEX := preload("res://assets/art/gen/kubi_hero_neutral.png")
-const GATE := Vector2(810, 450)   # จุดเกิดใหม่ (ประตูปราสาทขวาบน)
+const GATE := Vector2(810, 450)   # จุดเกิดใหม่เริ่มต้น (ประตูปราสาทแผนที่ 1)
+
+var home: Vector2 = GATE          # Phase E: จุดพัก/เกิดใหม่ตามแผนที่ปัจจุบัน (main ตั้งให้ตอนเลือกแผนที่)
 
 var speed := 155.0
 var acceleration := 900.0
@@ -79,7 +81,7 @@ func _die() -> void:
 func _respawn() -> void:
 	_dead = false
 	_hp = max_hp
-	position = GATE
+	position = home
 	_moving = false
 	_velocity = Vector2.ZERO
 	_sprite.modulate = Color.WHITE

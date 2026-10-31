@@ -7,6 +7,11 @@ func _initialize() -> void:
 	var main_scene: Node2D = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main_scene)
 	_main = main_scene
+
+func _seed_map() -> void:
+	# Phase E: เกมเริ่มที่หน้าเลือกแผนที่ -> เลือกแผนที่ 0 เข้าสู่เกมจริง + ระงับนับถอยหลังคลื่น
+	_main._start_map(0)
+	_main._prep_t = 1e9
 	if _main._gold != 0:
 		print("TEST_KEYS FAIL game should start with zero gold")
 		quit(1)
@@ -22,6 +27,8 @@ func _press(code: int) -> void:
 
 func _process(_delta: float) -> bool:
 	_f += 1
+	if _f == 1:
+		_seed_map()   # ต้องรอ _ready ของ main จบก่อน (_initialize ยังไม่มี layers)
 	if _f == 2:
 		_press(KEY_4)
 	if _f == 4:

@@ -11,6 +11,10 @@ func _initialize() -> void:
 
 func _process(_delta: float) -> bool:
 	_f += 1
+	if _f == 1:
+		# Phase E: เลือกแผนที่ 0 เข้าสู่เกมจริง — รอ _ready ของ main จบก่อน
+		_main._start_map(0)
+		_main._prep_t = 1e9
 	if _f == 2:
 		var ev := InputEventMouseButton.new()
 		ev.button_index = MOUSE_BUTTON_LEFT

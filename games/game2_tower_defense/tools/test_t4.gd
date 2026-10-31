@@ -9,16 +9,26 @@ var _gold_prep := 0          # ทอง ณ ตอนคลื่น 1 จบ (
 var _first_hp := -1.0
 var _assembly_checked := false
 var _sim_t := 0.0
+var _save_backup := ""       # Phase E หมายเหตุ: _game_over จะบันทึกสถิติจริง (record_best) — สำรองไฟล์เซฟ user ไม่พัง
+var _had_save := false
 
 func _initialize() -> void:
 	var scene: PackedScene = load("res://scenes/main.tscn")
 	_main = scene.instantiate()
 	root.add_child(_main)
+	# สำรองไฟล์เซฟคลื่นสูงสุด (ถ้ามี) เพื่อคืนเมื่อเทสเรียก _game_over แล้ว record_best เขียนจริง
+	if FileAccess.file_exists("user://td_best.json"):
+		var f := FileAccess.open("user://td_best.json", FileAccess.READ)
+		_save_backup = f.get_as_text()
+		f.close()
+		_had_save = true
 	if _main.WAVES.size() == 13:
 		print("TEST_T4 structure PASS waves=13")
 	else:
 		print("TEST_T4 FAIL waves=%d" % _main.WAVES.size())
 	# คลื่นแรกตั้งค่าผ่าน code path จริง (prep หมดเวลา -> _start_wave) ไม่เรียกแทนมือ
+	# Phase E: เกมเริ่มที่หน้าเลือกแผนที่ — เทสข้าม title ไปใช้แผนที่ 0 ตั้งแต่เริ่ม
+	_main._state = "prep"
 	_main._prep_t = 0.05
 
 func _kill_all() -> void:
@@ -85,17 +95,34 @@ func _process(delta: float) -> bool:
 					_main._on_enemy_leak()
 				if _main._state == "lost":
 					print("TEST_T4 lose PASS state=lost (leak 3 ครั้ง = lives 0)")
+					_restore_save()
 					print("TEST_T4 ALL PASS")
 					quit(0)
 					return true
 				print("TEST_T4 lose FAIL state=%s" % _main._state)
 				print("TEST_T4 FAIL")
+				_restore_save()
 				quit(1)
 				return true
 		_:
 			pass
 	if _sim_t > 60.0:
 		print("TEST_T4 TIMEOUT sim=%.1f phase=%d state=%s idx=%d" % [_sim_t, _phase, _main._state, _main._wave_idx])
+		_restore_save()
 		quit(1)
 		return true
 	return false
+
+func _restore_save() -> void:
+	# คืนไฟล์เซฟเดิมแบบ atomic เหมือนเกม
+	var tmp := "user://td_best.json.tmp"
+	var fa := FileAccess.open(tmp, FileAccess.WRITE)
+	if _had_save:
+		fa.store_string(_save_backup)
+	fa.flush()
+	fa.close()
+	DirAccess.remove_absolute("user://td_best.json")
+	if _had_save:
+		DirAccess.rename_absolute(tmp, "user://td_best.json")
+	else:
+		DirAccess.remove_absolute(tmp)

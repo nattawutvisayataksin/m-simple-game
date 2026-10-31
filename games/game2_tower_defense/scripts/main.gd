@@ -30,6 +30,15 @@ const ICON_UPG_BOW := preload("res://assets/art/icons/upg_bow.png")       # T5 �
 const ICON_UPG_HAMMER := preload("res://assets/art/icons/upg_hammer.png") # T5 ไอคอนอัปเกรดปืนใหญ่
 const ICON_SCROLL := preload("res://assets/art/icons/scroll.png")         # ย้ายจุดยืนทหาร
 const ICON_TARGET := preload("res://assets/art/icons/target.png")        # Phase D: โหมดเล็ง (First/Last/Strong/Weak)
+const MAP_A_TEX := preload("res://assets/art/kub_kingdom_map_v2.png")
+const MAP_B_TEX := preload("res://assets/art/kub_kingdom_map_v3.png")     # Phase E: แผนที่ 2 (gen สุสาน+ปราสาท)
+const BEST_PATH := "user://td_best.json"   # Phase E: save คลื่นสูงสุด (atomic write)
+
+# แผนที่ต่อตัวเลือก: ชื่อ / ภาพ / เส้นทางมอน / ลานป้อม (4 จุด)
+const MAPS := [
+	{"name": "ป่า Kubi", "tex": MAP_A_TEX, "path": PATH_A, "spots": TOWER_SPOTS},
+	{"name": "สุสานหลวง", "tex": MAP_B_TEX, "path": PATH_B, "spots": TOWER_SPOTS_B},
+]
 const HeroScript := preload("res://scripts/hero.gd")                     # T5 ฮีโร่ Kubi
 const SfxScript := preload("res://scripts/sfx.gd")                       # T6 ระบบเสียง
 
@@ -97,6 +106,24 @@ const SPOT_HIT_R := 44.0    # T5.1 คลิกอ้อมเผื่อ (เ�
 const GATE_COLOR := Color(0.55, 0.25, 0.80, 0.80)
 const CASTLE_COLOR := Color(1.0, 0.35, 0.15, 0.85)
 
+# Phase E: แผนที่ 2 "สุสานหลวง" — ผังเลี่ยงสระ (ภาพ gen 256x144 ยืด ×4.5):
+# สุสานซ้ายบน = ปากมอน, ตัวปราสาทใหญ่ขวาบน = ปลายทาง (ประตูปราสาท ≈ (850,380))
+const PATH_B: Array[Vector2] = [
+	Vector2(258, 140),
+	Vector2(258, 460),
+	Vector2(680, 460),
+	Vector2(680, 240),
+	Vector2(770, 240),
+	Vector2(770, 380),
+	Vector2(850, 380),
+]
+const TOWER_SPOTS_B: Array[Vector2] = [
+	Vector2(340, 370),  # หญ้าใต้กุมภะเล็ก - คลุมแนวตั้งซ้าย + ตัดกลุ่มบน
+	Vector2(490, 520),  # ใต้แนวนอน y460 กลางล่าง
+	Vector2(760, 360),  # กลางขวา - คลุม 770 ตั้ง + สูงสุด 240
+	Vector2(895, 455),  # หน้ารั้วปราสาทขวา (เลี่ยงถนนที่วิ่งเข้าประตู)
+]
+
 const FROG_SPEED := 35.0
 const LIZARD_SPEED := 60.0
 const GOLEM_SPEED := 27.0
@@ -139,7 +166,7 @@ const WAVES: Array = [
 	[["kubit_boss", 1], ["lizard", 5], ["shaman", 2], ["bat", 4], ["frog", 5]],
 ]
 
-var _state := "prep"        # prep | wave | won | lost
+var _state := "title"       # title | prep | wave | won | lost (Phase E: เริ่มที่หน้าเลือกแผนที่)
 var _wave_idx := -1         # คลื่นปัจจุบัน (0-based, -1 = ยังไม่เริ่ม)
 var _queue: Array = []      # คิวเกิดของคลื่นนี้ ["frog", ...]
 var _spawn_seq := 0
@@ -168,6 +195,15 @@ var _wave_label: Label        # แถวข้อมูลคลื่นบน
 var _wave_btn: Button         # ปุ่มเรียกคลื่นถัดไปก่อนพร้อมโบนัส (T4)
 var _shake := 0.0             # Phase D juice: แรงเขย่าจอคงเหลือ
 var _preview_box: HBoxContainer  # Phase D: แถวไอคอนพรีวิวคลื่นถัดไป
+# Phase E: multi-map + save สถิติ + title
+var _map_idx := 0
+var _road: Array[Vector2] = PATH_A            # เส้นทางที่ใช้จริงของแผนที่ปัจจุบัน
+var _spots: Array[Vector2] = TOWER_SPOTS      # ลานป้อมของแผนที่ปัจจุบัน
+var _title_layer: CanvasLayer
+var _best: Dictionary = {}                    # {"m0": 5, "m1": 3, "m0_won": true}
+var _kills := 0
+var _gold_earned := 0
+var _prev_best := 0                           # สถิติเดิมของแผนที่ตอนเริ่มรอบ (โชว์ "สถิติใหม่")
 
 class SpotsOverlay:
 	extends Node2D
@@ -182,10 +218,12 @@ class SpotsOverlay:
 	var selected := -1
 	var cursor_position := Vector2.ZERO
 	var cursor_valid := false
+	var gate := Vector2(258, 190)          # Phase E: ปากมอนของแผนที่ปัจจุบัน (main set ให้)
+	var castle := Vector2(810, 450)        # Phase E: ปราสาทของแผนที่ปัจจุบัน
 
 	func _draw() -> void:
-		draw_circle(Vector2(258, 190), 14.0, Color(0.55, 0.25, 0.80, 0.9))
-		draw_circle(Vector2(810, 450), 14.0, Color(1.0, 0.35, 0.15, 0.9))
+		draw_circle(gate, 14.0, Color(0.55, 0.25, 0.80, 0.9))
+		draw_circle(castle, 14.0, Color(1.0, 0.35, 0.15, 0.9))
 		for i in range(spots.size()):
 			if busy[i] != null:
 				continue
@@ -232,20 +270,24 @@ func _ready() -> void:
 	_audio.start_music()
 	_build_lives_label()
 	_path_layer = PathOverlay.new()
-	_path_layer.points = PackedVector2Array(PATH_A)
+	_path_layer.points = PackedVector2Array(_road)
 	_path_layer.position = Vector2.ZERO
 	_path_layer.z_index = 0
 	add_child(_path_layer)
 	# ฮีโร่ Kubi เริ่มเฝ้าประตูปราสาท และต้องออกไปสู้เพื่อหาเงินสร้างป้อม
 	_hero = HeroScript.new()
-	_hero.position = HeroScript.GATE
+	_hero.position = _road[_road.size() - 1]
 	add_child(_hero)
 	# ชั้นวาดวงทอง (T5.1 fix): ประกาศใน SpotsOverlay การันตีวาดเหนือพื้นหลัง (สาเหตุรายแก้ไม่จบ: วงถูก Background ทับ)
 	_spots_layer = SpotsOverlay.new()
 	_spots_layer.z_index = 30
-	_spots_layer.spots = TOWER_SPOTS
+	_spots_layer.spots = _spots
 	_spots_layer.busy = _towers   # อ้างอิงสด — สร้างป้อมที่ลานไหน วงลานนั้นเงียบ
+	_spots_layer.gate = _road[0]
+	_spots_layer.castle = _road[_road.size() - 1]
 	add_child(_spots_layer)
+	_load_best()
+	_build_title()   # Phase E: เริ่มที่หน้าเลือกแผนที่ (หยุดจนกว่าผู้เล่นจะเลือก)
 	queue_redraw()
 
 ## จุดเรียกเสียงจากโหนดลูก (tower/hero/projectile เรียก get_parent().sfx("arrow"))
@@ -326,39 +368,39 @@ func _spawn_kind(kind: String) -> void:
 	var jitter := randf_range(0.94, 1.06)
 	var hp_mult := pow(HP_GROWTH, _wave_idx)
 	if kind == "frog":
-		_spawn_enemy(FROG_TEX, FROG_SHEET, _shift_path(PATH_A, lane), FROG_SPEED * jitter, true, false, 59, null, 43, 26.0 * hp_mult, 15, 0.0, 1.5, 8.0)
+		_spawn_enemy(FROG_TEX, FROG_SHEET, _shift_path(_road, lane), FROG_SPEED * jitter, true, false, 59, null, 43, 26.0 * hp_mult, 15, 0.0, 1.5, 8.0)
 	elif kind == "lizard":
 		# กิ้งก่า: ชุดหันข้าง 8 ช่องหัวหันขวาโดยกำเนิด (ฟีดแบ็ค T5.1: เดินขวาต้องเห็นหัวหันขวาจริง ไม่ใช่รูปหน้าตรงส่ายหัว)
-		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56, LIZARD_SIDE_SHEET, 43, 42.0 * hp_mult, 25, 0.0, 1.5, 11.0)
+		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(_road, lane), LIZARD_SPEED * jitter, true, false, 56, LIZARD_SIDE_SHEET, 43, 42.0 * hp_mult, 25, 0.0, 1.5, 11.0)
 	elif kind == "stone_golem":
-		_spawn_enemy(GOLEM_TEX, null, _shift_path(PATH_A, lane), GOLEM_SPEED * jitter, true, false,
+		_spawn_enemy(GOLEM_TEX, null, _shift_path(_road, lane), GOLEM_SPEED * jitter, true, false,
 			59, null, 43, GOLEM_HP * hp_mult, 35, GOLEM_RESIST, 1.7, 18.0)
 	elif kind == "bat":
 		# Phase C ค้างคาว: บินลัดฟ้า — ปืนใหญ่/ทหารเก้อ (ต้องใช้ธนู/เวท) เลือดบางเร็วแต่ลัด
-		_spawn_enemy(BAT_TEX, null, _shift_path(PATH_A, lane), BAT_SPEED * jitter, true, false,
+		_spawn_enemy(BAT_TEX, null, _shift_path(_road, lane), BAT_SPEED * jitter, true, false,
 			52, null, 43, 30.0 * hp_mult, 20, 0.0, 1.35, 6.0, true)
 	elif kind == "slime":
 		# Phase C สไลม์: ตายแล้วแตกเป็น 2 ตัวจิ๋ววิ่งเร็วต่อ (ทหารตับมาช่วยบล็อกต่อ)
-		_spawn_enemy(SLIME_TEX, null, _shift_path(PATH_A, lane), SLIME_SPEED * jitter, true, false,
+		_spawn_enemy(SLIME_TEX, null, _shift_path(_road, lane), SLIME_SPEED * jitter, true, false,
 			59, null, 43, 34.0 * hp_mult, 22, 0.0, 1.5, 9.0, false, "mini_slime")
 	elif kind == "mini_slime":
-		_spawn_enemy(SLIME_TEX, null, _shift_path(PATH_A, lane), 46.0 * jitter, true, false,
+		_spawn_enemy(SLIME_TEX, null, _shift_path(_road, lane), 46.0 * jitter, true, false,
 			59, null, 43, 12.0 * hp_mult, 8, 0.0, 0.95, 5.0)
 	elif kind == "shaman":
 		# Phase C แชแมน: ฮีลออร่าระยะ 95px ทุก 2.2 วิ — เกิดหลังกอง ฆ่าเสียแค่ "ก่อนเคลียร์เฟสมอนหมด"
-		_spawn_enemy(SHAMAN_TEX, null, _shift_path(PATH_A, lane), SHAMAN_SPEED * jitter, true, false,
+		_spawn_enemy(SHAMAN_TEX, null, _shift_path(_road, lane), SHAMAN_SPEED * jitter, true, false,
 			59, null, 43, 55.0 * hp_mult, 30, 0.0, 1.5, 8.0, false, "", 2, 0.045)
 	else:
 		if kind == "kubit_boss":
 			# Phase C บอส Kubit: คลื่นสุดท้าย — อึดไม่มีเกราะ (เวท/ธนูลดเลือดได้เต็ม) ฟันทหารแตก
-			_spawn_enemy(BOSS_TEX, null, _shift_path(PATH_A, 0.0), BOSS_SPEED, true, false,
+			_spawn_enemy(BOSS_TEX, null, _shift_path(_road, 0.0), BOSS_SPEED, true, false,
 				92, null, 43, BOSS_HP * hp_mult, 250, 0.0, 2.1, 45.0, false, "", 0, 0.0, true)
 		else:
 			push_error("Unknown enemy type: %s" % kind)
 
 func _spawn_point_clear() -> bool:
 	# เว้นระยะเกิด: มอนหรือศพจางยังจอดปากประตู (< 80px) = ยังไม่เกิด
-	var gate := PATH_A[0]
+	var gate := _road[0]
 	for child in get_children():
 		if child is Node2D:
 			var v: Node2D = child
@@ -372,7 +414,8 @@ func _wave_cleared() -> void:
 	var bonus := WAVE_BONUS_BASE + (_wave_idx + 1) * WAVE_BONUS_STEP
 	_gold += bonus
 	_update_gold()
-	_gold_popup(bonus, HeroScript.GATE)
+	_gold_earned += bonus   # Phase E: incoming stat
+	_gold_popup(bonus, _road[_road.size() - 1])
 	if _wave_idx >= WAVES.size() - 1:
 		_game_over(true)
 	else:
@@ -458,6 +501,8 @@ func _blink_hurt() -> void:
 func _on_enemy_died(reward: int, at: Vector2) -> void:
 	# ทองรางวัลต่อการฆ่า + จุดป๊อบเงินลอยขึ้น (T3)
 	_gold += reward
+	_kills += 1               # Phase E: สถิติจบเกม
+	_gold_earned += reward
 	sfx("die")
 	sfx("coin")
 	_update_gold()
@@ -546,6 +591,7 @@ func _on_wave_btn() -> void:
 	var bonus := int(ceil(_prep_t * EARLY_BONUS_PER_SEC))
 	if bonus > 0:
 		_gold += bonus
+		_gold_earned += bonus   # Phase E: incoming stat
 		_update_gold()
 		_gold_popup(bonus, Vector2(930, 96))
 	_start_wave()
@@ -694,6 +740,23 @@ func _game_over(won: bool) -> void:
 	else:
 		sub.text = "ปราสาทแตกที่คลื่นที่ %d" % mini(_wave_idx + 1, WAVES.size())
 	box.add_child(sub)
+	# Phase E: บันทึกสถิติคลื่นสูงสุด (ทั้งชนะ/แพ้)
+	_record_best(won)
+	# Phase E: บล็อกสถิติการเล่นรอบนี้ (ฆ่า/ทอง/คลื่น/สถิติใหม่)
+	var new_best := _wave_idx + 1 > _prev_best
+	var stats := Label.new()
+	var sts := LabelSettings.new()
+	sts.font_size = 17
+	sts.font_color = Color(0.98, 0.80, 0.35) if new_best else Color(0.85, 0.85, 0.85)
+	sts.outline_size = 6
+	sts.outline_color = Color(0.1, 0.07, 0.04)
+	stats.label_settings = sts
+	stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var stat_line := "ฆ่าได้ %d ตัว · ทองได้รวม %d · คลื่นที่ทำได้ %d/%d" % [_kills, _gold_earned, mini(_wave_idx + 1, WAVES.size()), WAVES.size()]
+	if new_best and _wave_idx + 1 >= 1:
+		stat_line += "\n★ สถิติใหม่! คลื่นสูงสุด %d (เดิม %d)" % [_wave_idx + 1, _prev_best]
+	stats.text = stat_line
+	box.add_child(stats)
 	var btn := Button.new()
 	btn.text = "เริ่มใหม่ (R)"
 	btn.custom_minimum_size = Vector2(190, 46)
@@ -713,6 +776,138 @@ func _restart() -> void:
 	get_tree().paused = false
 	get_tree().reload_current_scene()
 
+# ---------- Phase E: title + เลือกแผนที่ + save สถิติคลื่นสูงสุด ----------
+func _load_best() -> void:
+	var f := FileAccess.open(BEST_PATH, FileAccess.READ)
+	if f == null:
+		return
+	var parsed = JSON.parse_string(f.get_as_text())
+	f.close()
+	if parsed is Dictionary:
+		_best = parsed
+
+func _save_best() -> void:
+	# เขียนไฟล์ชั่วคราวแล้วเปลี่ยนชื่อ (atomic) — ไฟล์เสียไม่ได้ถ้าเครื่องดับกลางทาง
+	var f := FileAccess.open(BEST_PATH + ".tmp", FileAccess.WRITE)
+	if f == null:
+		return
+	f.store_string(JSON.stringify(_best))
+	f.flush()
+	f.close()
+	DirAccess.remove_absolute(BEST_PATH)
+	DirAccess.rename_absolute(BEST_PATH + ".tmp", BEST_PATH)
+
+func _record_best(won: bool) -> void:
+	var key := "m%d" % _map_idx
+	var reached := mini(_wave_idx + 1, WAVES.size())
+	var prev := int(_best.get(key, 0))
+	if reached > prev:
+		_best[key] = reached
+	if won:
+		_best[key + "_won"] = true
+	_save_best()
+
+func _map_best_text(idx: int) -> String:
+	var key := "m%d" % idx
+	if _best.has(key):
+		var won_txt := " ★ผ่านแล้ว" if _best.get(key + "_won", false) else ""
+		return "คลื่นสูงสุด %d/%d%s" % [int(_best[key]), WAVES.size(), won_txt]
+	return "ยังไม่มีสถิติ"
+
+func _build_title() -> void:
+	# Phase E: หน้าเลือกแผนที่ (CanvasLayer ซ้อนบน HUD; ปิดอินพุตเกมจนกว่าผู้เล่นเลือก)
+	_title_layer = CanvasLayer.new()
+	_title_layer.layer = 25
+	_title_layer.process_mode = Node.PROCESS_MODE_ALWAYS
+	add_child(_title_layer)
+	var dim := ColorRect.new()
+	dim.color = Color(0.06, 0.05, 0.03, 0.58)
+	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_title_layer.add_child(dim)
+	var center := CenterContainer.new()
+	center.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_title_layer.add_child(center)
+	var box := VBoxContainer.new()
+	box.add_theme_constant_override("separation", 14)
+	box.alignment = BoxContainer.ALIGNMENT_CENTER
+	center.add_child(box)
+	var title := Label.new()
+	title.text = "หอคอยคู่ฟ้า"
+	var ts := LabelSettings.new()
+	ts.font_size = 62
+	ts.font_color = Color(1.0, 0.85, 0.2)
+	ts.outline_size = 14
+	ts.outline_color = Color(0.15, 0.09, 0.02)
+	title.label_settings = ts
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(title)
+	var story := Label.new()
+	story.text = "เหล่ามอนปลุกจากสุสานสาบานมุ่งหมายปราสาทหลวง\nจงตั้งป้อม ซ่อมแม่ทัพ Kubi และขับไล่ถึง %d คลื่น" % WAVES.size()
+	var ss := LabelSettings.new()
+	ss.font_size = 19
+	ss.font_color = Color(0.95, 0.93, 0.9)
+	ss.outline_size = 7
+	ss.outline_color = Color(0.1, 0.07, 0.04)
+	story.label_settings = ss
+	story.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(story)
+	var pick := Label.new()
+	pick.text = "เลือกแผนที่บุก"
+	var ps := LabelSettings.new()
+	ps.font_size = 23
+	ps.font_color = Color(0.7, 0.95, 1.0)
+	ps.outline_size = 7
+	ps.outline_color = Color(0.1, 0.07, 0.04)
+	pick.label_settings = ps
+	pick.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(pick)
+	for idx in range(MAPS.size()):
+		var btn := Button.new()
+		btn.text = "%s — %s" % [MAPS[idx]["name"], _map_best_text(idx)]
+		btn.custom_minimum_size = Vector2(360, 52)
+		btn.focus_mode = Control.FOCUS_NONE
+		btn.pressed.connect(_start_map.bind(idx))
+		box.add_child(btn)
+
+func _start_map(idx: int) -> void:
+	# เปลี่ยนแผนที่: ภาพพื้นหลัง + เส้นทาง + ลานป้อม + ประตู/ปราสาท + จุดพักฮีโร่ -> แล้วเริ่มเกม
+	if _state != "title":
+		return
+	_map_idx = clampi(idx, 0, MAPS.size() - 1)
+	var cfg: Dictionary = MAPS[_map_idx]
+	var road_tmp: Array[Vector2] = []
+	for p in cfg["path"]:
+		road_tmp.append(p)
+	var spots_tmp: Array[Vector2] = []
+	for s in cfg["spots"]:
+		spots_tmp.append(s)
+	_road = road_tmp
+	_spots = spots_tmp
+	var bg := get_node_or_null("Background")
+	if bg != null and bg is Sprite2D:
+		bg.texture = cfg["tex"]
+		# พื้นหลัง gen อาจเล็ก (256x144) — ยืดเต็มจอ 1152 เสมอ (map A = ×1 อยู่แล้ว)
+		var tex: Texture2D = cfg["tex"]
+		var s := 1152.0 / float(tex.get_width())
+		bg.scale = Vector2(s, s)
+	_path_layer.points = PackedVector2Array(_road)
+	_spots_layer.spots = _spots
+	_spots_layer.gate = _road[0]
+	_spots_layer.castle = _road[_road.size() - 1]
+	_spots_layer.queue_redraw()
+	_hero.home = _road[_road.size() - 1]
+	_hero.position = _road[_road.size() - 1]
+	_prev_best = int(_best.get("m%d" % _map_idx, 0))
+	_kills = 0
+	_gold_earned = 0
+	if _title_layer != null:
+		_title_layer.queue_free()
+		_title_layer = null
+	_state = "prep"
+	_prep_t = WAVE_PREP
+	sfx("build")
+	queue_redraw()
+
 # ---------- เมนูสร้างป้อม (T3) ----------
 func _start_rally_move(tower: Node2D) -> void:
 	_rally_tower = tower
@@ -730,6 +925,8 @@ func _cycle_targeting_menu(spot_idx: int, tower: Node2D) -> void:
 		_open_menu(-1, Vector2.ZERO, tower)
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _state == "title":
+		return   # Phase E: อยู่หน้าเลือกแผนที่ = ปิดคลิก/คีย์เกมทั้งหมด (จัดการเฉพาะปุ่มบน title)
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		# คลิกขวาศัตรู = Kubi ไล่โจมตี; คลิกพื้น = เดินไปตำแหน่งนั้น
 		if _hero != null and not _hero._dead:
@@ -771,9 +968,9 @@ func _unhandled_input(event: InputEvent) -> void:
 			return
 		var hit := -1
 		for p in candidates:
-			for i in range(TOWER_SPOTS.size()):
+			for i in range(_spots.size()):
 				# T5: ลานที่มีป้อมแล้วก็คลิกได้ -> เมนูอัปเกรด/ขาย (เดิมกรองเฉพาะลานว่าง)
-				if p.distance_to(TOWER_SPOTS[i]) <= SPOT_HIT_R:
+				if p.distance_to(_spots[i]) <= SPOT_HIT_R:
 					hit = i
 					break
 			if hit >= 0:
@@ -912,7 +1109,7 @@ func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_t
 	style.content_margin_top = 7
 	style.content_margin_bottom = 7
 	panel.add_theme_stylebox_override("panel", style)
-	var anchor := TOWER_SPOTS[spot_idx] if spot_idx >= 0 else _placement_position
+	var anchor := _spots[spot_idx] if spot_idx >= 0 else _placement_position
 	panel.position = anchor + Vector2(-100, -78)
 	panel.position.x = clampf(panel.position.x, 8.0, 1152.0 - menu_width - 8.0)
 	panel.position.y = clampf(panel.position.y, 8.0, 648.0 - 178.0)
@@ -999,7 +1196,7 @@ func _build_tower(spot_idx: int, key: String) -> void:
 	_update_gold()
 	var t := TowerScript.new()
 	t.setup(def["kind"], def["tex"], def["dmg"], def["interval"], def["range"], def["shot"], def["splash"])
-	t.position = TOWER_SPOTS[spot_idx]
+	t.position = _spots[spot_idx]
 	t.invested_gold = int(def["cost"])
 	add_child(t)
 	sfx("build")
@@ -1114,8 +1311,8 @@ func _enemy_at(at: Vector2, radius: float) -> Node2D:
 
 func _distance_to_path(at: Vector2) -> float:
 	var nearest_distance := INF
-	for i in range(PATH_A.size() - 1):
-		var closest := Geometry2D.get_closest_point_to_segment(at, PATH_A[i], PATH_A[i + 1])
+	for i in range(_road.size() - 1):
+		var closest := Geometry2D.get_closest_point_to_segment(at, _road[i], _road[i + 1])
 		nearest_distance = minf(nearest_distance, at.distance_to(closest))
 	return nearest_distance
 
@@ -1124,7 +1321,7 @@ func _valid_tower_position(at: Vector2) -> bool:
 		return false
 	if _distance_to_path(at) < 62.0:
 		return false
-	for spot in TOWER_SPOTS:
+	for spot in _spots:
 		if at.distance_to(spot) < 70.0:
 			return false
 	for tower in _towers:

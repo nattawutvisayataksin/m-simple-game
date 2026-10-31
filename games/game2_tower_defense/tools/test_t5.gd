@@ -18,6 +18,12 @@ func _initialize() -> void:
 	var main_scene: Node2D = load("res://scenes/main.tscn").instantiate()
 	root.add_child(main_scene)
 	_main = main_scene
+
+func _seed_map() -> void:
+	# Phase E: เกมเริ่มที่หน้าเลือกแผนที่ -> เลือกแผนที่ 0 เข้าสู่เกมจริง + ระงับนับถอยหลังคลื่น
+	# NB: ต้องเรียกหลัง _ready ของ main จบ (path_layer สร้างใน _ready) - เรียกจาก _process
+	_main._start_map(0)
+	_main._prep_t = 1e9
 	if _main._gold != 0:
 		print("TEST_T5 FAIL game should start with zero gold")
 		quit(1)
@@ -157,6 +163,8 @@ func _process(_delta: float) -> bool:
 	_sim_t += _delta
 	var hero: Node2D = _main._hero
 
+	if _phase == 0 and _main._path_layer != null:
+		_seed_map()   # Phase E: เริ่มเกมจริงหลัง _ready ของ main จบ (layers สร้างเรียบร้อย)
 	if _phase == 1:
 		if _frog_done:
 			if _main._gold != 251:
