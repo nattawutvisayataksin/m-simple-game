@@ -18,6 +18,10 @@ var max_hp := 30.0
 var reward := 15            # ทองที่ได้เมื่อฆ่าสำเร็จ
 var damage_resist := 0.0
 var dead := false
+var flying := false          # กลางอากาศ: ทหารบล็อกไม่ได้ (C รอค้างไว้ที่นี่)
+var blocker: Node2D = null   # บล็อก: soldier ที่ยืนกั้นหน้า (null = อิสระ)
+var melee_dmg := 8.0         # แรงโจมตีที่ใช้ปะทะกับทหาร
+var _atk_cd := 0.0
 var _hp := 30.0
 var _progress := 0.0        # ระยะทางที่เดินมาแล้ว (ป้อมเลืองเป้า "ขึ้นหน้าสุด")
 var no_flip := false
@@ -62,6 +66,15 @@ func _draw() -> void:
 	draw_circle(Vector2.ZERO, 17.0, Color(0.05, 0.09, 0.04, 0.35))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 
+func set_blocker(soldier: Node2D) -> void:
+	if dead:
+		return
+	blocker = soldier
+
+func clear_blocker(soldier: Node2D) -> void:
+	if blocker == soldier:
+		blocker = null
+
 func take_damage(amount: float, bypass_resistance := false) -> void:
 	# T3: โดนกระสุนป้อม - แฟลชแดงสั้น ๆ ตายเมื่อหมดเลือด
 	if dead:
@@ -89,6 +102,19 @@ func _die() -> void:
 
 func _process(delta: float) -> void:
 	if dead or _wp_index >= waypoints.size() - 1:
+		return
+	# โดนทหารบล็อก: หยุดเดิน + ฟันทหารเป็นจังหวะ (Kingdom Rush style)
+	if blocker != null and (not is_instance_valid(blocker) or blocker.dead):
+		blocker = null
+	if blocker != null:
+		_atk_cd -= delta
+		if _atk_cd <= 0.0:
+			_atk_cd = 1.0
+			var b: Node2D = blocker
+			var to_b := b.position - position     # อ่านก่อนฟัน (การฟันอาจฆ่าทหาร → blocker ถูกล้างกลางอากาศ)
+			if absf(to_b.x) > 0.05:
+				_sprite.flip_h = to_b.x > 0.0
+			b.take_damage(melee_dmg)
 		return
 	var step := speed * delta
 	_progress += step

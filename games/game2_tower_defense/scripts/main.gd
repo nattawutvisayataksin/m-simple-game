@@ -15,6 +15,7 @@ const GOLEM_TEX := preload("res://assets/art/gen/stone_golem.png")
 const TOWER_ARCHER_TEX := preload("res://assets/art/gen/tower_archer.png")
 const TOWER_CANNON_TEX := preload("res://assets/art/gen/tower_cannon.png")
 const TOWER_MAGE_TEX := preload("res://assets/art/gen/tower_mage.png")
+const TOWER_BARRACKS_TEX := preload("res://assets/art/gen/tower_barracks.png")  # Phase B ค่ายทหาร
 const ICON_BOW := preload("res://assets/art/icons/bow.png")
 const ICON_CANNON := preload("res://assets/art/icons/cannon.png")
 const ICON_MAGE := TOWER_MAGE_TEX
@@ -22,6 +23,7 @@ const ICON_COIN := preload("res://assets/art/icons/coin.png")
 const ICON_HEART := preload("res://assets/art/icons/heart.png")
 const ICON_UPG_BOW := preload("res://assets/art/icons/upg_bow.png")       # T5 ไอคอนอัปเกรดป้อมธนู
 const ICON_UPG_HAMMER := preload("res://assets/art/icons/upg_hammer.png") # T5 ไอคอนอัปเกรดปืนใหญ่
+const ICON_SCROLL := preload("res://assets/art/icons/scroll.png")         # ย้ายจุดยืนทหาร
 const HeroScript := preload("res://scripts/hero.gd")                     # T5 ฮีโร่ Kubi
 const SfxScript := preload("res://scripts/sfx.gd")                       # T6 ระบบเสียง
 
@@ -51,6 +53,14 @@ const TOWER_DEFS := {
 		"dmg": 18.0, "interval": 1.1, "range": 185.0, "shot": 280.0, "splash": 0.0,
 		"upg_cost": 100, "upg_icon": ICON_MAGE,
 		"upg": {"dmg": 30.0, "interval": 0.95, "range": 210.0, "shot": 320.0, "splash": 0.0},
+	},
+	# Phase B: สายที่ 4 ตาม GDD (สีฟ้า) — ไม่ยิง แต่เจนทหารบล็อกทาง
+	"barracks": {
+		"name": "ค่ายทหาร", "cost": 110, "kind": TowerScript.BARRACKS,
+		"tex": TOWER_BARRACKS_TEX, "icon": TOWER_BARRACKS_TEX,
+		"dmg": 10.0, "interval": 0.8, "range": 130.0, "shot": 0.0, "splash": 0.0,
+		"upg_cost": 90, "upg_icon": TOWER_BARRACKS_TEX,
+		"upg": {"dmg": 16.0, "interval": 0.66, "range": 140.0, "shot": 0.0, "splash": 0.0},
 	},
 }
 const SELL_REFUND := 0.6   # T5 ขายป้อมคืน 60% ของเงินที่ลงไป (สร้าง + อัปเกรด)
@@ -133,6 +143,7 @@ var _menu_mode := ""          # T5: "build" = เลือกสร้าง / "
 var _menu_tower: Node2D
 var _placement_mode := false
 var _placement_position := Vector2.ZERO
+var _rally_tower: Node2D       # Phase B: โหมดสั่งย้ายจุดยืนทหาร (ค่ายทหาร)
 var _hero                     # T5: ฮีโร่ Kubi (คลิกขวาสั่งเดิน)
 var _spots_layer: SpotsOverlay  # T5.1: ชั้นวาดวงทองลานป้อม (z 30 เหนือพื้นหลัง)
 var _path_layer: PathOverlay
@@ -286,13 +297,13 @@ func _spawn_kind(kind: String) -> void:
 	var jitter := randf_range(0.94, 1.06)
 	var hp_mult := pow(HP_GROWTH, _wave_idx)
 	if kind == "frog":
-		_spawn_enemy(FROG_TEX, FROG_SHEET, _shift_path(PATH_A, lane), FROG_SPEED * jitter, true, false, 59, null, 43, 26.0 * hp_mult, 15)
+		_spawn_enemy(FROG_TEX, FROG_SHEET, _shift_path(PATH_A, lane), FROG_SPEED * jitter, true, false, 59, null, 43, 26.0 * hp_mult, 15, 0.0, 1.5, 8.0)
 	elif kind == "lizard":
 		# กิ้งก่า: ชุดหันข้าง 8 ช่องหัวหันขวาโดยกำเนิด (ฟีดแบ็ค T5.1: เดินขวาต้องเห็นหัวหันขวาจริง ไม่ใช่รูปหน้าตรงส่ายหัว)
-		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56, LIZARD_SIDE_SHEET, 43, 42.0 * hp_mult, 25)
+		_spawn_enemy(LIZARD_TEX, LIZARD_SHEET, _shift_path(PATH_A, lane), LIZARD_SPEED * jitter, true, false, 56, LIZARD_SIDE_SHEET, 43, 42.0 * hp_mult, 25, 0.0, 1.5, 11.0)
 	elif kind == "stone_golem":
 		_spawn_enemy(GOLEM_TEX, null, _shift_path(PATH_A, lane), GOLEM_SPEED * jitter, true, false,
-			59, null, 43, GOLEM_HP * hp_mult, 35, GOLEM_RESIST, 1.7)
+			59, null, 43, GOLEM_HP * hp_mult, 35, GOLEM_RESIST, 1.7, 18.0)
 	else:
 		push_error("Unknown enemy type: %s" % kind)
 
@@ -339,7 +350,7 @@ func _shift_path(path: Array[Vector2], off: float) -> Array[Vector2]:
 			out.append(path[i] + Vector2(off, 0))   # ช่วงเดินตั้ง -> เลื่อนตามแกน x
 	return out
 
-func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], speed: float, no_flip: bool, faces_left: bool, bottom_row: int, s_sheet: Texture2D = null, s_bottom: int = 43, hp: float = 26.0, gold: int = 15, resist: float = 0.0, enemy_scale: float = 1.5) -> void:
+func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], speed: float, no_flip: bool, faces_left: bool, bottom_row: int, s_sheet: Texture2D = null, s_bottom: int = 43, hp: float = 26.0, gold: int = 15, resist: float = 0.0, enemy_scale: float = 1.5, atk: float = 8.0) -> void:
 	var e := EnemyScript.new()
 	e.sheet = sheet          # เฟรมเดินจริงถ้ามี sheet (fallback texture นิ่ง)
 	e.texture = texture
@@ -352,6 +363,7 @@ func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], sp
 	e.body_bottom_row = bottom_row  # แถวเท้าจริงในเฟรม
 	e.side_sheet = s_sheet          # ชุดหันข้าง (ช่วงเดินแนวนอน)
 	e.side_bottom_row = s_bottom
+	e.melee_dmg = atk      # แรงฟันเมื่อสู้กับทหาร้ (Phase B)
 	e.max_hp = hp        # เลือดต่อชนิด (T3)
 	e.reward = gold      # ทองต่อการฆ่า (T3)
 	add_child(e)
@@ -538,6 +550,10 @@ func _restart() -> void:
 	get_tree().reload_current_scene()
 
 # ---------- เมนูสร้างป้อม (T3) ----------
+func _start_rally_move(tower: Node2D) -> void:
+	_rally_tower = tower
+	sfx("click")
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		# คลิกขวาศัตรู = Kubi ไล่โจมตี; คลิกพื้น = เดินไปตำแหน่งนั้น
@@ -563,6 +579,18 @@ func _unhandled_input(event: InputEvent) -> void:
 			clicked_tower = _tower_at(p)
 			if clicked_tower != null:
 				break
+		# Phase B: โหมดย้ายจุดยืนทหาร — คลิกครั้งต่อไปกำหนด rally
+		if _rally_tower != null and is_instance_valid(_rally_tower):
+			var t_r: Node2D = _rally_tower
+			var p_r: Vector2 = candidates[0]
+			if p_r.distance_to(t_r.position) <= t_r.range_r * 1.25:
+				t_r.rally_point = p_r
+				t_r.rally_locked = true
+				sfx("build")
+			else:
+				sfx("leak")   # ไกลเกิน: ใช้เสียงปฏิเสธแทนข้อความ
+			_rally_tower = null
+			return
 		if clicked_tower != null:
 			_open_tower_menu(clicked_tower)
 			return
@@ -622,6 +650,8 @@ func _unhandled_input(event: InputEvent) -> void:
 					_upgrade_selected_tower()
 				elif code == KEY_2:
 					_sell_selected_tower()
+				elif code == KEY_3 and _menu_tower != null and _menu_tower.kind == TowerScript.BARRACKS:
+					_start_rally_move(_menu_tower)
 			if code == KEY_ESCAPE or code == KEY_X:
 				_close_menu()
 	elif event.is_action_pressed("ui_cancel") and _menu != null:
@@ -645,7 +675,7 @@ func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_t
 		_menu_tower.show_range = true
 		_menu_tower.queue_redraw()
 	var panel := PanelContainer.new()
-	var menu_width := 316.0 if _menu_mode == "build" else 218.0
+	var menu_width := 438.0 if _menu_mode == "build" else 218.0
 	panel.custom_minimum_size.x = menu_width
 	var layout := VBoxContainer.new()
 	layout.add_theme_constant_override("separation", 6)
@@ -669,7 +699,7 @@ func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_t
 	layout.add_child(hb)
 	if _menu_mode == "build":
 		var option_number := 1
-		for key in ["archer", "cannon", "mage"]:
+		for key in ["archer", "cannon", "mage", "barracks"]:
 			var def: Dictionary = TOWER_DEFS[key]
 			var tip: String = "%s (รัศมี %d, ดาเมจ %.0f)" % [def["name"], def["range"], def["dmg"]]
 			var build_action := _build_tower.bind(spot_idx, key) if spot_idx >= 0 else _build_free_tower.bind(_placement_position, key)
@@ -684,6 +714,10 @@ func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_t
 			var tip2: String = "อัปเกรด %s Lv2 (ดาเมจ %.0f, รัศมี %d)" % [def["name"], upg["dmg"], upg["range"]]
 			var upgrade_action := _upgrade_tower.bind(spot_idx) if spot_idx >= 0 else _upgrade_selected_tower
 			_menu_entry(hb, def["upg_icon"], "1 อัปเกรด", int(def["upg_cost"]), tip2, upgrade_action)
+		if t.kind == TowerScript.BARRACKS:
+			# Phase B: สั่งทหารย้ายจุดยืน (rally) คลิกจุดต่อไป
+			var rally_action := _start_rally_move.bind(t)
+			_menu_entry(hb, ICON_SCROLL, "3 ย้ายจุด", 0, "คลิกจุดบนสนามเพื่อสั่งทหารยืนกั้นทางที่นั่น", rally_action)
 		# ขายคืน 60% ของเงินที่ลงไป (ไอคอนเหรียญ Kubi เดิม)
 		var refund := _tower_refund(t)
 		var sell_action := _sell_tower.bind(spot_idx) if spot_idx >= 0 else _sell_selected_tower
@@ -855,6 +889,10 @@ func _sell_tower_node(t: Node2D, spot_idx: int) -> void:
 	_update_gold()
 	_gold_popup(refund, t.position)
 	t.queue_free()
+	if t.kind == TowerScript.BARRACKS:
+		for s in t._soldiers:
+			if s != null and is_instance_valid(s):
+				s.queue_free()
 	if spot_idx >= 0:
 		_towers[spot_idx] = null
 		_lvl[spot_idx] = 0
@@ -970,7 +1008,7 @@ func _build_lives_label() -> void:
 	_wave_label.position = Vector2(16, 80)
 	_hud.add_child(_wave_label)
 	var controls := Label.new()
-	controls.text = "B + คลิกพื้น: วางป้อม · คลิกขวาศัตรู: สู้ / พื้น: เดิน · 1-4: ฐาน"
+	controls.text = "1-4: ฐาน/ป้อม · B+คลิก: วางอิสระ · ค่ายทหาร: ปุ่ม 3 = สั่งจุดยืนทหาร"
 	controls.add_theme_font_size_override("font_size", 13)
 	controls.add_theme_color_override("font_color", Color(0.95, 0.93, 0.86))
 	controls.add_theme_color_override("font_shadow_color", Color(0.08, 0.06, 0.04, 0.95))

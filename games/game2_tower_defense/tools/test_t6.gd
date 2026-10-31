@@ -26,8 +26,8 @@ func _process(delta: float) -> bool:
 		_main._open_menu(2)
 		var layout: VBoxContainer = _main._menu.get_child(0)
 		var options: HBoxContainer = layout.get_child(1)
-		if options.get_child_count() != 3:
-			_fail("build menu does not show all three weapons")
+		if options.get_child_count() != 4:
+			_fail("build menu does not show all four towers (archer/cannon/mage/barracks)")
 			return true
 		var mage_option: VBoxContainer = options.get_child(2)
 		var mage_label: Label = mage_option.get_child(1)
