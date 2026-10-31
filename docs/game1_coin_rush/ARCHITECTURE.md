@@ -23,19 +23,24 @@
 - Player controller: coyote time + jump buffer + variable height + asymmetric gravity +
   2-air-tier double jump (`MAX_AIR_JUMPS`/`AIR_JUMP_SCALE` in player.gd, resets on landing,
   `_air_ring` dust + SFX on air jumps)
+- Per-level attempts: three lives shown by `TriesLabel`; first two deaths allow a same-level retry
+  while retaining remaining attempts, and the third death requires a fresh restart
+- Test-level entry: title menu sets `main.gd`'s transient `pending_start_level` before loading a
+  selected level; normal start clears this value
 - Camera2D smooth follow + bounds clamp + screen shake (trauma-based)
 - Per-theme look: `_apply_level_look()` swaps far/near bg strips + sky Gradient + tile self_modulate
   tints (`_tile_tints_for`: sewer teal-moss / castle purple-dusk) + CanvasModulate tint +
   `_setup_weather()/_apply_weather()` CPUParticles2D (sewer drips / sky sparkles / castle embers)
 - Per-theme music: `_apply_theme_music()` swaps Music stream (music.wav / music_sewer / music_sky / music_castle)
 - Hero skins: `player.gd set_skin(idx)` + SKIN_SHEETS; chosen on title screen, persisted as `skin` in the save file
-- Title menus: `title.gd` builds a 3-item keyboard menu + two bbcode panels (วิธีเล่น bestiary /
-  Story) and a single-frame `AtlasTexture` skin preview
+- Title menus: `title.gd` builds a 4-item keyboard menu + two bbcode panels (วิธีเล่น bestiary /
+  Story) + an eight-level test selector (arrows or number keys 1-8), and a single-frame
+  `AtlasTexture` skin preview
 - Save schema v1 (hi_score, best_win_time, wins, plays, level, skin) atomic write
 
 ## Testing
 - `godot --headless --path games/game1_coin_rush --import` must pass
-- `godot --headless --path games/game1_coin_rush --script res://tools/test_game1.gd` — 124-assertion
-  headless suite (level data, scenes, coins, goal monument, double jump, title menus, save round-trip,
-  state reset); exit 0 = pass
+- `godot --headless --path games/game1_coin_rush --script res://tools/test_game1.gd` — 147-assertion
+  headless suite (level data, scenes, coins, goal monument, double jump, three-attempt retry flow,
+  title menus/test-level selector, skin persistence, save round-trip, state reset); exit 0 = pass
 - Headless smoke: `godot --headless --path games/game1_coin_rush res://scenes/main.tscn --quit-after 180`

@@ -1,7 +1,7 @@
 extends Control
-## Title screen: เมนูหลัก 3 ตัว — เริ่มเล่น / วิธีเล่น (ตัวละคร+มอนสเตอร์) / เนื้อเรื่อง
+## Title screen: เมนูหลัก 4 ตัว — เริ่มเล่น / วิธีเล่น (ตัวละคร+มอนสเตอร์) / เนื้อเรื่อง / ทดสอบ·เลือกด่าน 1-8
 ## ↑↓ (หรือ W/S) เลือกเมนู · Space/Enter ยืนยัน · ←/→ (หรือ A/D) เปลี่ยนสกิน (เซฟทันที)
-## เปิดแผงคู่มือ/เนื้อเรื่องแล้ว กด Esc หรือ Space เพื่อกลับเมนู
+## แผงคู่มือ/เนื้อเรื่อง/เลือกด่านเปิดแล้ว กด Esc หรือตามคำใบ้เพื่อกลับเมนู
 
 const MAIN_SCENE := "res://scenes/main.tscn"
 const SAVE_PATH := "user://kubi_coin_dash_save.json"
@@ -23,6 +23,7 @@ const MENU_ITEMS: Array[String] = [
 	"เริ่มเล่น",
 	"วิธีเล่น · ตัวละคร & มอนสเตอร์",
 	"Story · เนื้อเรื่องของเกม",
+	"Test · โหมดทดสอบ (เลือกด่าน 1-8)",
 ]
 
 # ไอคอนสปรไตร์ที่ใช้ในแผงคู่มือ
@@ -33,7 +34,7 @@ const ICON_HOPPER := "res://assets/art/sprites/enemy_glitch_blue.png"
 const ICON_BAT := "res://assets/art/gen/enemy_bat.png"
 const ICON_CHARGER := "res://assets/art/gen/enemy_charger.png"
 
-enum UiState { MENU, PANEL }
+enum UiState { MENU, PANEL, SELECT }
 
 @onready var prompt: Label = $Prompt
 @onready var hero: TextureRect = $Hero
@@ -49,6 +50,10 @@ var _state := UiState.MENU
 var _dim: ColorRect
 var _howto_panel: PanelContainer
 var _story_panel: PanelContainer
+var _level_panel: PanelContainer
+var _level_items: Array[Label] = []
+var _level_names: Array[String] = []
+var _lv_sel := 0
 var _panels: Array[PanelContainer] = []
 
 func _ready() -> void:
@@ -97,8 +102,24 @@ func _input(event: InputEvent) -> void:
 			UiState.PANEL:
 				if event.keycode in [KEY_ESCAPE, KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
 					_close_panel()
+			UiState.SELECT:
+				if event.keycode == KEY_ESCAPE:
+					_close_panel()
+				elif event.keycode in [KEY_UP, KEY_W, KEY_LEFT, KEY_A]:
+					_lv_sel = wrapi(_lv_sel - 1, 0, _level_items.size())
+					_refresh_level_items()
+				elif event.keycode in [KEY_DOWN, KEY_S, KEY_RIGHT, KEY_D]:
+					_lv_sel = wrapi(_lv_sel + 1, 0, _level_items.size())
+					_refresh_level_items()
+				elif event.keycode >= KEY_1 and event.keycode <= KEY_8:
+					_lv_sel = clampi(event.keycode - KEY_1, 0, _level_items.size() - 1)
+					_refresh_level_items()
+				elif event.keycode in [KEY_SPACE, KEY_ENTER, KEY_KP_ENTER] and not _level_items.is_empty():
+					_start_level_at(_lv_sel + 1)
 	elif event is InputEventMouseButton and event.pressed and _state == UiState.MENU:
 		_persist_skin()
+		var msc: GDScript = load("res://scripts/main.gd")
+		msc.pending_start_level = 0
 		_start()
 
 # ---------- เมนูหลัก ----------
@@ -140,11 +161,16 @@ func _confirm() -> void:
 	match _sel:
 		0:
 			_persist_skin()
+			# เริ่มเล่นปกติ — ล้างค่าข้ามด่านของโหมดทดสอบ (กันค่าค้างจากครั้งก่อน)
+			var msc: GDScript = load("res://scripts/main.gd")
+			msc.pending_start_level = 0
 			_start()
 		1:
 			_open_panel(_howto_panel)
 		2:
 			_open_panel(_story_panel)
+		3:
+			_open_level_panel()
 
 # ---------- แผงคู่มือ / เนื้อเรื่อง ----------
 
@@ -226,17 +252,94 @@ func _close_panel() -> void:
 	_dim.visible = false
 	for pp in _panels:
 		pp.visible = false
+	if _level_panel != null:
+		_level_panel.visible = false
+
+# ---------- แผงโหมดทดสอบ (เลือกด่าน 1-8) ----------
+
+func _build_level_panel() -> void:
+	_level_panel = PanelContainer.new()
+	_level_panel.name = "TestPanel"
+	_level_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_level_panel.offset_left = 260.0
+	_level_panel.offset_right = -260.0
+	_level_panel.offset_top = 80.0
+	_level_panel.offset_bottom = -80.0
+	_level_panel.visible = false
+	_level_panel.add_theme_stylebox_override("panel", _panel_style())
+	var vb := VBoxContainer.new()
+	vb.add_theme_constant_override("separation", 6)
+	_level_panel.add_child(vb)
+	var head := Label.new()
+	head.text = "◆ โหมดทดสอบ · เลือกด่าน 1-8"
+	head.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	head.add_theme_font_size_override("font_size", 30)
+	head.add_theme_color_override("font_color", Color(1.0, 0.84, 0.3))
+	head.add_theme_color_override("font_outline_color", Color(0.1, 0.06, 0.02))
+	head.add_theme_constant_override("outline_size", 10)
+	vb.add_child(head)
+	var body := VBoxContainer.new()
+	body.name = "LevelRows"
+	body.add_theme_constant_override("separation", 2)
+	vb.add_child(body)
+	var msc: GDScript = load("res://scripts/main.gd")
+	var levels: Array = msc.get_script_constant_map().get("LEVELS", [])
+	for i in range(levels.size()):
+		var row := Label.new()
+		row.name = "L%d" % (i + 1)
+		row.text = "ด่าน %d · %s" % [i + 1, str(levels[i].get("name", ""))]
+		row.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+		row.custom_minimum_size = Vector2(0, 30)
+		row.add_theme_constant_override("outline_size", 8)
+		row.add_theme_color_override("font_outline_color", Color(0.14, 0.08, 0.02))
+		_level_names.append(str(levels[i].get("name", "")))
+		_level_items.append(row)
+		body.add_child(row)
+	var hint := Label.new()
+	hint.text = "↑↓ (หรือ ←→ / ตัวเลข 1-8) เลือก · Space หรือ Enter = เริ่มด่านนั้น · Esc กลับเมนู"
+	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	hint.add_theme_font_size_override("font_size", 18)
+	hint.add_theme_color_override("font_color", Color(1, 1, 1, 0.55))
+	vb.add_child(hint)
+	add_child(_level_panel)
+
+func _open_level_panel() -> void:
+	if _level_panel == null:
+		_build_level_panel()
+	_state = UiState.SELECT
+	_dim.visible = true
+	for pp in _panels:
+		pp.visible = false
+	_lv_sel = 0
+	_refresh_level_items()
+	_level_panel.visible = true
+
+func _refresh_level_items() -> void:
+	for i in range(_level_items.size()):
+		var l := _level_items[i]
+		var sel := i == _lv_sel
+		l.text = ("▶  ด่าน %d · %s" % [i + 1, _level_names[i]]) if sel else ("    ด่าน %d · %s" % [i + 1, _level_names[i]])
+		l.add_theme_font_size_override("font_size", 26 if sel else 22)
+		l.add_theme_color_override("font_color", Color(1.0, 0.83, 0.28) if sel else Color(1, 1, 1, 0.8))
+
+func _start_level_at(n: int) -> void:
+	# เหมือนกด "เริ่มเล่น" แต่ย้อนเข้าเกมที่ด่านอื่น — สกินที่เลือกก็บันทึก/ใช้เหมือนกัน
+	_persist_skin()
+	var msc: GDScript = load("res://scripts/main.gd")
+	msc.pending_start_level = n
+	get_tree().change_scene_to_file(MAIN_SCENE)
 
 func _build_howto_text() -> String:
 	return """[color=#ffd94a][b]ปุ่มควบคุม[/b][/color]
 • A / D หรือ ← → : เดินซ้าย-ขวา
 • Space / W / ↑ : กระโดด — [color=#7ee6a2][b]กดซ้ำกลางอากาศได้อีก 2 ชั้น[/b][/color] (กดค้าง = สูง, ปล่อยกลางคัน = กระโดดสั้น)
 • Shift : วิ่งเร็ว — จำเป็นกับช่องกว้างในด่านท้าย
-• R : เริ่มด่านใหม่ · Esc : กลับหน้าเมนู
+• R : เริ่มด่านใหม่ (รับโอกาส 3 ตัวกลับ) · Esc : กลับหน้าเมนู
 
 [color=#ffd94a][b]เป้าหมาย[/b][/color]
 [img=34x34]%s[/img] เหรียญเงิน 1 คะแนน · มี [color=#ffd94a]เหรียญทองคุ้ม 3 คะแนน[/color] ซ่อนในแต่ละด่าน
 เก็บเหรียญ เหยียบหัวศัตรู แล้วไปแตะ[color=#ffd94a]เสาธงชัยทอง[/color]ตอนจบด่าน — ห้ามหมดเวลาและห้ามตกหุบเหว
+[color=#ffd94a][b]3 โอกาสต่อด่าน[/b][/color]: ตายหนึ่งครั้ง = ใช้หนึ่งโอกาส แล้วกด Space/R เล่นซ้ำด่านเดิมได้ทันที ครบ 3 ครั้งจึงเริ่มด่านใหม่จริง
 ข้ามด้วย [b]ดับเบิลจัมพ์[/b]: กระโดดจากพื้น แล้วกด Space อีกสองระลอกกลางอากาศ เก็บเหรียญชั้นสูงได้สบาย
 
 [color=#ffd94a][b]ตัวละคร[/b][/color]

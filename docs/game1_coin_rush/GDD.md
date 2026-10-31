@@ -5,7 +5,7 @@
 - **Genre:** 2D Side-scrolling Platformer (vertical slice)
 - **Engine:** Godot 4.7 (GL Compatibility)
 - **Goal/Story:** ฝูงไวรัส "Glitch Bugs" ขโมยเหรียญกองทุนเมือง KUB แล้วกระจายหนีไป 3 ที่ลับ (ท่อระบาย / ท้องฟ้า / ปราสาทบิตคู) → Kubi ตามเก็บคืนทีละด่าน 8 ด่าน — และแตะเสาธงชัยทองบนยอดปราสาทด่านสุดท้าย = คืนเหรียญครบ = ชนะ
-- **Status:** Playable 8 levels (run/jump + double jump 2 ชั้น, coins, ศัตรู 5 ชนิด + มินิบอส, ravine pits, moving platforms, title menus สามตัว (เริ่มเล่น / วิธีเล่น · ตัวละคร & มอนสเตอร์ / Story) + skin chooser, เสาธงชัยทองอนุสาวรีย์, level banners, per-theme ambience, save)
+- **Status:** Playable 8 levels (run/jump + double jump 2 ชั้น, coins, ศัตรู 5 ชนิด + มินิบอส, ravine pits, moving platforms, 3 attempts per level, four-item title menu with direct test-level selector, skin chooser, เสาธงชัยทองอนุสาวรีย์, level banners, per-theme ambience, save)
 
 ## 2. Core loop
 Run → jump gaps (กดซ้ำกลางอากาศได้อีก 2 ชั้น) → collect coins → avoid enemies → reach เสาธงชัยทอง.
@@ -15,7 +15,7 @@ Tight controller first: coyote time, jump buffer, variable height, asymmetric gr
 - A/D or arrows: move
 - Space/W/Up: jump — กดซ้ำกลางอากาศได้อีก 2 ชั้น (ดับเบิลจัมพ์สุดฟุ้ง)
 - Shift: sprint
-- R: restart · Esc: กลับเมนู
+- R: ระหว่างเล่นเริ่มด่านใหม่พร้อม 3 โอกาส; หลังตายกด Space/R เพื่อเล่นด่านเดิมซ้ำโดยคงโอกาสที่เหลือ; เมื่อหมด 3 โอกาส R เริ่มด่านเดิมใหม่ · Esc: กลับเมนู
 - ←/→ หรือ A/D บนหน้าเมนู: เปลี่ยนสกิน Kubi (บันทึกลงเซฟทันที)
 
 ## 4. Levels (ครบ 8 ด่าน — มีชื่อ + คำใบ้เปิดด่าน)
@@ -44,9 +44,11 @@ Tight controller first: coyote time, jump buffer, variable height, asymmetric gr
 - Goal (Area2D): `_build_monument()` ประกอบเสาธงชัยทองแบบอนุสาวรีย์จาก Polygon2D — แท่นหิน + เหรียญตรา + เสามืด + ลูกแก้วทอง + คาน + ผ้าธงสองชายหางปลาแถบแดง (โหนด Sway สั่นตามลม) + ประกายทองลอย; ไม่ใช้ภาพ goal_flag.png อีก (ไฟล์คงเก็บ)
 - หนามแดงถอดออกจากเกมแล้ว (คำขอ 2026-10-31): LEVELS ไม่มีคีย์ hazards, main.tscn ไม่มีโหนด $Hazards, hazard.tscn วางพักเฉย ๆ ไม่ถูกยิงและเทสยังเคลียร์โหลดไฟล์ได้
 - Ravine: `_process` เช็ค y เกิน height+90 → lose "ตกหุบเหว"
+- Attempts: `MAX_ATTEMPTS = 3`; `attempts_left` is reset on a fresh level start, decremented after the first two deaths, and shown by `TriesLabel`; retrying preserves the remaining count
 - Level banner (HUD label + tween): แสดง "ด่าน N · ชื่อ · คำใบ้" fade in/out ต่อด่าน
 - Dev shortcut: `godot ... res://scenes/main.tscn -- <level 1-based>`
-- Title scene (main_scene): เมนูสามตัวเลือก (เริ่มเล่น / วิธีเล่น · ตัวละคร & มอนสเตอร์ / Story · เนื้อเรื่อง) คุมด้วย ↑↓ + Space ยืนยัน; ←/→ เปลี่ยนสกิน; แผงข้อมูลเป็น RichTextLabel bbcode พร้อมไอคอนสปรไตร์มอนสเตอร์; ปิดแผงด้วย Esc/Space; แสดงสถิติจาก save
+- Title scene (main_scene): เมนูสี่ตัวเลือก (เริ่มเล่น / วิธีเล่น · ตัวละคร & มอนสเตอร์ / Story · เนื้อเรื่อง / Test · เลือกด่าน) คุมด้วย ↑↓ + Space ยืนยัน; ←/→ เปลี่ยนสกิน; แผงเลือกด่านรองรับปุ่มลูกศรและเลข 1-8; แผงข้อมูลเป็น RichTextLabel bbcode พร้อมไอคอนสปรไตร์มอนสเตอร์; ปิดแผงด้วย Esc/Space; แสดงสถิติจาก save
+- Test-level handoff: title writes a temporary 1-based `pending_start_level`, consumed and cleared by `main.gd`; regular start clears stale test selection
 - Save (user://, atomic + .bak): hi_score, best_win_time, wins, plays, level, skin
 - Camera2D smooth follow + bounds
 - HUD (coins, time, best stats)
@@ -62,6 +64,7 @@ Tight controller first: coyote time, jump buffer, variable height, asymmetric gr
 
 ## 7. Dev log
 - **2026-10-31 (รอบ 4):** ตามคำขอผู้เล่น 5 ข้อ — (1) ถอดหนามแดงออกจากทุกด่าน (2) ธงชัยใหม่เป็นเสาธงชัยทองอนุสาวรีย์ (แท่นหิน+เหรียญตรา+ผ้าธงสองชายหางปลา+ประกายทอง) (3) แก้พรีวิวสกินหน้าเมนูให้ตัดเฟรมจริง AtlasTexture(512,0,64,64) (4) เมนูหน้าแรกสามตัว: เริ่มเล่น / วิธีเล่น (ปุ่ม+ตัวละคร+มอนสเตอร์ bestiary พร้อมไอคอน) / Story (เนื้อเรื่องเมือง KUB) คุม ↑↓ + Space + Esc (5) ดับเบิลจัมพ์กลางอากาศ 2 ชั้น (MAX_AIR_JUMPS=2 + วงแหวนลม + เสียง); ชุดเทสอัปเดตเป็น 124 ข้อ (124 PASS / 0 FAIL)
+- **2026-10-31 (รอบ 5):** เพิ่มโอกาส 3 ครั้งต่อด่านพร้อม HUD หัวใจและ retry ด่านเดิมโดยไม่คืนโอกาส; ครบสามครั้งจึงเริ่มใหม่ด้วยโอกาสเต็ม · เพิ่มเมนู Test เลือกข้ามไปด่าน 1-8 ด้วยลูกศร/ปุ่มเลข · แก้โหลดสกินจากเซฟใน `main.gd` · `test_game1.gd` ผ่าน 147/147 assertions; headless smoke 180 เฟรมผ่าน
 - **2026-10-30 (รอบสร้างสรรค์ใหญ่):** เพิ่มมอนสเตอร์ 2 ชนิด (บัตบิต / ชาร์เจอร์) · ด่าน 6-8 ธีมใหม่ (ท่อระบาย / ท้องฟ้า / ปราสาท) พร้อมฉาก+สีฟ้า+บรรยากาศรายธีม · สกินฮีโร่ 3 ชุดเลือกในเมนู (บันทึกเซฟ) · ชุดเทสอัตโนมัติ `tools/test_game1.gd` 94 ข้อ (PASS) · รีไรต์ PLAY.md · อาร์ตสร้างด้วย `tools/generate_theme_art.ps1` + `tools/generate_skins.ps1` (ไม่กิน gen)
 - **2026-10-30 (รอบ 2):** เพลงรายธีม 3 แนว สลับอัตโนมัติตามด่าน (`_apply_theme_music`) — ท่อระบาย 90 BPM บูบ / ท้องฟ้า 126 BPM สดใส / ปราสาท 105 BPM ครึ่งลังกล สร้างฟรีด้วย `tools/generate_theme_music.ps1` (0 gen, ลูปเนียน seam-crossfade)
 - **2026-10-30 (รอบ 3):** สกินจาก 3 → 5 (ม่วงราตรี / ใบไม้ระยิบ) · สีไทล์พื้นรายธีม (`_tile_tints_for` + self_modulate) · มินิบอส **บิตคูผู้คุม** ในด่าน 8 (HP 3, ดำดิ่งใส่, เหรียญรางวัลตอนตาย) · ถ่ายภาพจอจริง QA ด้วย `tools/shot_themes.gd` + `tools/shot_boss.gd` → screenshots/ · เทสขยายเป็น 104 ข้อ (PASS)

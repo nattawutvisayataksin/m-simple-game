@@ -85,6 +85,10 @@ func _process(_delta: float) -> bool:
 			quit(1)
 		return false
 	if _phase == 0:
+		# สำรองไฟล์เซฟจริง — เทสพวกนี้เขียน/บันทึกเซฟ ต้องคืนข้อมูลผู้เล่นตอนจบ phase
+		var save_path: String = "user://kubi_coin_dash_save.json"
+		var had_save := FileAccess.file_exists(save_path)
+		var save_backup := FileAccess.get_file_as_string(save_path) if had_save else ""
 		# --- ตรวจโครงสร้างอนุสาวรีย์ธงชัย (instantiated ตอน _initialize; _ready รันสุดแล้วเฟรมแรก) ---
 		if _goal_probe == null:
 			print("FAIL: probe เสาธงชัยถูกล้างรึอื่น — ตรวจ _initialize")
@@ -176,6 +180,49 @@ func _process(_delta: float) -> bool:
 		_check(_main.current_level == _main.LEVELS.size() - 1, "ถึงด่านใหม่เท่านั้นอาศัยการโหลด")
 		_check(_main.state == _main.GameState.PLAYING, "state กลับมา PLAYING หลังโหลดด่าน")
 		_check(_main.score == 0, "score รีเซ็ตหลังโหลดด่าน")
+		# --- ระบบโอกาส 3 ตัว: ตาย → กดเล่นซ้ำด่านเดิม → ครบ 3 ตัวจึงเริ่มใหม่จริง ---
+		_check(_main.attempts_left == 3, "เริ่มด่านมีโอกาสเต็ม 3 ตัว")
+		_check(_main.find_child("TriesLabel", true, false) != null, "HUD มีป้ายโอกาส (TriesLabel)")
+		_check(String(_main.tries_label.text).contains("♥♥♥"), "HUD โอกาสแสดงหัวใจเต็ม 3")
+		_main._lose("โดนศัตรู!")
+		_check(_main.attempts_left == 2, "ตายครั้งแรก = เหลือโอกาส 2")
+		_check(String(_main.gameover_label.text).contains("เหลือโอกาส 2"), "จอแพ้สั้นบอกจำนวนโอกาสที่เหลือ")
+		_main._retry_same_level()
+		_check(_main.state == _main.GameState.PLAYING and _main.attempts_left == 2, "กดเล่นซ้ำด่านเดิม = กลับ PLAYING โอกาสยัง 2 (ไม่เต็ม)")
+		_check(_main.score == 0 and _main.time_left > 0.0, "เล่นซ้ำแล้วคะแนน/เวลาด่านรีเซ็ต")
+		_check(String(_main.tries_label.text).contains("♥♥") and not String(_main.tries_label.text).contains("♥♥♥"), "HUD โอกาสเหลือ 2 หัวใจ")
+		_main._lose("ตกหุบเหว!")
+		_check(_main.attempts_left == 1, "ตายครั้งที่ 2 = เหลือโอกาส 1")
+		_main._retry_same_level()
+		_main._lose("หมดเวลา!")
+		_check(_main.attempts_left == 0, "ตายครั้งที่ 3 = โอกาสจบเต็ม")
+		_check(String(_main.gameover_label.text).contains("โอกาสหมด"), "จอแพ้เต็มบอกว่าโอกาสหมดแล้ว")
+		_main._load_level(_main.current_level, _main.MAX_ATTEMPTS)
+		_check(_main.state == _main.GameState.PLAYING and _main.attempts_left == 3, "เริ่มด่านใหม่หลังโอกาสหมด = ได้โอกาส 3 ตัวกลับคืน")
+		# --- สกินจากเซฟ + โหมดทดสอบข้ามด่าน: เขียนเซฟตัวอย่าง+static แล้วเปิด main ใหม่ ---
+		var msc: GDScript = load("res://scripts/main.gd")
+		var f2 := FileAccess.open(save_path, FileAccess.WRITE)
+		f2.store_string(JSON.stringify({"version": 1, "hi_score": 9, "best_win_time": 42.0, "wins": 3, "plays": 11, "level": 4, "skin": 3}))
+		f2.close()
+		msc.pending_start_level = 5
+		var m2: Node2D = (load("res://scenes/main.tscn") as PackedScene).instantiate()
+		root.add_child(m2)
+		_check(String(m2.player.visual.texture.resource_path).contains("violet"), "สกินที่บันทึกในเซฟถูก apply จริงตอนเข้าเกม (แก้บั๊ก apply ไม่ได้)")
+		_check(m2.current_level == 4, "โหมดทดสอบตั้ง pending_start_level=5 → เปิดเกมที่ด่าน 5")
+		_check(m2.attempts_left == 3, "ข้ามด่านด้วยโหมดทดสอบก็ได้โอกาสเต็ม 3")
+		_check(String(m2.tries_label.text).contains("♥♥♥"), "HUD โอกาสเต็มบนด่านที่ข้ามไป")
+		_check(int(m2.stats["skin"]) == 3, "_load_stats รับคีย์ skin จากไฟล์ (ไม่ถูกทับเป็น 0)")
+		msc.pending_start_level = 0
+		m2.free()
+		# --- โหนด TriesLabel ทำงานต่อด่าน (HUD อัพตาม) ---
+		_check(String(_main.tries_label.text).contains("♥♥♥"), "กลับมาด่านหลัก — HUD โอกาสกลับเต็ม 3")
+		# คืนไฟล์เซฟจริงของผู้เล่น (เทสไม่ทำลายข้อมูล)
+		if had_save:
+			var fback := FileAccess.open(save_path, FileAccess.WRITE)
+			fback.store_string(save_backup)
+			fback.close()
+		else:
+			DirAccess.remove_absolute(save_path)
 		_phase = 1
 	elif _phase == 1:
 		# รอ 1 เฟรมหลังโหลดด่าน ให้ queue_free เก่าถูกกวาดก่อนนับ
@@ -192,8 +239,8 @@ func _process(_delta: float) -> bool:
 		if hero_tex is AtlasTexture:
 			var at: AtlasTexture = hero_tex
 			_check(absf(at.region.position.x - 512.0) < 0.5 and absf(at.region.size.x - 64.0) < 0.5, "พรีวิวใช้เฟรมยืน (512,0,64,64)")
-		_check(title_ui._menu_box.get_child_count() == 3, "เมนูหลักครบ 3 ตัว (เริ่มเล่น/วิธีเล่น/เนื้อเรื่อง)")
-		_check(int(title_ui._state) == 0 and not title_ui._howto_panel.visible and not title_ui._story_panel.visible, "แผงคู่มือ+เนื้อเรื่องเริ่มต้นถูกซ่อน")
+		_check(title_ui._menu_box.get_child_count() == 4, "เมนูหลักครบ 4 ตัว (เริ่มเล่น/วิธีเล่น/เนื้อเรื่อง/โหมดทดสอบ)")
+		_check(int(title_ui._state) == 0 and not title_ui._howto_panel.visible and not title_ui._story_panel.visible and title_ui._level_panel == null, "แผงข้อมูลเริ่มต้นถูกซ่อน (เลือกด่านสร้างแบบสาย)")
 		for panel in [title_ui._howto_panel, title_ui._story_panel]:
 			var rtls: Array = panel.find_children("*", "RichTextLabel", true, false)
 			_check(not rtls.is_empty() and rtls[0].bbcode_enabled, "แผงข้อมูลสร้างด้วย RichTextLabel bbcode")
@@ -207,6 +254,17 @@ func _process(_delta: float) -> bool:
 		title_ui._confirm()
 		_check(title_ui._story_panel.visible, "ยืนยันเมนู 'Story' = เปิดแผงเนื้อเรื่อง")
 		title_ui._close_panel()
+		# --- แผงโหมดทดสอบ (เลือกด่าน 1-8) ---
+		title_ui._sel = 3
+		title_ui._confirm()
+		_check(int(title_ui._state) == 2 and title_ui._level_panel.visible, "ยืนยันเมนู 'โหมดทดสอบ' = เปิดแผงเลือกด่าน")
+		_check(title_ui._level_items.size() == 8, "แผงเลือกด่านมีแถวครบ 8 (ด่าน 1-8)")
+		_check(String(title_ui._level_names[0]).length() > 0 and String(title_ui._level_names[7]).length() > 0, "แถวเลือกด่านใช้ชื่อด่านจริงจาก LEVELS")
+		title_ui._lv_sel = 6
+		title_ui._refresh_level_items()
+		_check(String(title_ui._level_items[6].text).begins_with("▶") and String(title_ui._level_items[0].text).begins_with(" "), "ไฮไลต์ขยับตามการเลือกด่าน")
+		title_ui._close_panel()
+		_check(int(title_ui._state) == 0 and not title_ui._level_panel.visible, "ปิดแผงเลือกด่านกลับเมนูได้")
 		# free() ทันที (ไม่ใช่ queue_free) — เทสจบใน _process เฟรมเดียวกัน โหนดที่คิวจะไม่ถูกกวาดก่อนออก → leak
 		title_ui.free()
 		_phase = 2

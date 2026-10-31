@@ -234,6 +234,12 @@ const SAVE_PATH := "user://kubi_coin_dash_save.json"
 const DEFAULT_STATS: Dictionary = {"hi_score": 0, "best_win_time": 0.0, "wins": 0, "plays": 0, "level": 0, "skin": 0}
 var stats: Dictionary = DEFAULT_STATS.duplicate(true)
 
+# โอกาส 3 ตัวต่อด่าน — ตายแล้วกดเล่นซ้ำด่านเดิมได้ หมดโอกาสทุกตัวจึงเริ่มด่านใหม่จริง
+const MAX_ATTEMPTS := 3
+var attempts_left := MAX_ATTEMPTS
+# เมนูทดสอบของหน้าเมนู (title.gd) ตั้งค่านี้ก่อนเปลี่ยนฉาก → เปิดเกมแล้วไปด่านที่เลือกทันที (1-based)
+static var pending_start_level := 0
+
 enum GameState { PLAYING, WON, LOST, LEVEL_DONE }
 var state := GameState.PLAYING
 var score := 0
@@ -276,6 +282,7 @@ const SKY_CASTLE := [Color("#1c1430"), Color("#332349"), Color("#4a2a5e")]
 @onready var time_label: Label = $HUD/TimeLabel
 @onready var stats_label: Label = $HUD/BestLabel
 @onready var level_label: Label = $HUD/LevelLabel
+@onready var tries_label: Label = $HUD/TriesLabel
 @onready var win_label: Label = $HUD/WinLabel
 @onready var gameover_label: Label = $HUD/GameoverLabel
 @onready var leveldone_label: Label = $HUD/LevelDoneLabel
@@ -304,7 +311,10 @@ func _ready() -> void:
 	# dev: `godot ... scenes/main.tscn -- 3` jumps straight to level 3 (1-based)
 	var ua := OS.get_cmdline_user_args()
 	var start_idx := int(ua[0]) - 1 if ua.size() > 0 and ua[0].is_valid_int() else 0
-	_load_level(clampi(start_idx, 0, LEVELS.size() - 1))
+	if start_idx == 0 and pending_start_level > 0:
+		start_idx = pending_start_level - 1
+	pending_start_level = 0
+	_load_level(clampi(start_idx, 0, LEVELS.size() - 1), MAX_ATTEMPTS)
 
 func _exit_tree() -> void:
 	if has_node("Music"):
@@ -341,13 +351,28 @@ func _process(delta: float) -> void:
 
 func _input(event: InputEvent) -> void:
 	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_R:
-			get_tree().reload_current_scene()
-		elif event.keycode == KEY_ESCAPE:
+		if event.keycode == KEY_ESCAPE:
 			get_tree().change_scene_to_file("res://scenes/title.tscn")
+			return
+		match state:
+			GameState.PLAYING:
+				# ระหว่างเล่น: R = เริ่มด่านนี้ใหม่ (รับโอกาส 3 ตัวกลับคืน)
+				if event.keycode == KEY_R:
+					_load_level(current_level, MAX_ATTEMPTS)
+			GameState.LOST:
+				if event.keycode in [KEY_R, KEY_SPACE, KEY_ENTER, KEY_KP_ENTER]:
+					if attempts_left > 0:
+						_retry_same_level()      # ยังมีโอกาส — เล่นซ้ำด่านเดิม
+					else:
+						_load_level(current_level, MAX_ATTEMPTS)   # โอกาสหมด — จึงเริ่มด่านใหม่
+			GameState.WON:
+				# เล่นใหม่ทั้งเกมตั้งแต่ด่าน 1
+				if event.keycode == KEY_R:
+					_load_level(0, MAX_ATTEMPTS)
 
-func _load_level(idx: int) -> void:
+func _load_level(idx: int, with_attempts := MAX_ATTEMPTS) -> void:
 	current_level = idx
+	attempts_left = with_attempts
 	var lvl: Dictionary = LEVELS[idx]
 	# clear
 	for c in platforms.get_children(): c.queue_free()
@@ -450,8 +475,17 @@ func _load_level(idx: int) -> void:
 	_update_score_label()
 	_update_time_label()
 	_update_level_label()
+	_update_attempts_label()
 	_update_stats_label()
 	_show_banner()
+
+func _retry_same_level() -> void:
+	# "กดเล่นซ้ำด่านเดิม" — รีเซ็ตเฉพาะด่านปัจจุบัน (เหรียญ/เวลา/ศัตรูกลับต้น) โดยคงโอกาสที่เหลือไว้
+	_load_level(current_level, attempts_left)
+
+func _update_attempts_label() -> void:
+	# โอกาส: ♥♥♥ → ♥♡♡ ตามจำนวนที่เหลือ
+	tries_label.text = "โอกาส: %s%s" % ["♥".repeat(attempts_left), "♡".repeat(MAX_ATTEMPTS - attempts_left)]
 
 func _setup_camera() -> void:
 	var cam := Camera2D.new()
@@ -701,7 +735,7 @@ func _win() -> void:
 	state = GameState.WON
 	_record_win(_total_time_used + float(LEVELS[current_level]["time"]) - time_left)
 	_end_round_soft()
-	win_label.text = "ภารกิจสำเร็จ! เหรียญเมือง KUB กลับบ้านครบทุกด่าน\nคะแนนสุดท้าย %d · เวลารวม %.1f วิ\nกด R เล่นอีกครั้ง · Esc กลับหน้าเมนู" % [score, _total_time_used + float(LEVELS[current_level]["time"]) - time_left]
+	win_label.text = "ภารกิจสำเร็จ! เหรียญเมือง KUB กลับบ้านครบทุกด่าน\nคะแนนสุดท้าย %d · เวลารวม %.1f วิ\nกด R เล่นใหม่ตั้งแต่ด่าน 1 · Esc กลับหน้าเมนู" % [score, _total_time_used + float(LEVELS[current_level]["time"]) - time_left]
 	_coin_celebration()
 	win_label.visible = true
 	sfx_win.play()
@@ -723,12 +757,22 @@ func TIME_LIMIT_TOTAL() -> float:
 func _lose(reason: String) -> void:
 	state = GameState.LOST
 	gameover_reason = reason
-	add_trauma(0.8)
-	_record_loss()
 	_end_round_soft()
 	gameover_label.visible = true
-	gameover_label.text = "เกมจบแล้ว! %s\nคะแนน: %d · สถิติ: %d\nกด R เริ่มใหม่ · Esc กลับเมนู" % [reason, score, int(stats["hi_score"])]
 	sfx_lose.play()
+	if attempts_left > 1:
+		# ยังมีโอกาส — แพ้แบบสั้น เลือกเล่นซ้ำด่านเดิมได้ทันที (Space/R)
+		attempts_left -= 1
+		add_trauma(0.5)
+		gameover_label.text = "พลาด! %s\nเหลือโอกาส %d/%d · กด Space หรือ R เล่นซ้ำด่านเดิม\nEsc กลับหน้าเมนู" % [reason, attempts_left, MAX_ATTEMPTS]
+		_update_attempts_label()
+	else:
+		# โอกาสหมด (ตายครั้งที่ 3) — ผ่านจอแพ้เต็มจึงเริ่มด่านใหม่จริง (รับ 3 โอกาสกลับ)
+		attempts_left = 0
+		add_trauma(0.8)
+		_record_loss()
+		_update_attempts_label()
+		gameover_label.text = "โอกาสหมด! %s\nคะแนน: %d · สถิติ: %d\nกด R เริ่มด่านใหม่ (รับโอกาส 3 ใหม่) · Esc กลับหน้าเมนู" % [reason, score, int(stats["hi_score"])]
 
 func _record_win(time_used: float) -> void:
 	stats["plays"] = int(stats["plays"]) + 1
@@ -741,7 +785,7 @@ func _record_win(time_used: float) -> void:
 	stats["level"] = current_level
 	_save_stats()
 	_update_stats_label()
-	win_label.text = "คุณคืนเหรียญของเมืองครบแล้ว! (%.1f วิ)\nคะแนน: %d · กด R เล่นใหม่ · Esc กลับเมนู" % [time_used, score]
+	win_label.text = "คุณคืนเหรียญของเมืองครบแล้ว! (%.1f วิ)\nคะแนน: %d · กด R เล่นใหม่ตั้งแต่ด่าน 1 · Esc กลับเมนู" % [time_used, score]
 
 func _record_loss() -> void:
 	stats["plays"] = int(stats["plays"]) + 1
@@ -763,6 +807,10 @@ func _load_stats() -> void:
 			stats["plays"] = int(data["plays"])
 			if data.has("level"):
 				stats["level"] = int(data["level"])
+			# สกินที่เลือกที่หน้าเมนู: ต้องโหลดเข้า stats ด้วย — ไม่งั้น set_skin ได้ 0 เสมอ
+			# (และตอน _save_stats จะยังไม่ทับค่าที่หน้าเมนูเขียนไว้เป็น 0)
+			if data.has("skin"):
+				stats["skin"] = clampi(int(data["skin"]), 0, 4)
 			return
 	if FileAccess.file_exists(SAVE_PATH) or FileAccess.file_exists(SAVE_PATH + ".bak"):
 		push_warning("ไฟล์สถิติพัง — เริ่มนับใหม่")

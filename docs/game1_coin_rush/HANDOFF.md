@@ -4,17 +4,19 @@ Updated: 2026-10-31
 
 ## Current status
 
-The project is a playable eight-level 2D platformer. The title menu has three items (เริ่มเล่น /
-วิธีเล่น with controls + hero & monster bestiary / Story) driven by ↑↓ + Space/Enter + Esc, and also
-offers a hero-skin chooser (Left/Right, saved into the save file, with a correct single-frame preview);
+The project is a playable eight-level 2D platformer. The title menu has four items (เริ่มเล่น /
+วิธีเล่น with controls + hero & monster bestiary / Story / Test level selector) driven by ↑↓ +
+Space/Enter + Esc, and also offers a hero-skin chooser (Left/Right, saved into the save file, with
+a correct single-frame preview);
 levels include coins, walkers, a jumping
 Hopper enemy, a flying Bat (sine hover), a sight-locked Charger that dashes when it sees the
 player on the same row and is stunned after hitting a wall, and a level-8 mini-boss (มินิบอส
 บิตคูผู้คุม: hover, periodic dive attacks, 3 stomps to defeat, coin burst reward). There are
 moving platforms, per-theme backdrops with tile tints/weather/music, and fall detection
 in the ravine/castle stages. The player has a 2-air-tier double jump, can stomp enemies,
-collect coins, restart a level, and
-return to the title menu. Red ground spikes were removed from every level on 2026-10-31
+collect coins, and gets three attempts per level: the first two deaths allow a same-level retry
+without restoring a used attempt; the third ends the run and allows a full retry of that level.
+Red ground spikes were removed from every level on 2026-10-31
 per playtest feedback; each level ends at a golden victory-flag monument instead of the old flag sprite.
 
 Godot 4.7.2 script parse checks and a 180-frame headless smoke run of `scenes/main.tscn` both passed. This does not replace a GUI playtest. Full-lap/level completion, visual readability, and controller feel still need human verification.
@@ -29,20 +31,21 @@ $godot = (& .\shared\find_godot.ps1)   # หา Godot อัตโนมัต�
 The project starts at `scenes/title.tscn`. Controls:
 
 - A/D or Left/Right: move — on the title screen they change the hero skin
-- Up/Down (or W/S): choose a title-menu item (เริ่มเล่น / วิธีเล่น / Story); Space/Enter confirms; Esc closes an open info panel
+- Up/Down (or W/S): choose a title-menu item (เริ่มเล่น / วิธีเล่น / Story / Test); Space/Enter confirms; Esc closes an open panel
+- In the Test panel, Up/Down or Left/Right selects a level; number keys 1-8 jump to a row; Space/Enter starts it
 - Space/W/Up: jump — press again in midair for up to 2 extra air jumps (double jump); hold longer to jump higher
 - Shift: sprint
-- R: restart the current level
+- R: restart the current level with three attempts while playing; after a death, retry the same level with the remaining attempts (Space or R); after the third death, R starts the level with three fresh attempts
 - Esc: return to the title menu
 
 ## Gameplay and implementation
 
-- `scripts/main.gd` defines eight level layouts (levels 6-8 use the sewer/sky/castle themes) and builds platforms, pickups, enemies, moving platforms, HUD, level transitions, per-theme backgrounds/weather, win/loss, and save data. The red ground spikes (hazards) were removed from every level on 2026-10-31 per playtest feedback; `scenes/hazard.tscn` is kept idle on disk only.
+- `scripts/main.gd` defines eight level layouts (levels 6-8 use the sewer/sky/castle themes) and builds platforms, pickups, enemies, moving platforms, HUD, level transitions, per-theme backgrounds/weather, win/loss, and save data. It also manages three attempts per level and the transient `pending_start_level` handoff from the test selector. The red ground spikes (hazards) were removed from every level on 2026-10-31 per playtest feedback; `scenes/hazard.tscn` is kept idle on disk only.
 - `scripts/player.gd` implements acceleration-based movement, sprint, variable jump height, coyote time, jump buffering, a 2-air-tier double jump (MAX_AIR_JUMPS + ring dust + SFX on air jumps), the run/air/idle sprite animation, and `set_skin(idx)` for hero skins.
 - `scripts/enemy.gd` is the walking Glitch Bug; `scripts/enemy_hopper.gd` and `scenes/hopper.tscn` add the jumping, edge-aware Hopper; `scripts/bat.gd` + `scenes/bat.tscn` add the flying บัตบิต (sine hover, stompable); `scripts/charger.gd` + `scenes/charger.tscn` add the charging ชาร์เจอร์; `scripts/boss_kubit.gd` + `scenes/boss_kubit.tscn` add the level-8 mini-boss (HP 3, dive, coin burst via main's `_on_boss_defeated`). All can be stomped.
 - Levels 4, 5, and 8 have broken ground sections; falling below the level bounds causes a loss.
 - The old 32×64 flag sprite goal was retired; `scripts/goal.gd` now assembles a golden monument (stone pedestal + city-coin emblem + dark pole + gold sphere + two swallowtail banners with red stripes that sway + gold sparkles).
-- `scripts/title.gd` and `scenes/title.tscn` provide the title screen with a 3-item menu (เริ่มเล่น / วิธีเล่น with controls + hero & monster bestiary / Story), keyboard-driven (↑↓ + Space/Enter confirm, Esc closes panels), correct single-frame skin previews via AtlasTexture, saved-stat display, and the skin chooser (Left/Right or A/D, persisted as `skin` in the save file).
+- `scripts/title.gd` and `scenes/title.tscn` provide the title screen with a 4-item menu (เริ่มเล่น / วิธีเล่น with controls + hero & monster bestiary / Story / Test level selector), keyboard-driven (↑↓ + Space/Enter confirm, Esc closes panels), correct single-frame skin previews via AtlasTexture, saved-stat display, and the skin chooser (Left/Right or A/D, persisted as `skin` in the save file). The Test panel starts any of the eight levels directly.
 - Saves live under `user://`; preserve the existing save behavior when changing the schema.
 
 See [ARCHITECTURE.md](ARCHITECTURE.md) for node responsibilities, [GDD.md](GDD.md) for level and design details, [PLAY.md](PLAY.md) for player-facing instructions, [ART_DIRECTION.md](ART_DIRECTION.md) for visual constraints, and [ASSETS.md](ASSETS.md) for asset provenance.
@@ -62,9 +65,10 @@ Both exited successfully. A dedicated headless test suite now exists:
 godot --headless --path games/game1_coin_rush --script res://tools/test_game1.gd
 ```
 
-It runs 124 assertions over level data, all scene loads, coin/gold values, the goal-flag monument
-structure, the double-jump air-jump budget, the title menu/panels/skin preview, save-file round-trip
-(including the `skin` field), and state reset on level reload — last run: 124 PASS / 0 FAIL.
+It runs 147 assertions over level data, all scene loads, coin/gold values, the goal-flag monument
+structure, the double-jump air-jump budget, the three-attempt retry flow, the four-item title
+menu/test-level selector, skin preview and persistence, save-file round-trip, and state reset on
+level reload — last run: 147 PASS / 0 FAIL. The 180-frame headless smoke also exits successfully.
 Run it after any change to `scripts/` or level data; it does not yet replace visual playtesting.
 
 ## Before calling it playtested
@@ -72,8 +76,9 @@ Run it after any change to `scripts/` or level data; it does not yet replace vis
 1. Play through all eight levels from the title screen; verify the ordered transitions and the final win on level 8 (ปราสาทบิตคู).
 2. Verify Walker/Hopper/Bat/Charger stomps, side hits, Charger wall-stun behavior, the mini-boss (3 stomps + dive telegraphs + coin burst), timer loss, and ravine fall behavior (levels 4, 5, 8).
 3. Check the double jump in real falls (jump again twice midair to climb back), moving-platform jumps, sprint gaps, HUD, save/stat display, restart, and return-to-title behavior.
-4. Try all five hero skins in the title chooser (preview shows a standing frame, not a stretched sheet) and both info panels (วิธีเล่น / Story); confirm the choice persists after restarting the game.
-5. Levels 6-8, the Bat, the Charger, the double jump, the new goal monument, and the title menus are new content generated without a human playtest — prioritize playing them first.
+4. Try all five hero skins in the title chooser (preview shows a standing frame, not a stretched sheet), both info panels (วิธีเล่น / Story), and the Test level selector; confirm the skin persists after restarting the game.
+5. Verify the three-attempt flow in a real play session: the first two deaths retry the same level without replenishing attempts, and the third death offers a fresh three-attempt restart.
+6. Levels 6-8, the Bat, the Charger, the double jump, the new goal monument, the attempt/retry flow, and the title menus are new content that still needs a human playtest — prioritize playing them first.
 
 Preserve vendor license notices and asset attributions. Keep the active project at `games/game1_coin_rush`; do not confuse it with other game projects in the repository.
 
@@ -114,3 +119,10 @@ First human playtest feedback (5 items) — all implemented and covered by the t
   **124 PASS / 0 FAIL**, headless parse + 180-frame smoke clean.
 - Docs synced: GDD/PLAY/ARCHITECTURE/HANDOFF.
 - Still awaiting a human playtest of the new mechanics (see checklist above).
+
+## Session log 2026-10-31 (latest Game 1 work)
+
+- Added three attempts per level. Deaths one and two show a short retry prompt; Space/R retries the same level while retaining the remaining attempts. The third death ends the run; R restarts that level with three attempts. The HUD displays remaining attempts as hearts.
+- Added a fourth title-menu item, **Test · โหมดทดสอบ**, to select any of the eight levels using arrows or number keys 1-8; normal start explicitly clears the temporary test-level selection.
+- Fixed loading the saved hero skin in `main.gd`; test coverage now includes save-loaded skin, attempt transitions, HUD hearts, and test-level selection.
+- Latest validation: Godot 4.7.2 import, `test_game1.gd` **147 PASS / 0 FAIL**, and the 180-frame headless smoke all exited successfully. GUI playtest is still needed.
