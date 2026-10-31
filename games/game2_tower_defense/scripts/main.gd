@@ -29,6 +29,7 @@ const ICON_HEART := preload("res://assets/art/icons/heart.png")
 const ICON_UPG_BOW := preload("res://assets/art/icons/upg_bow.png")       # T5 ไอคอนอัปเกรดป้อมธนู
 const ICON_UPG_HAMMER := preload("res://assets/art/icons/upg_hammer.png") # T5 ไอคอนอัปเกรดปืนใหญ่
 const ICON_SCROLL := preload("res://assets/art/icons/scroll.png")         # ย้ายจุดยืนทหาร
+const ICON_TARGET := preload("res://assets/art/icons/target.png")        # Phase D: โหมดเล็ง (First/Last/Strong/Weak)
 const HeroScript := preload("res://scripts/hero.gd")                     # T5 ฮีโร่ Kubi
 const SfxScript := preload("res://scripts/sfx.gd")                       # T6 ระบบเสียง
 
@@ -165,6 +166,8 @@ var _spots_layer: SpotsOverlay  # T5.1: ชั้นวาดวงทองล�
 var _path_layer: PathOverlay
 var _wave_label: Label        # แถวข้อมูลคลื่นบน HUD (T4)
 var _wave_btn: Button         # ปุ่มเรียกคลื่นถัดไปก่อนพร้อมโบนัส (T4)
+var _shake := 0.0             # Phase D juice: แรงเขย่าจอคงเหลือ
+var _preview_box: HBoxContainer  # Phase D: แถวไอคอนพรีวิวคลื่นถัดไป
 
 class SpotsOverlay:
 	extends Node2D
@@ -250,7 +253,17 @@ func sfx(kind: String) -> void:
 	if _audio != null:
 		_audio.play(kind)
 
+## Phase D juice: โหนดลูกเรียกเขย่าจอ (ปืนใหญ่ยิง/ระเบิด/มอนรั่ว)
+func juice_shake(amount: float) -> void:
+	_shake = maxf(_shake, amount)
+
 func _process(delta: float) -> void:
+	# Phase D juice: จอสั่นรวม (offset ทั้งฉาก; HUD เป็น CanvasLayer ไม่โยนตาม = แนว TD)
+	if _shake > 0.03:
+		_shake = maxf(_shake - delta * (14.0 + _shake * 6.0), 0.0)
+		position = Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
+	elif position != Vector2.ZERO:
+		position = Vector2.ZERO
 	if _spots_layer:
 		_spots_layer.queue_redraw()   # วงทองลานป้อมเต้นกระพริบทุกเฟรม (T5.1)
 		if _placement_mode:
@@ -417,14 +430,30 @@ func _spawn_enemy(texture: Texture2D, sheet: Texture2D, path: Array[Vector2], sp
 func _on_enemy_leak() -> void:
 	_lives -= 1
 	sfx("leak")
+	juice_shake(7.0)   # Phase D: มอนรั่วเข้าปราสาท = สั่นรุนแรง + แดง
 	_update_lives()
 	if _lives_label:
 		_lives_label.modulate = Color(1.0, 0.4, 0.25)
 		var t := _lives_label.create_tween()
 		t.tween_property(_lives_label, "modulate", Color.WHITE, 0.4)
+	# Phase D: ขอบจอแดงกะพริบสั้น ๆ เตือน (CanvasLayer วาดทับทั้งเกม)
+	_blink_hurt()
 	queue_redraw()
 	if _lives <= 0:
 		_game_over(false)
+
+func _blink_hurt() -> void:
+	if _hud == null:
+		return
+	var red := ColorRect.new()
+	red.color = Color(0.85, 0.12, 0.08, 0.0)
+	red.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	red.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_hud.add_child(red)
+	var t := red.create_tween()
+	t.tween_property(red, "color:a", 0.28, 0.06)
+	t.tween_property(red, "color:a", 0.0, 0.35)
+	t.tween_callback(red.queue_free)
 
 func _on_enemy_died(reward: int, at: Vector2) -> void:
 	# ทองรางวัลต่อการฆ่า + จุดป๊อบเงินลอยขึ้น (T3)
@@ -498,6 +527,7 @@ func _update_wave_hud() -> void:
 			var nxt := _wave_idx + 1
 			if nxt < WAVES.size():
 				_wave_label.text = "คลื่นถัดไป %d/%d · %s" % [nxt + 1, WAVES.size(), _wave_text(nxt)]
+	_refresh_preview()
 	if _wave_btn:
 		if _state == "prep":
 			_wave_btn.disabled = false
@@ -519,6 +549,68 @@ func _on_wave_btn() -> void:
 		_update_gold()
 		_gold_popup(bonus, Vector2(930, 96))
 	_start_wave()
+
+# Phase D: แถวไอคอนพรีวิวคลื่นถัดไป (Bloons-style: ผู้เล่นเห็นก่อน วางแผนได้จริง)
+const PREVIEW_ICONS := {
+	"frog": FROG_TEX,
+	"lizard": LIZARD_TEX,
+	"stone_golem": GOLEM_TEX,
+	"bat": BAT_TEX,
+	"slime": SLIME_TEX,
+	"shaman": SHAMAN_TEX,
+	"kubit_boss": BOSS_TEX,
+}
+const PREVIEW_NAMES := {
+	"frog": "กบ", "lizard": "กิ้งก่า", "stone_golem": "โกเลมหิน",
+	"bat": "ค้างคาว (ปืนใหญ่/ทหารยิงไม่โดน)", "slime": "สไลม์ (ตายแล้วแตก 2 ไอจิ๋ว)",
+	"shaman": "แชแมน (ฮีลเพื่อนรอบตัว)", "kubit_boss": "บอส KUBIT",
+}
+var _preview_shown := -999   # คลื่นที่แถวไอคอนสะท้อนอยู่ (เตรียม rebuild แค่เปลี่ยนคลื่น)
+
+func _refresh_preview() -> void:
+	if _preview_box == null:
+		return
+	var want := _wave_idx + 1
+	if _state != "prep" or want >= WAVES.size():
+		_preview_box.visible = false
+		_preview_shown = -999
+		return
+	_preview_box.visible = true
+	if _preview_shown == want:
+		return
+	_preview_shown = want
+	for child in _preview_box.get_children():
+		child.queue_free()
+	for entry in WAVES[want]:
+		var kind: String = entry[0]
+		var icon: Texture2D = PREVIEW_ICONS.get(kind, FROG_TEX)
+		var tr := TextureRect.new()
+		tr.texture = icon
+		tr.custom_minimum_size = Vector2(32, 32)
+		tr.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		tr.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		tr.tooltip_text = "%s — %d ตัว" % [PREVIEW_NAMES.get(kind, kind), entry[1]]
+		tr.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_preview_box.add_child(tr)
+		var lb := Label.new()
+		if kind == "kubit_boss":
+			var bs := LabelSettings.new()
+			bs.font_size = 16
+			bs.font_color = Color(1.0, 0.32, 0.2)
+			bs.outline_size = 5
+			bs.outline_color = Color(0.1, 0.02, 0.02)
+			lb.label_settings = bs
+			lb.text = "☠×%d" % entry[1]
+		else:
+			lb.add_theme_font_size_override("font_size", 13)
+			lb.add_theme_color_override("font_color", Color(0.94, 0.92, 0.86))
+			lb.add_theme_color_override("font_shadow_color", Color(0.08, 0.06, 0.04, 0.9))
+			lb.add_theme_constant_override("shadow_offset_x", 1)
+			lb.add_theme_constant_override("shadow_offset_y", 1)
+			lb.text = "×%d" % entry[1]
+		lb.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		lb.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		_preview_box.add_child(lb)
 
 func _wave_announce(n: int) -> void:
 	# ป้ายชื่อคลื่นกลางจอ จางหายหลังโชว์เภูมิมอนกลุ่มใหม่ (HUD ยังไม่พร้อม = ข้ามเงียบ)
@@ -626,6 +718,17 @@ func _start_rally_move(tower: Node2D) -> void:
 	_rally_tower = tower
 	sfx("click")
 
+func _cycle_targeting_menu(spot_idx: int, tower: Node2D) -> void:
+	# Phase D: สลับโหมดเล็งของป้อมนี้แล้วเปิดเมนูใหม่ (รีเฟรชชื่อโหมดบนป้าย)
+	if tower == null or not is_instance_valid(tower):
+		return
+	tower.cycle_targeting()
+	sfx("click")
+	if spot_idx >= 0:
+		_open_menu(spot_idx)
+	else:
+		_open_menu(-1, Vector2.ZERO, tower)
+
 func _unhandled_input(event: InputEvent) -> void:
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_RIGHT:
 		# คลิกขวาศัตรู = Kubi ไล่โจมตี; คลิกพื้น = เดินไปตำแหน่งนั้น
@@ -724,6 +827,10 @@ func _unhandled_input(event: InputEvent) -> void:
 					_sell_selected_tower()
 				elif code == KEY_3 and _menu_tower != null and _menu_tower.kind == TowerScript.BARRACKS:
 					_start_rally_move(_menu_tower)
+				elif code == KEY_4 and _menu_tower != null:
+					# Phase D: สลับโหมดเล็ง (ทุกสายป้อม)
+					_menu_tower.cycle_targeting()
+					sfx("click")
 			if code == KEY_ESCAPE or code == KEY_X:
 				_close_menu()
 	elif event.is_action_pressed("ui_cancel") and _menu != null:
@@ -794,6 +901,9 @@ func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_t
 		var refund := _tower_refund(t)
 		var sell_action := _sell_tower.bind(spot_idx) if spot_idx >= 0 else _sell_selected_tower
 		_menu_entry(hb, ICON_COIN, "2 ขายคืน", refund, "ขายคืน 60%% ของเงินที่ลงไป (%d)" % refund, sell_action)
+		# Phase D: ปุ่มสลับโหมดเล็ง (First/Last/Strong/Weak) — ทุกสายป้อม
+		var tgt_action := _cycle_targeting_menu.bind(spot_idx, t)
+		_menu_entry(hb, ICON_TARGET, "เล็ง: %s" % t.targeting_name(), 0, t.targeting_tip() + " (กดเพื่อสลับ)", tgt_action)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.10, 0.07, 0.03, 0.9)
 	style.set_corner_radius_all(8)
@@ -1080,7 +1190,7 @@ func _build_lives_label() -> void:
 	_wave_label.position = Vector2(16, 80)
 	_hud.add_child(_wave_label)
 	var controls := Label.new()
-	controls.text = "1-4: ฐาน/ป้อม · B+คลิก: วางอิสระ · ค่ายทหาร: ปุ่ม 3 = สั่งจุดยืนทหาร"
+	controls.text = "1-4: ฐาน/ป้อม · B+คลิก: วางอิสระ · เมนูป้อม: กด 4 สลับโหมดเล็ง · ค่ายทหาร: ปุ่ม 3 สั่งจุดยืน"
 	controls.add_theme_font_size_override("font_size", 13)
 	controls.add_theme_color_override("font_color", Color(0.95, 0.93, 0.86))
 	controls.add_theme_color_override("font_shadow_color", Color(0.08, 0.06, 0.04, 0.95))
@@ -1088,6 +1198,12 @@ func _build_lives_label() -> void:
 	controls.add_theme_constant_override("shadow_offset_y", 1)
 	controls.position = Vector2(16, 108)
 	_hud.add_child(controls)
+	# Phase D: แถวไอคอนพรีวิวคลื่นถัดไป (ใต้แถววิธีเล่น)
+	_preview_box = HBoxContainer.new()
+	_preview_box.position = Vector2(16, 130)
+	_preview_box.add_theme_constant_override("separation", 5)
+	_preview_box.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hud.add_child(_preview_box)
 	# ปุ่มเรียกคลื่นถัดไปก่อนพร้อมโบนัส (มุมขวาบน - T4)
 	_wave_btn = Button.new()
 	_wave_btn.text = "เรียกคลื่น 1"

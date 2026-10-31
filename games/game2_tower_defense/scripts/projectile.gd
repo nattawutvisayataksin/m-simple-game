@@ -62,6 +62,10 @@ func _explode(at: Vector2) -> void:
 	# ระเบิดกระจุก: เป้าเต็ม + มอนรอบ ๆ ในรัศมีได้รับบางส่วน
 	if get_parent() and get_parent().has_method("sfx"):
 		get_parent().sfx("explosion")
+	# Phase D juice: จอสั่นหนักตอนระเบิด + อนุภาคปะทุเป็นวงกลม
+	if get_parent() and get_parent().has_method("juice_shake"):
+		get_parent().juice_shake(5.0)
+	_spawn_burst(at)
 	for e in get_tree().get_nodes_in_group("enemies"):
 		# Phase C: ปืนใหญ่ระเบิดพื้น — ค้างคาวบินอยู่เหนือแรงระเบิด
 		if e is Node2D and not e.dead and not e.flying and (e.position.distance_to(at) <= splash_r):
@@ -70,3 +74,25 @@ func _explode(at: Vector2) -> void:
 				dmg = damage * 0.55   # ตัวรอบ ๆ โหมเบากว่าเป้าหลัก
 			e.take_damage(dmg)
 	queue_free()
+
+func _spawn_burst(at: Vector2) -> void:
+	# Phase D: อนุภาคปะทุระเบิด (CPUParticles2D ช็อตเดียว - ถูกฟรีเองเมื่อจบ)
+	var p := CPUParticles2D.new()
+	p.one_shot = true
+	p.amount = 16
+	p.lifetime = 0.42
+	p.explosiveness = 1.0
+	p.direction = Vector2.UP
+	p.spread = 180.0
+	p.initial_velocity_min = 40.0
+	p.initial_velocity_max = 110.0
+	p.gravity = Vector2(0, 260)
+	p.scale_amount_min = 1.6
+	p.scale_amount_max = 3.4
+	p.scale_amount_curve = null
+	p.color_ramp = null
+	p.color = Color(1.0, 0.62, 0.18)
+	p.position = at
+	p.z_index = 50
+	get_parent().add_child(p)
+	p.finished.connect(p.queue_free)

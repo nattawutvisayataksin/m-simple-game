@@ -66,6 +66,25 @@ var _base_scale := Vector2(1.6, 1.6)
 var _muzzle_flash_t := 0.0
 var _turn_speed := 8.0
 var show_range := false
+# Phase D: โหมดเล็งต่อป้อม (0=ใกล้ปราสาท 1=ไกลปราสาท 2=เลือดมาก 3=เลือดน้อย)
+var targeting := 0
+
+const TARGETING_NAMES := ["ใกล้ปราสาท", "นำหน้า", "ชี้เป้าหนัก", "เก็บเศษ"]
+const TARGETING_TIPS := [
+	"ยิงมอนที่เดินมาไกลสุด (ใกล้ปราสาทที่สุด = กันรั่ว)",
+	"ยิงมอนที่เพิ่งเข้าวง (ทยอยเก็บหัวกอง)",
+	"ยิงตัวเลือดมากสุดในวง (โฟกัสโกเลม/บอส)",
+	"ยิงตัวเลือดน้อยที่สุด (ฟินิชทันที ไม่เปลืองดาเมจ)",
+]
+
+func targeting_name() -> String:
+	return TARGETING_NAMES[clampi(targeting, 0, 3)]
+
+func targeting_tip() -> String:
+	return TARGETING_TIPS[clampi(targeting, 0, 3)]
+
+func cycle_targeting() -> void:
+	targeting = (targeting + 1) % TARGETING_NAMES.size()
 
 # -- ค่ายทหาร (BARRACKS) --
 var _soldiers: Array = []                 # ต่อ slot: Node2D or null
@@ -205,8 +224,9 @@ func _process_barracks(delta: float) -> void:
 	queue_redraw()
 
 func _pick_target() -> Node2D:
+	# Phase D: โหมดเล็ง 4 แบบ — First(_progress มากสุด)/Last(n้อยสุด)/Strong/Weak
 	var best: Node2D = null
-	var best_prog := 0.0
+	var best_score := -INF
 	for e in get_tree().get_nodes_in_group("enemies"):
 		if not e is Node2D or e.dead or e._progress < 0.0:
 			continue
@@ -214,8 +234,16 @@ func _pick_target() -> Node2D:
 			# Phase C: ปืนใหญ่ยิงโค้งพื้น — ค้างคาวลอดห้าม (นักธนู/เวท ยิงได้)
 			continue
 		var d: float = e.position.distance_to(position)
-		if d <= range_r and e._progress > best_prog:
-			best_prog = e._progress
+		if d > range_r:
+			continue
+		var score := 0.0
+		match targeting:
+			0: score = e._progress        # ใกล้ปราสาท (เดินมาไกลสุด)
+			1: score = -e._progress       # นำหน้า (เพิ่งเข้าวง)
+			2: score = e.max_hp           # ชี้เป้าหนัก (โกเลม/บอส)
+			3: score = -e._hp             # เก็บเศษ (เลือดปัจจุบันน้อยสุด = ฟินิช)
+		if score > best_score:
+			best_score = score
 			best = e
 	return best
 
@@ -258,5 +286,13 @@ func _process(delta: float) -> void:
 		2: SND = "mage"
 	if get_parent() and get_parent().has_method("sfx"):
 		get_parent().sfx(SND)
+	# Phase D juice: ปืนใหญ่ = จอสั่นนิดตอนยิง (ระเบิดข้างหน้าสั่นหนักกว่า)
+	var shake := 0.0
+	if kind == CANNON:
+		shake = 2.5
+	elif kind == MAGE:
+		shake = 1.4
+	if get_parent() and get_parent().has_method("juice_shake") and shake > 0.0:
+		get_parent().juice_shake(shake)
 	get_parent().add_child(p)
 	p.global_position = _weapon_pivot.to_global(Vector2(0, -31))
