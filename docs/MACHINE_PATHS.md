@@ -31,6 +31,7 @@ Updated: 2026-10-31
 |---|---|---|---|
 | เครื่องหลัก | `Administrator` | `C:\Users\Administrator\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.2-stable_win64_console.exe` | ยกจาก config ชุดที่ใช้มาก่อน — แนะให้รัน setup_machine.ps1 ครั้งเดียวเพื่อเข้าระบบใหม่ |
 | เครื่องบ้าน (ACERHOMENITRO5) | `admin` | `C:\Users\admin\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.2-stable_win64_console.exe` | 2026-10-31 ตั้งโดย setup_machine.ps1 — เทสผ่าน find_godot.ps1 + godot-mcp ตอบเวอร์ชัน |
+| เครื่องหลัก (LICENSEHOME) | `Administrator` | `C:\Users\Administrator\AppData\Local\Microsoft\WinGet\Packages\GodotEngine.GodotEngine_Microsoft.Winget.Source_8wekyb3d8bbwe\Godot_v4.7.2-stable_win64_console.exe` | 2026-10-31 ตั้งโดย setup_machine.ps1 — env GODOT_PATH + godot-mcp ตอบ 4.7.2 ผ่าน |
 
 > เพิ่มเครื่องใหม่: รัน setup_machine.ps1 มันจะเติมแถวให้เอง (คอลัมน์แรกใช้ COMPUTERNAME กรอกชื่อคนมองรู้เรื่อง
 > เช่น "เครื่องหลัก/เครื่องบ้าน" โดยยืนยันตัวจริงด้วย USERNAME คอลัมน์สองเสมอ)
