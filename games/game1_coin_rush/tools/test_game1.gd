@@ -4,6 +4,7 @@ extends SceneTree
 # แบบแผนเดียวกับชุดเทส tools/test_*.gd ของเกม 2
 var _fail := 0
 var _main: Node2D = null
+var _goal_probe: Area2D = null
 var _frames := 0
 var _phase := 0
 
@@ -21,7 +22,7 @@ func _initialize() -> void:
 	_check(sc != null, "โหลด scripts/main.gd ได้")
 	var levels: Array = sc.get_script_constant_map()["LEVELS"]
 	_check(levels.size() == 8, "มี 8 ด่านตามแผนไน้")
-	var need_keys := ["name", "sub", "width", "height", "time", "start", "platforms", "coins", "gold_index", "enemies", "hazards", "moving"]
+	var need_keys := ["name", "sub", "width", "height", "time", "start", "platforms", "coins", "gold_index", "enemies", "moving"]
 	for i in range(levels.size()):
 		var lvl: Dictionary = levels[i]
 		_check(lvl.has_all(need_keys), "ด่าน %d มีคีย์ครบ" % (i + 1))
@@ -41,6 +42,12 @@ func _initialize() -> void:
 	var bs: Node2D = boss_scene_ref.instantiate()
 	_check(bs != null and int(bs.hp) == 3, "บอสเกิดมา HP=3")
 	bs.free()
+
+	# --- ส่วนที่ 1.45: เสาธงชัยทองแบบอนุสาวรีย์ (โครงสร้างสร้างเองตอน _ready) ---
+	# _initialize ยังไม่มี first frame — _ready ถูกเรียกเมื่อเข้า์ frame แรก เลยยืนยันชิ้นส่วนใน phase 0
+	var goal_scene_ref: PackedScene = load("res://scenes/goal.tscn")
+	_goal_probe = goal_scene_ref.instantiate()
+	root.add_child(_goal_probe)
 
 	# --- ส่วนที่ 1.5: สกินฮีโร่ครบ 5 ชุด (ไฟล์ + set_skin ใน player) ---
 	var skin_paths := [
@@ -78,6 +85,23 @@ func _process(_delta: float) -> bool:
 			quit(1)
 		return false
 	if _phase == 0:
+		# --- ตรวจโครงสร้างอนุสาวรีย์ธงชัย (instantiated ตอน _initialize; _ready รันสุดแล้วเฟรมแรก) ---
+		if _goal_probe == null:
+			print("FAIL: probe เสาธงชัยถูกล้างรึอื่น — ตรวจ _initialize")
+			_fail += 1
+		else:
+			var polys: Array = _goal_probe.find_children("*", "Polygon2D", true, false)
+			_check(polys.size() >= 12, "ธงชัยใหม่ประกอบอนุสาวรีย์จากหลายชิ้น (%d ชิ้น)" % polys.size())
+			_check(_goal_probe.find_child("Sway", true, false) != null, "ผ้าธงสองชายอยู่ในโหนด Sway เพื่อแกว่งตามลม")
+			_check(_goal_probe.find_child("GoldSparkles", true, false) != null, "ประกายทองลอยรอบเสาธงชัย")
+			var coin_img: Sprite2D = null
+			for chs in _goal_probe.find_children("*", "Sprite2D", true, false):
+				if String(chs.texture.resource_path).contains("coin_kub"):
+					coin_img = chs
+					break
+			_check(coin_img != null, "เหรียญตราเมืองประดับหน้าแท่นธง")
+			_goal_probe.free()
+			_goal_probe = null
 		# --- สกินฮีโร่: set_skin กับผู้เล่นจริง (ต้องรอ @onready) ---
 		_main.player.set_skin(3)
 		var vtex: Texture2D = _main.player.visual.texture
@@ -86,6 +110,41 @@ func _process(_delta: float) -> bool:
 		var ltex: Texture2D = _main.player.visual.texture
 		_check(String(ltex.resource_path).contains("leaf"), "set_skin(99) clamp เป็นใบไม้ระยิบได้")
 		_main.player.set_skin(0)
+		# --- ดับเบิลจัมพ์: งบกระโดดกลางอากาศ 2 ชั้น ---
+		var pl: CharacterBody2D = _main.player
+		var start_pos: Vector2 = _main.player.position
+		# ก้าวเตรียม: ย้ายขึ้นกลางอากาศแล้วเดินหนึ่งก้าว ให้ is_on_floor() กลับเป็น false จริง ๆ
+		pl.position = Vector2(300, 280)
+		pl.velocity = Vector2.ZERO
+		pl._buffer = 0.0
+		pl._physics_process(1.0 / 60.0)
+		pl._coyote = 0.0
+		pl._air_used = 0
+		pl._buffer = 0.2
+		pl._physics_process(1.0 / 60.0)
+		_check(not pl.is_on_floor(), "สภาพเทส = ลอยกลางอากาศจริง")
+		_check(pl._air_used == 1, "กดกระโดดกลางอากาศ = จ่ายงบชั้นที่ 1")
+		_check(pl.velocity.y < 0.0, "ยกตัวขึ้นหลังกระโดดกลางอากาศ")
+		pl._physics_process(1.0 / 60.0)
+		_check(pl._air_used == 1, "ไม่กดปุ่มใหม่ = ไม่จ่ายงบซ้ำ")
+		pl.position = Vector2(300, 280)
+		pl.velocity = Vector2.ZERO
+		pl._coyote = 0.0
+		pl._buffer = 0.2
+		pl._physics_process(1.0 / 60.0)
+		_check(pl._air_used == 2, "ชั้นกลางอากาศที่ 2 ยังกระโดดได้")
+		pl.position = Vector2(300, 280)
+		pl.velocity = Vector2.ZERO
+		pl._coyote = 0.0
+		pl._buffer = 0.2
+		pl._physics_process(1.0 / 60.0)
+		_check(pl._air_used == 2, "งบ 2 ชั้นหมด — ชั้นที่ 3 ถูกปฏิเสธ")
+		# คืนค่าเดิมก่อนเช็คจุดเกิด
+		pl.position = start_pos
+		pl.velocity = Vector2.ZERO
+		pl._air_used = 0
+		pl._buffer = 0.0
+		pl._coyote = 0.0
 		# --- ส่วนที่ 3: สถานะเกมหลัง _ready ---
 		_check(_main.state == _main.GameState.PLAYING, "เริ่มเกมสถานะ PLAYING")
 		_check(_main.score == 0, "คะแนนเริ่ม 0")
@@ -124,6 +183,32 @@ func _process(_delta: float) -> bool:
 		_check(_main.coins_container.get_child_count() == coinsN, "ด่านใหม่เหลิยญครบหลังโหลดทับ (%d)" % coinsN)
 		var win_bg: Node = _main.find_child("BGFar", true, false)
 		_check(win_bg != null, "มีชั้นพื้นหลังไกล BGFar")
+		# --- หน้า title: พรีวิวสกิน + เมนู วิธีเล่น/เนื้อเรื่อง ---
+		var tt: PackedScene = load("res://scenes/title.tscn")
+		var title_ui: Control = tt.instantiate()
+		root.add_child(title_ui)
+		var hero_tex: Texture2D = title_ui.hero.texture
+		_check(hero_tex is AtlasTexture, "พรีวิวสกิน = AtlasTexture ตัดเฟรมเดียว (ไม่แผ่ชีตทั้งแถวให้ยืดพัง)")
+		if hero_tex is AtlasTexture:
+			var at: AtlasTexture = hero_tex
+			_check(absf(at.region.position.x - 512.0) < 0.5 and absf(at.region.size.x - 64.0) < 0.5, "พรีวิวใช้เฟรมยืน (512,0,64,64)")
+		_check(title_ui._menu_box.get_child_count() == 3, "เมนูหลักครบ 3 ตัว (เริ่มเล่น/วิธีเล่น/เนื้อเรื่อง)")
+		_check(int(title_ui._state) == 0 and not title_ui._howto_panel.visible and not title_ui._story_panel.visible, "แผงคู่มือ+เนื้อเรื่องเริ่มต้นถูกซ่อน")
+		for panel in [title_ui._howto_panel, title_ui._story_panel]:
+			var rtls: Array = panel.find_children("*", "RichTextLabel", true, false)
+			_check(not rtls.is_empty() and rtls[0].bbcode_enabled, "แผงข้อมูลสร้างด้วย RichTextLabel bbcode")
+		_check(String(title_ui._howto_panel.find_children("*", "RichTextLabel", true, false)[0].text).contains("มอนสเตอร์"), "คู่มือมีโซนมอนสเตอร์")
+		title_ui._sel = 1
+		title_ui._confirm()
+		_check(int(title_ui._state) == 1 and title_ui._howto_panel.visible, "ยืนยันเมนู 'วิธีเล่น' = เปิดแผงคู่มือ")
+		title_ui._close_panel()
+		_check(int(title_ui._state) == 0 and not title_ui._howto_panel.visible, "ปิดแผงกลับเมนูหลักได้")
+		title_ui._sel = 2
+		title_ui._confirm()
+		_check(title_ui._story_panel.visible, "ยืนยันเมนู 'Story' = เปิดแผงเนื้อเรื่อง")
+		title_ui._close_panel()
+		# free() ทันที (ไม่ใช่ queue_free) — เทสจบใน _process เฟรมเดียวกัน โหนดที่คิวจะไม่ถูกกวาดก่อนออก → leak
+		title_ui.free()
 		_phase = 2
 	else:
 		_finish()
@@ -132,4 +217,6 @@ func _process(_delta: float) -> bool:
 
 func _finish() -> void:
 	print("=== TEST_GAME1 END fail=%d ===" % _fail)
+	# หมายเหตุ: อาจมีคำเตือน "N resources still in use" ตอน exit (pickup.wav/music_castle.wav ค้าง
+	# ใน teardown ของ engine — ผ่านมาตั้งแต่รุ่นก่อน ไม่กระทบผลเทส ซึ่งตัดสินด้วย exit code)
 	quit(1 if _fail > 0 else 0)

@@ -84,7 +84,7 @@ theme_override_colors/font_color = Color(1, 0.95, 0.8, 1)
 theme_override_colors/font_outline_color = Color(0.164706, 0.0901961, 0.0313726, 1)
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 24
-text = "เก็บเหรียญ · หลบหนาม · เหยียบศัตรู · ไปถึงธงเพื่อชนะ"
+text = "เก็บเหรียญคืนกองทุนเมือง · เหยียบฝูงไวรัส · ไปถึงเสาธงชัยทองเพื่อชนะ"
 horizontal_alignment = 1
 
 [node name="Prompt" type="Label" parent="."]
@@ -98,7 +98,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0.164706, 0.0901961, 0.0313726, 1)
 theme_override_constants/outline_size = 6
 theme_override_font_sizes/font_size = 30
-text = "กด Space เพื่อเริ่มเกม  ·  Esc ในเกม = กลับเมนู"
+text = "↑↓ เลือกเมนู · Space ยืนยัน · ←→ เปลี่ยนสกิน"
 horizontal_alignment = 1
 
 [node name="StatsLine" type="Label" parent="."]

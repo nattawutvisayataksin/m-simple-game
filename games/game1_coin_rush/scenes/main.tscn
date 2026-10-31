@@ -17,8 +17,6 @@ script = ExtResource("1_main")
 
 [node name="Enemies" type="Node2D" parent="."]
 
-[node name="Hazards" type="Node2D" parent="."]
-
 [node name="MovingPlatforms" type="Node2D" parent="."]
 
 [node name="Goal" parent="." instance=ExtResource("3_goal")]

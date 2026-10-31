@@ -18,6 +18,9 @@ const MAX_FALL_SPEED := 760.0
 const COYOTE_TIME := 0.12
 const JUMP_BUFFER := 0.15
 const JUMP_CUT := 0.55
+# ดับเบิลจัมพ์สุดฟุ้ง: กดกระโดดกลางอากาศได้อีก 2 ชั้น (ช่วยตอนตกลงลึกแล้วต้องไต่กลับ)
+const MAX_AIR_JUMPS := 2
+const AIR_JUMP_SCALE := 0.9
 const RUN_FPS := 12.0
 const RUN_FRAME_COUNT := 8
 const AIR_FRAME := 3
@@ -36,7 +39,9 @@ const SKIN_SHEETS: Array[String] = [
 var _coyote := 0.0
 var _buffer := 0.0
 var _was_on_floor := false
+var _air_used := 0
 var _dust: CPUParticles2D
+var _air_ring: CPUParticles2D
 var _bob := 0.0
 var _frame_t := 0.0
 var _rest_scale := Vector2.ONE
@@ -61,6 +66,24 @@ func _ready() -> void:
 	_dust.scale_amount_max = 1.2
 	_dust.position = Vector2(0, 14)
 	add_child(_dust)
+	# วงแหวนลมพุ่งลงแตกกระจายเป็นวง ตอนดับเบิลจัมพ์
+	_air_ring = CPUParticles2D.new()
+	_air_ring.name = "AirRing"
+	_air_ring.emitting = false
+	_air_ring.one_shot = true
+	_air_ring.explosiveness = 1.0
+	_air_ring.amount = 16
+	_air_ring.lifetime = 0.32
+	_air_ring.direction = Vector2(0, 1)
+	_air_ring.spread = 62.0
+	_air_ring.gravity = Vector2(0, 260)
+	_air_ring.initial_velocity_min = 150.0
+	_air_ring.initial_velocity_max = 240.0
+	_air_ring.scale_amount_min = 0.45
+	_air_ring.scale_amount_max = 0.85
+	_air_ring.color = Color(1.0, 0.96, 0.8, 0.8)
+	_air_ring.position = Vector2(0, 10)
+	add_child(_air_ring)
 
 func _input(event: InputEvent) -> void:
 	# Event-driven jump capture: a press can never be missed between frames.
@@ -76,6 +99,7 @@ func _physics_process(delta: float) -> void:
 	_dust_cd = maxf(_dust_cd - delta, 0.0)
 	if is_on_floor():
 		_coyote = COYOTE_TIME
+		_air_used = 0
 	else:
 		_coyote = maxf(_coyote - delta, 0.0)
 		var g := GRAVITY * (FALL_GRAVITY_MULT if velocity.y > 0.0 else 1.0)
@@ -84,12 +108,21 @@ func _physics_process(delta: float) -> void:
 	_buffer = maxf(_buffer - delta, 0.0)
 
 	# Resolve jump (buffer + coyote = forgiving, always fires)
-	if _buffer > 0.0 and _coyote > 0.0:
-		velocity.y = JUMP_VELOCITY
-		_buffer = 0.0
-		_coyote = 0.0
-		_squash(Vector2(0.78, 1.22))
-		_play_sfx("SfxJump")
+	# พื้น/โคโยตีมาก่อนเสมอ — หมดคิวแล้วกดซ้ำกลางอากาศใช้งบ MAX_AIR_JUMPS
+	if _buffer > 0.0:
+		if _coyote > 0.0:
+			velocity.y = JUMP_VELOCITY
+			_buffer = 0.0
+			_coyote = 0.0
+			_squash(Vector2(0.78, 1.22))
+			_play_sfx("SfxJump")
+		elif _air_used < MAX_AIR_JUMPS:
+			_air_used += 1
+			velocity.y = JUMP_VELOCITY * AIR_JUMP_SCALE
+			_buffer = 0.0
+			_squash(Vector2(0.82, 1.15))
+			_air_ring.restart()
+			_play_sfx("SfxJump")
 
 	# Horizontal movement with skid/friction
 	var dir := Input.get_axis("move_left", "move_right")

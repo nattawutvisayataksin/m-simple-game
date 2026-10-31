@@ -19,7 +19,6 @@ const LEVELS := [
 		"gold_index": 2,
 		"enemies": [Vector2(600,626), Vector2(1100,354), Vector2(1700,394), Vector2(2050,454)],
 		"hoppers": [],
-		"hazards": [Vector2(860,632), Vector2(1450,632), Vector2(1980,632)],
 		"moving": [],
 	},
 	{
@@ -42,7 +41,6 @@ const LEVELS := [
 		"gold_index": 5,
 		"enemies": [Vector2(520,626), Vector2(1000,374), Vector2(1600,394), Vector2(2200,454), Vector2(2800,394)],
 		"hoppers": [Vector2(1700,626)],
-		"hazards": [Vector2(820,632), Vector2(1400,632), Vector2(1960,632), Vector2(2520,632), Vector2(3080,632)],
 		"moving": [{"a": Vector2(1380, 460), "b": Vector2(1560, 460), "speed": 70.0}],
 	},
 	{
@@ -69,7 +67,6 @@ const LEVELS := [
 		"gold_index": 8,
 		"enemies": [Vector2(500,626), Vector2(900,354), Vector2(1500,374), Vector2(2100,314), Vector2(2700,344), Vector2(3300,374)],
 		"hoppers": [Vector2(1150,626), Vector2(2600,626)],
-		"hazards": [Vector2(780,632), Vector2(1320,632), Vector2(1860,632), Vector2(2400,632), Vector2(2940,632), Vector2(3480,632)],
 		"moving": [
 			{"a": Vector2(1280, 450), "b": Vector2(1440, 450), "speed": 80.0},
 			{"a": Vector2(2380, 420), "b": Vector2(2560, 420), "speed": 90.0},
@@ -99,7 +96,6 @@ const LEVELS := [
 		"gold_index": 5,
 		"enemies": [Vector2(500,626), Vector2(2100,414), Vector2(3100,374)],
 		"hoppers": [Vector2(1850,626), Vector2(2650,626)],
-		"hazards": [Vector2(940,632), Vector2(1650,632), Vector2(2790,632), Vector2(3150,632)],
 		"moving": [
 			{"a": Vector2(1980, 560), "b": Vector2(1980, 340), "speed": 90.0},
 			{"a": Vector2(1200, 560), "b": Vector2(1520, 560), "speed": 85.0},
@@ -133,7 +129,6 @@ const LEVELS := [
 		"gold_index": 10,
 		"enemies": [Vector2(560,626), Vector2(1350,444), Vector2(2150,394), Vector2(3350,354), Vector2(4000,374)],
 		"hoppers": [Vector2(1750,626), Vector2(2900,626), Vector2(3550,626), Vector2(1150,444)],
-		"hazards": [Vector2(980,632), Vector2(1290,632), Vector2(1900,632), Vector2(2470,632), Vector2(3000,632), Vector2(3620,632)],
 		"moving": [
 			{"a": Vector2(1050, 560), "b": Vector2(1050, 300), "speed": 95.0},
 			{"a": Vector2(2050, 500), "b": Vector2(2200, 500), "speed": 80.0},
@@ -164,7 +159,6 @@ const LEVELS := [
 		"chargers": [Vector2(900,626), Vector2(2450,626)],
 		"bats": [Vector2(1150,430), Vector2(1950,420), Vector2(2780,410)],
 		"hoppers": [Vector2(1650,626)],
-		"hazards": [Vector2(820,632), Vector2(1420,632), Vector2(2000,632), Vector2(2700,632)],
 		"moving": [{"a": Vector2(1610, 470), "b": Vector2(1770, 470), "speed": 85.0}],
 	},
 	{
@@ -191,7 +185,6 @@ const LEVELS := [
 		"chargers": [Vector2(1350,626)],
 		"bats": [Vector2(760,400), Vector2(1420,440), Vector2(2400,390), Vector2(3060,430)],
 		"hoppers": [Vector2(1130,626), Vector2(2380,626), Vector2(3220,626)],
-		"hazards": [Vector2(880,632), Vector2(1660,632), Vector2(2480,632), Vector2(3040,632)],
 		"moving": [
 			{"a": Vector2(1240, 500), "b": Vector2(1400, 500), "speed": 90.0},
 			{"a": Vector2(2140, 450), "b": Vector2(2300, 450), "speed": 95.0},
@@ -228,7 +221,6 @@ const LEVELS := [
 		"bats": [Vector2(900,410), Vector2(1700,430), Vector2(2250,380), Vector2(3100,400)],
 		"bosses": [Vector2(3420, 340)],
 		"hoppers": [Vector2(1500,626), Vector2(2850,626), Vector2(3450,626)],
-		"hazards": [Vector2(900,632), Vector2(1600,632), Vector2(2100,632), Vector2(2750,632), Vector2(3180,632), Vector2(3700,606)],
 		"moving": [
 			{"a": Vector2(1350, 540), "b": Vector2(1350, 320), "speed": 100.0},
 			{"a": Vector2(2550, 470), "b": Vector2(2700, 470), "speed": 95.0},
@@ -278,7 +270,6 @@ const SKY_CASTLE := [Color("#1c1430"), Color("#332349"), Color("#4a2a5e")]
 @onready var platforms: Node2D = $Platforms
 @onready var coins_container: Node2D = $Coins
 @onready var enemies_container: Node2D = $Enemies
-@onready var hazards_container: Node2D = $Hazards
 @onready var moving_container: Node2D = $MovingPlatforms
 @onready var goal: Area2D = $Goal
 @onready var score_label: Label = $HUD/ScoreLabel
@@ -292,7 +283,6 @@ const SKY_CASTLE := [Color("#1c1430"), Color("#332349"), Color("#4a2a5e")]
 @onready var coin_gold_scene: PackedScene = preload("res://scenes/coin_gold.tscn")
 @onready var enemy_scene: PackedScene = preload("res://scenes/enemy.tscn")
 @onready var hopper_scene: PackedScene = preload("res://scenes/hopper.tscn")
-@onready var hazard_scene: PackedScene = preload("res://scenes/hazard.tscn")
 @onready var moving_scene: PackedScene = preload("res://scenes/moving_platform.tscn")
 @onready var bat_scene: PackedScene = preload("res://scenes/bat.tscn")
 @onready var charger_scene: PackedScene = preload("res://scenes/charger.tscn")
@@ -363,7 +353,6 @@ func _load_level(idx: int) -> void:
 	for c in platforms.get_children(): c.queue_free()
 	for c in coins_container.get_children(): c.queue_free()
 	for c in enemies_container.get_children(): c.queue_free()
-	for c in hazards_container.get_children(): c.queue_free()
 	for c in moving_container.get_children(): c.queue_free()
 	var tints: Array = _tile_tints_for(lvl)
 	# ground (1 piece by default; levels can split it into ravine segments)
@@ -439,11 +428,6 @@ func _load_level(idx: int) -> void:
 		bs.defeated.connect(_on_boss_defeated)
 	# ธีมฉาก/ฟากตามด่าน
 	_apply_level_look(lvl)
-	# hazards
-	for pos in lvl["hazards"]:
-		var h: Area2D = hazard_scene.instantiate()
-		h.position = pos
-		hazards_container.add_child(h)
 	# goal
 	goal.position = Vector2(float(lvl["width"]) - 120.0, float(lvl.get("goal_y", 600.0)))
 	# player
@@ -693,10 +677,6 @@ func _on_coin_collected(coin_value: int) -> void:
 func _on_player_caught() -> void:
 	if state == GameState.PLAYING:
 		_lose("โดนศัตรู!")
-
-func _on_hazard_hit() -> void:
-	if state == GameState.PLAYING:
-		_lose("ตกหนาม!")
 
 func _on_goal_reached() -> void:
 	if state != GameState.PLAYING:
