@@ -523,7 +523,7 @@ func _update_smoke(dt: float) -> void:
 func _draw() -> void:
 	# grass base + grass patches (deterministic)
 	draw_rect(Rect2(0, 0, W, H), Color(0.24, 0.5, 0.28))
-	for i in 26:
+	for i in 12:
 		var px := 40.0 + float(i * 97 % 1072)
 		var py := 40.0 + float(i * 53 % 568)
 		draw_rect(Rect2(px, py, 14 + float(i % 3) * 6.0, 8.0 + float(i % 2) * 5.0), Color(0.20, 0.44, 0.24, 0.8))
@@ -726,9 +726,10 @@ func _draw_hud() -> void:
 	else:
 		draw_string(ThemeDB.fallback_font, Vector2(14, 23), "เวลา %.1f" % time_left, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(1.0, 0.85, 0.3) if time_left < 20.0 else Color(0.95, 0.95, 0.9))
 	draw_string(ThemeDB.fallback_font, Vector2(180, 23), "เงิน %d" % cash, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.2, 0.95, 0.4))
-	var st: String = "รับได้ %d · พลาด %d · %s Lv%d" % [rides_ok, rides_fail, str(CAR_NAMES.get(car.car_id, "Kubi Cab")), int((best.get("upgrades", {}) as Dictionary).get(car.car_id, 0))]
+	var st: String = "รับ %d · พลาด %d · Lv%d" % [rides_ok, rides_fail, int((best.get("upgrades", {}) as Dictionary).get(car.car_id, 0))]
 	draw_string(ThemeDB.fallback_font, Vector2(340, 23), st, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(0.9, 0.9, 0.95))
-	draw_string(ThemeDB.fallback_font, Vector2(640, 23), "คอมโบ x%d" % combo, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(1.0, 0.75, 0.3))
+	if combo >= 2:   # คอมโบโชว์เมื่อเล่นได้ต่อเนื่องเท่านั้น — จอไม่โข่งตอน x1
+		draw_string(ThemeDB.fallback_font, Vector2(640, 23), "คอมโบ x%d" % combo, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(1.0, 0.75, 0.3))
 	if night:
 		draw_string(ThemeDB.fallback_font, Vector2(905, 23), "กลางคืน x1.5", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, Color(0.55, 0.85, 1.0))
 	# ภารกิจของกะ (แผงซ้ายบน)
@@ -783,9 +784,9 @@ func _draw_hud() -> void:
 			info += " (VIP!)"
 		draw_rect(Rect2(700, 4, 200, 26), Color(0.2, 0.9, 0.45, 0.3))
 		draw_string(ThemeDB.fallback_font, Vector2(708, 18), info, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, Color(0.95, 0.95, 0.9))
-	# controls hint bottom
-	draw_rect(Rect2(0, H - 26, W, 26), Color(0.08, 0.08, 0.12, 0.7))
-	draw_string(ThemeDB.fallback_font, Vector2(12, H - 8), "ลูกศร/WASD ขับ · เคาะ Space เบรกมือ = ดริฟท์ · จอดใกล้หมุดเพื่อรับ/ส่ง · R เริ่มใหม่ · ESC เมนู", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, Color(0.9, 0.9, 0.85))
+	# controls hint bottom — จางลง (อ่านขอบใต้ไม่ตึงตา)
+	draw_rect(Rect2(0, H - 26, W, 26), Color(0.08, 0.08, 0.12, 0.6))
+	draw_string(ThemeDB.fallback_font, Vector2(12, H - 8), "ลูกศร/WASD ขับ · เคาะ Space เบรกมือ = ดริฟท์ · จอดใกล้หมุดเพื่อรับ/ส่ง · R เริ่มใหม่ · ESC เมนู", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, Color(0.75, 0.78, 0.75, 0.85))
 
 func _draw_over() -> void:
 	draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.72))

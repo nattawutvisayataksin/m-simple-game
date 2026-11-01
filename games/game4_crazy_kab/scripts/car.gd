@@ -47,7 +47,7 @@ func _physics_process(dt: float) -> void:
 
 	drifting = handbrake and absf(steer_turn) > 0.1 and speed_abs() > 120.0
 	var turn_mult := 1.45 if drifting else 1.0
-	turn_mult *= 0.35 + 0.65 * minf(speed_abs() / 180.0, 1.0)   # เลี้ยวสุดพลังต่อเมื่อความเร็วสูงพอ
+	turn_mult *= 0.5 + 0.5 * minf(speed_abs() / 160.0, 1.0)   # เลี้ยวตอนจอดเลี้ยวดีขึ้น ไม่อืดแบบเดิม
 	var target: float = steer_turn * float(d["turn"]) * turn_mult
 	rotation = rotation + target * dt2
 
@@ -61,6 +61,19 @@ func _physics_process(dt: float) -> void:
 		speed_cap *= 0.4
 	velocity = velocity + Vector2.RIGHT.rotated(rotation) * accel * dt2
 	velocity = velocity * pow(0.85 if handbrake else 0.985, dt2 * 60.0)
+	# แรงเกาะถนน (G19): ความเร็วด้านข้างหายเร็ว — รถวิ่งตามหัวจริงทันที
+	# (ตัวเดิม lateral ลดแค่ 1.5%/เฟรม = ลื่นน้ำแข็ง) — ดริฟท์ยังปล่อยลื่นตามมือ
+	var fwd := Vector2.RIGHT.rotated(rotation)
+	var v_fwd := velocity.dot(fwd)
+	var v_lat: Vector2 = velocity - fwd * v_fwd
+	var lat_mult: float = 0.98 if drifting else 0.80
+	velocity = fwd * v_fwd + v_lat * pow(lat_mult, dt2 * 60.0)
+	# เบรกลอย (ชะลอเมื่อไม่เหยียบอะไร): จอดหมุดเร็วขึ้นไม่ต้องเลาะถอยลาก
+	if steer_throttle == 0.0 and not handbrake and spin_timer <= 0.0:
+		var sp := velocity.length()
+		if sp > 0.0:
+			sp = maxf(sp - 200.0 * dt2, 0.0)
+			velocity = velocity.normalized() * sp
 	velocity = velocity.limit_length(speed_cap)
 	if speed_abs() < 4.0 and accel == 0.0:
 		velocity = Vector2.ZERO

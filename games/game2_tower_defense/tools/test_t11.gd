@@ -121,7 +121,7 @@ func _process(delta: float) -> bool:
 					return _fail("hero gate must be road end of map A")
 				# อินพุตกลับมาปกติ: B + คลิกพื้นเปิดเมนูสร้าง
 				_press(KEY_B)
-				_click(Vector2(420, 615))
+				_click(Vector2(420, 580))
 				if _main._menu == null:
 					return _fail("click route after start_map(0) must open menu")
 				_main._close_menu()

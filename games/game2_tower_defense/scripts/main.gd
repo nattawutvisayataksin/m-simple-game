@@ -301,7 +301,7 @@ func _ready() -> void:
 	_hero = HeroScript.new()
 	_hero.position = _road[_road.size() - 1]
 	add_child(_hero)
-	# ชั้นวาดวงทอง (T5.1 fix): ประกาศใน SpotsOverlay การันตีวาดเหนือพื้นหลัง (สาเหตุรายแก้ไม่จบ: วงถูก Background ทับ)
+	# ชั้นวาดประตูและ cursor เหนือพื้นหลัง
 	_placement_overlay = PlacementOverlay.new()
 	_placement_overlay.z_index = 30
 	_placement_overlay.gate = _road[0]
