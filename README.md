@@ -13,7 +13,7 @@ Repo นี้เก็บ **เกมฝึกพัฒนา 4 เกม (แ�
 
 > สถานะเกม 2: **ปิดโปรเจกต์** ที่ T5.2 (คำวินิจฉัยผู้อำนวยการ + บทเรียนเก็บไว้เต็ม ๆ ใน GDD เกม 2)
 > สถานะเกม 3: **T1.1 WIP** — เกมรถ 3D พร้อมระบบหลัก กำลังต่อยอดภาพเมือง Kubi (`docs/game3_car/GDD.md`)
-> สถานะเกม 4: **เกมเล่นได้ (G7)** — เมนู 5 จอ · สไปรต์ PixelLab 7 ภาพ + เมืองแต่ง (ตึก/ฟุตบาท/ทางม้าลาย) · เทส 3 ชุด PASS (`docs/game4_crazy_kab/`)
+> สถานะเกม 4: **เกมเล่นได้เต็ม (G8)** — เมนู 5 จอ · สไปรต์ PixelLab 7 ภาพ + เมืองแต่ง · เสียงสังเคราะห์ครบ (เพลง+SFX 12) · เทส 3 ชุด PASS (`docs/game4_crazy_kab/`)
 
 ## โครงสร้าง repo
 
@@ -29,7 +29,7 @@ m-sample-game/
 │  ├─ game1_coin_rush/      # GDD · ART_DIRECTION · ARCHITECTURE · ASSETS
 │  ├─ game2_tower_defense/  # GDD · ARCHITECTURE · ASSETS
 │  ├─ game3_car/            # GDD · ROADMAP · PLAYER_GUIDE · ASSETS
-│  ├─ game4_crazy_kab/      # GDD · ARCHITECTURE · ROADMAP_12H (แท็กซี่คู่ฟ้า)
+│  ├─ game4_crazy_kab/      # GDD · ARCHITECTURE · ART_DIRECTION · ROADMAP_12H · PLAYER_GUIDE · ASSETS (แท็กซี่)
 │  ├─ ASSET_MANIFEST.md     # สมุดบัญชี asset+โควตา key (รัวมทั้ง 2 เกม, พยานบันทึกทั้งหมด)
 │  ├─ MACHINE_PATHS.md      # สมุด path รายเครื่อง + ระเบียบ "ห้ามฝัง path ตามเครื่อง"
 │  └─ MCP_SETUP.md          # MCP ทั้งหมด + ตำแหน่งตั้งค่า + บทเรียน 401/422/timeout

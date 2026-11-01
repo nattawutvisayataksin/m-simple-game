@@ -54,6 +54,7 @@ var nearmiss_cd := 0.0
 var drift_bank := 0.0          # seconds accumulated of destructive drifting
 var golem_timer := 5.0
 var _anim_t := 0.0             # นาฬิกาแต่งภาพ (สไลม์หายใจ)
+var sfx: Node = null           # โหนดเสียงของ Main (ตั้งตอนเริ่มเกม)
 
 func _ready() -> void:
 	_start()
@@ -120,6 +121,7 @@ func _process(dt: float) -> void:
 				drift_bank -= 0.8
 				cash += DRIFT_TIP
 				add_tip(car.position, "+%d ดริฟท์!" % DRIFT_TIP, Color(1.0, 0.85, 0.3))
+				_sfx("squeal")
 		else:
 			drift_bank = 0.0
 
@@ -144,6 +146,7 @@ func _serve_input(_dt: float) -> void:
 			cash += RAMP_TIP
 			combo += 1
 			add_tip(car.position, "+%d แรมพ์!" % RAMP_TIP, Color(0.6, 1.0, 0.6))
+			_sfx("boing")
 	elif bool(car.get_meta("ramp_cd")) and not RAMP_ZONE.has_point(car.position):
 		car.set_meta("ramp_cd", false)
 	# keep inside city
@@ -163,6 +166,7 @@ func _update_trip(dt: float) -> void:
 		if car.position.distance_to(trip["p"]) < PICK_RADIUS and car.speed_abs() < STOP_SPEED:
 			trip_active = true
 			add_tip(trip["p"], "ขึ้นรถ! ส่งทัน %d วิ" % int(trip["limit"]), Color(0.4, 0.9, 1.0))
+			_sfx("pickup")
 		return
 	# on board: countdown
 	trip["left"] -= dt
@@ -170,6 +174,7 @@ func _update_trip(dt: float) -> void:
 		rides_fail += 1
 		combo = 0
 		add_tip(trip["drop"], "หมดเวลา! ลูกหนี", Color(1.0, 0.45, 0.35))
+		_sfx("fail")
 		trip = {}
 		trip_active = false
 		spawn_gap = 1.0
@@ -186,6 +191,7 @@ func _update_trip(dt: float) -> void:
 		rides_ok += 1
 		combo += 1
 		add_tip(trip["drop"], "+%d บาท x%.1f" % [total, mult], Color(0.2, 0.95, 0.4))
+		_sfx("drop")
 		trip = {}
 		trip_active = false
 		spawn_gap = 0.6
@@ -243,6 +249,7 @@ func _update_traffic(dt: float) -> void:
 				cash += NEARMISS_TIP
 				combo += 1
 				add_tip(t["pos"], "+%d เฉียดสวย!" % NEARMISS_TIP, Color(1.0, 0.95, 0.4))
+				_sfx("whoosh")
 
 func _build_slimes() -> Array:
 	var arr := []
@@ -262,6 +269,7 @@ func _update_slimes(dt: float) -> void:
 			s["vel"].y *= -1.0
 		if car != null and car.position.distance_to(s["pos"]) < 30.0:
 			car.apply_slow(2.0)
+			_sfx("squish")
 
 func _update_golems(dt: float) -> void:
 	golem_timer -= dt
@@ -275,6 +283,7 @@ func _update_golems(dt: float) -> void:
 		if car != null and car.position.distance_to(g["pos"]) < 34.0 and car.spin_timer <= 0.0:
 			car.apply_spin(1.0)
 			add_tip(car.position, "ชนโกเลม!", Color(1.0, 0.3, 0.3))
+			_sfx("thud")
 	golem_list = golem_list.filter(func(g): return g["pos"].x > -60.0 and g["pos"].x < W + 60.0)
 
 # ---------- tips / over ----------
@@ -294,6 +303,13 @@ func _update_tips(dt: float) -> void:
 func _finish() -> void:
 	over = true
 	over_info = SaveScript.record_run(cash, rides_ok)
+	# จังหวะปิด: ตัดเพลง + จิงเกิล ส่งคืนคู่คืงอย่างน้อย 5 = จัดว่ารวย
+	if sfx != null and is_instance_valid(sfx):
+		sfx.game_over(rides_ok >= 5)
+
+func _sfx(kind: String) -> void:
+	if sfx != null and is_instance_valid(sfx):
+		sfx.play(kind)
 
 # ---------- drawing ----------
 

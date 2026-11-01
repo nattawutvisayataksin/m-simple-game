@@ -22,6 +22,13 @@
 - หมุด POI / ตึกเมือง+ไฟหน้าต่าง / ฟุตบาท / ทางม้าลาย / แรมพ์ / ลูกศรชี้เป้า = `play.gd`
 - เงารถ / ไฟเบรกแดง / ดาวหมุนตอนโดนโกเลม = `car.gd`
 
+## เสียง (G8) — สังเคราะห์สัญญาณล้วน ฟรี ไม่กินโควตา PixelLab
+
+- ตัวสร้าง: `games/game4_crazy_kab/tools/generate_audio.ps1` (pattern เดียวกับ `generate_td_audio.ps1` เกม 2) → `assets/audio/` 13 ไฟล์ WAV
+- เพลง: `music_day.wav` (124 BPM funky ลูป 8 บาร์) วนตลอดทั้ง 5 จอหลัก, จบเกมตัดเพลงเปิดจิงเกิล win/lose
+- SFX: pickup / drop / fail / squeal (ยางดริฟท์) / whoosh (เฉียด) / boing (แรมพ์) / thud (ชนโกเลม) / squish (สไลม์) / horn (เริ่มเกม) / click (เมนู)
+- เดรัมเบล: `sfx.gd` พูล 10 ผู้เล่น + throttle ต่อชนิด (เช่น squeal 0.5 วิ) — จบเกมจิงเกิลตาม rides_ok ≥ 5 = "win"
+
 ## ยอดบัญชี PixelLab Key C (ยืนยันจาก get_balance จริง)
 
 - เริ่มงานเกม 4: ใช้ 9/40, เหลือ 31
@@ -30,12 +37,11 @@
 
 ## เทคนิค gen ที่พิสูจน์แล้ว (เกม 4)
 
-- รถ: `-View "high top-down"` หรือ `"low top-down"`, `-W 64 -H 64 -DownscaleTo 48`
-- ยูนิตเล็ก: `-View "side"`, `-W 32 -H 32`
+- รถ: `-View "high top-down"`, `-W 64 -H 64 -DownscaleTo 48`; ยูนิตเล็ก: `-View "side"`, `-W 32 -H 32`
 - คำอธิบายห้ามมี "stone ground / terrain" — โปรเจกต์จะเอาพื้นหินมาเกาะรถ
-- view เจอ enum ถ้าใส่อย่างอื่น (front แล้วพัง 422) — ใช้แค่ side/low/high top-down
+- view จำกัด enum: side / low top-down / high top-down (ใส่ front แล้วพัง 422)
+- **เสียงไม่ผ่าน PixelLab เลย** — PowerShell synth เอง: หลีเดื่อเอนจิน (`generate_audio.ps1`)
 
-## ทำต่อถอยหลัง (ถ้ามีงบ)
+## หลงเหลือ (ถ้าทำต่อ)
 
-- เสียง: เอนจิน/ฮอร์น/เสียงเงินเข้า (pattern เดียวกับ `generate_td_audio.ps1` เกม 2)
-- ผู้โดยสารหลายชนิด (กิ้งก่าลูก/ไก่) สุ่มแต่ละทริป
+- ผู้โดยสารหลายชนิด (กิ้งก่าลูก/ไก่) สุ่มแต่ละทริป — เหลือเฉพาะสุ่มภาพ

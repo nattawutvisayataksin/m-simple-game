@@ -30,10 +30,13 @@
 - shot_debug.gd SubViewport แคป 5 จอ (title/story/howto/guide/play) ตรวจสายตาครบ
 - แก้บั๊ก _draw cache (queue_redraw ทุกเฟรม) — เวลา/จราจร/ทิปเรนเดอร์ตามจริง
 - แต่งเมือง: ตึกไฟหน้าต่าง / ฟุตบาท / ทางม้าลาย / หญ้าหย่อน / หมุดรับไม่ทับรถเริ่มเกม
-- เสียง: ยังไม่ทำ (อยู่ใน "ทำต่อถ้ามีงบ" ของ ASSETS.md)
 
 ## G7 — ปิดท้าย (11:00-12:00) ✅
-- PLAYER_GUIDE.md + ASSETS.md จากโค้ดจริงทั้งหมด · README สถิติเกม 4 · push รอบนี้
+- PLAYER_GUIDE.md + ASSETS.md + ART_DIRECTION.md จากโค้ดจริงทั้งหมด · README สถิติเกม 4 · push รอบนี้
+
+## G8 — เสียง (ส่วนเฟรมถัดไป) ✅
+- `tools/generate_audio.ps1` synth ล้วน (ฟรี ไม่กิน PixelLab): เพลงเมือง 124 BPM + SFX 12 ชิ้น
+- `sfx.gd`: พูล 10 เล่น, throttle ต่อชนิด เข้าคลิกเมนู/จบเกม win-lose; hook ครบทุก event ใน play.gd + เทส 3/3 PASS
 
 ## กันพลาด (เหมือนเกม 2)
 - `FileAccess.close()` ทุกครั้ง · สั่งจัดฉากใน `_initialize` ไม่ได้ — รอ `_process` เฟรมแรก

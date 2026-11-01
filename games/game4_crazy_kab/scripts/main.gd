@@ -4,6 +4,7 @@ extends Node2D
 
 const PlayScript := preload("res://scripts/play.gd")
 const SaveScript := preload("res://scripts/save.gd")
+const SfxScript := preload("res://scripts/sfx.gd")
 
 const W := 1152.0
 const H := 648.0
@@ -15,8 +16,13 @@ var play_node: Node2D = null
 var best := {}
 var buttons := []            # [{rect, label, target}]
 var mouse := Vector2.ZERO
+var sfx: Node = null
 
 func _ready() -> void:
+	sfx = Node.new()
+	sfx.name = "Sfx"
+	sfx.set_script(SfxScript)
+	add_child(sfx)
 	best = SaveScript.load_best()
 	_to_title()
 
@@ -35,6 +41,8 @@ func _input(ev: InputEvent) -> void:
 
 func _to_title() -> void:
 	screen = SCR.TITLE
+	if sfx != null:
+		sfx.resume_music()
 	if play_node != null:
 		play_node.queue_free()
 		play_node = null
@@ -47,6 +55,8 @@ func _to_title() -> void:
 	]
 
 func _click(t: int) -> void:
+	if sfx != null:
+		sfx.play("click")
 	if t == SCR.PLAY:
 		_start_play()
 	elif t == SCR.OVER:
@@ -61,8 +71,12 @@ func _start_play() -> void:
 		play_node.queue_free()
 	play_node = Node2D.new()
 	play_node.set_script(PlayScript)
+	play_node.sfx = sfx
 	add_child(play_node)
 	play_node.back_to_menu.connect(_to_title)
+	if sfx != null:
+		sfx.start_music()
+		sfx.play("horn")
 	screen = SCR.PLAY
 	buttons = []
 
