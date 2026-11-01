@@ -56,6 +56,9 @@ var golem_timer := 5.0
 var _anim_t := 0.0             # นาฬิกาแต่งภาพ (สไลม์หายใจ)
 var sfx: Node = null           # โหนดเสียงของ Main (ตั้งตอนเริ่มเกม)
 var shake_t := 0.0             # กล้องเขย่า (ชนโกเลม)
+var freeze_t := 0.0            # hit-stop 0.06 วิ (เงินเข้าส่งสำเร็จ)
+var smoke := []                # ควันยางดริฟท์ [{pos, age}]
+var _smoke_cd := 0.0
 
 func _ready() -> void:
 	_start()
@@ -114,12 +117,18 @@ func _process(dt: float) -> void:
 		time_left = 0.0
 		_finish()
 		return
-	_serve_input(dt)
-	_update_trip(dt)
-	_update_traffic(dt)
-	_update_slimes(dt)
-	_update_golems(dt)
+	# hit-stop: โลกหยุดหายใจแวบเดียวตอนแตกโอกาส — อินพุตยังเก็บแต่เวลาโลกไม่ไหล
+	var world_dt := dt
+	if freeze_t > 0.0:
+		freeze_t -= dt
+		world_dt = 0.0
+	_serve_input(world_dt)
+	_update_trip(world_dt)
+	_update_traffic(world_dt)
+	_update_slimes(world_dt)
+	_update_golems(world_dt)
 	_update_tips(dt)
+	_update_smoke(dt)
 	if nearmiss_cd > 0.0:
 		nearmiss_cd -= dt
 	if drift_bank > 0.0 or car.drifting:
@@ -200,6 +209,7 @@ func _update_trip(dt: float) -> void:
 		combo += 1
 		add_tip(trip["drop"], "+%d บาท x%.1f" % [total, mult], Color(0.2, 0.95, 0.4))
 		_sfx("drop")
+		freeze_t = 0.06
 		trip = {}
 		trip_active = false
 		spawn_gap = 0.6
@@ -321,6 +331,22 @@ func _sfx(kind: String) -> void:
 	if sfx != null and is_instance_valid(sfx):
 		sfx.play(kind)
 
+func _update_smoke(dt: float) -> void:
+	# ควันยาง: ปล่อยทุก 0.09 วิขณะดริฟท์ เก็บอายุ 0.7 วิตายผี
+	if car != null and car.drifting:
+		_smoke_cd -= dt
+		if _smoke_cd <= 0.0:
+			_smoke_cd = 0.09
+			smoke.append({"pos": car.position + Vector2(randf_range(-8.0, 8.0), randf_range(-6.0, 10.0)), "age": 0.0})
+	else:
+		_smoke_cd = 0.0
+	var keep := []
+	for s: Dictionary in smoke:
+		s["age"] += dt
+		if s["age"] < 0.7:
+			keep.append(s)
+	smoke = keep
+
 # ---------- drawing ----------
 
 func _draw() -> void:
@@ -335,6 +361,10 @@ func _draw() -> void:
 	# roads
 	_draw_roads()
 	_draw_crosswalks()
+	# smoke puffs: วงเทาโปร่งขยายตามอายุ วาดก่อนของชิ้นใหญ่
+	for s: Dictionary in smoke:
+		var t: float = s["age"] / 0.7
+		draw_circle(s["pos"], 6.0 + 10.0 * t, Color(0.85, 0.85, 0.85, 0.45 * (1.0 - t)))
 	# ramp
 	draw_rect(RAMP_ZONE, Color(0.85, 0.9, 0.95))
 	draw_rect(RAMP_ZONE.grow(-4.0), Color(0.55, 0.6, 0.7))
