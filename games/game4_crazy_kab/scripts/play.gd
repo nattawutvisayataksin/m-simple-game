@@ -55,6 +55,7 @@ var drift_bank := 0.0          # seconds accumulated of destructive drifting
 var golem_timer := 5.0
 var _anim_t := 0.0             # นาฬิกาแต่งภาพ (สไลม์หายใจ)
 var sfx: Node = null           # โหนดเสียงของ Main (ตั้งตอนเริ่มเกม)
+var shake_t := 0.0             # กล้องเขย่า (ชนโกเลม)
 
 func _ready() -> void:
 	_start()
@@ -102,6 +103,13 @@ func _process(dt: float) -> void:
 		return
 	time_left -= dt
 	_anim_t += dt
+	# camera shake: หนุนจอสนุกหมุน 1 วิเท่านั้น — ระบายแรงตามเวลาที่เหลือ
+	if shake_t > 0.0:
+		shake_t -= dt
+		var mag := 7.0 * shake_t / 0.35
+		position = Vector2(randf_range(-mag, mag), randf_range(-mag, mag))
+	elif position != Vector2.ZERO:
+		position = Vector2.ZERO
 	if time_left <= 0.0:
 		time_left = 0.0
 		_finish()
@@ -211,7 +219,8 @@ func _new_trip() -> void:
 		if d > MIN_DROP_DIST:
 			break
 	var lim := clampf(15.0 + d / 60.0, 18.0, 45.0)
-	trip = {"p": pickup, "drop": drop, "limit": lim, "left": lim, "dist": d, "fare": 50 + int(d / 10.0)}
+	# สายพันธุ์ลูกค้า 3 แบบจากสไปรต์เดียว: กบปกติ / กบน้อง (เล็ก) / กบธุระ (ใหญ่)
+	trip = {"p": pickup, "drop": drop, "limit": lim, "left": lim, "dist": d, "fare": 50 + int(d / 10.0), "kind": randi() % 3}
 	trip_active = false
 
 # ---------- traffic / hazards ----------
@@ -284,6 +293,7 @@ func _update_golems(dt: float) -> void:
 			car.apply_spin(1.0)
 			add_tip(car.position, "ชนโกเลม!", Color(1.0, 0.3, 0.3))
 			_sfx("thud")
+			shake_t = 0.35
 	golem_list = golem_list.filter(func(g): return g["pos"].x > -60.0 and g["pos"].x < W + 60.0)
 
 # ---------- tips / over ----------
@@ -340,9 +350,18 @@ func _draw() -> void:
 			c = Color(0.35, 0.75, 1.0)
 		draw_circle(p, 12.0, c)
 		draw_circle(p, 7.0, Color(0.08, 0.08, 0.08))
-	# ผู้โดยสารรอขึ้นรถที่หมุดรับ (ยืนเหนือหมุดเล็กน้อย)
+	# ผู้โดยสารรอขึ้นรถที่หมุดรับ (ยืนเหนือหมุดเล็กน้อย) — ติดสี/ขนาดตามสายพันธุ์
 	if not trip.is_empty() and not trip_active:
-		draw_texture_rect(PASS_TEX, Rect2(trip["p"] + Vector2(-11, -38), (Vector2(22, 22))), false)
+		var kind: int = int(trip.get("kind", 0))
+		var tint := Color(1.0, 1.0, 1.0)
+		var half := 11.0
+		if kind == 1:
+			tint = Color(1.0, 0.85, 0.55)      # กบน้องชุดคูบี้
+			half = 9.0
+		elif kind == 2:
+			tint = Color(0.78, 0.87, 1.0)      # กบสเวตออฟฟิศ
+			half = 13.0
+		draw_texture_rect(PASS_TEX, Rect2(trip["p"] + Vector2(-half, -38.0), Vector2(half * 2.0, half * 2.0)), false, tint)
 	# trip arrow: pickup or drop
 	if not trip.is_empty() and car != null:
 		var target: Vector2 = trip["drop"] if trip_active else trip["p"]
