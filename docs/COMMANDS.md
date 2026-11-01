@@ -65,7 +65,7 @@ powershell -File shared\gen_pixen_c.ps1 -OutFile games\<gameX>\assets\sprites\fo
 
 ### เช็คยอดเครดิต Key C
 
-ผ่าน MCP `execute`:  `tools["pixellab-c"].get_balance()` — ล่าสุด 2026-11-01 (จบกราฟิกเกม 4) = **23/40 ใช้ 17**
+ผ่าน MCP `execute`:  `tools["pixellab-c"].get_balance()` — ล่าสุด 2026-11-01 (ผู้โดยสาร 2 สายพันธุ์) = **21/40 ใช้ 19**
 
 ### อนิเมชันตัวละคร (animate-pixminimax)
 

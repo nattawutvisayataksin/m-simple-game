@@ -10,6 +10,8 @@ const SaveScript := preload("res://scripts/save.gd")
 const SLIME_TEX := preload("res://assets/sprites/hazard_slime.png")
 const GOLEM_TEX := preload("res://assets/sprites/hazard_golem.png")
 const PASS_TEX := preload("res://assets/sprites/pass_frog.png")
+const PASS_LIZ_TEX := preload("res://assets/sprites/pass_liz.png")
+const PASS_CHICK_TEX := preload("res://assets/sprites/pass_chick.png")
 const TRAFFIC_TEX := preload("res://assets/sprites/car_traffic.png")
 const CAR_ANG := PI * 0.75   # ภาพรถหันลงซ้าย 135° (ชุดเดียวกับ car.gd)
 
@@ -380,18 +382,18 @@ func _draw() -> void:
 			c = Color(0.35, 0.75, 1.0)
 		draw_circle(p, 12.0, c)
 		draw_circle(p, 7.0, Color(0.08, 0.08, 0.08))
-	# ผู้โดยสารรอขึ้นรถที่หมุดรับ (ยืนเหนือหมุดเล็กน้อย) — ติดสี/ขนาดตามสายพันธุ์
+	# ผู้โดยสารรอขึ้นรถที่หมุดรับ (ยืนเหนือหมุดเล็กน้อย) — สายพันธุ์จากสไปรต์จริง
 	if not trip.is_empty() and not trip_active:
 		var kind: int = int(trip.get("kind", 0))
-		var tint := Color(1.0, 1.0, 1.0)
+		var tex: Texture2D = PASS_TEX
 		var half := 11.0
 		if kind == 1:
-			tint = Color(1.0, 0.85, 0.55)      # กบน้องชุดคูบี้
-			half = 9.0
+			tex = PASS_LIZ_TEX       # กิ้งก่าลูกน้อยตัวอวบหน่อย
+			half = 12.0
 		elif kind == 2:
-			tint = Color(0.78, 0.87, 1.0)      # กบสเวตออฟฟิศ
+			tex = PASS_CHICK_TEX     # ไก่แก้วตัวกลมโตกว่า
 			half = 13.0
-		draw_texture_rect(PASS_TEX, Rect2(trip["p"] + Vector2(-half, -38.0), Vector2(half * 2.0, half * 2.0)), false, tint)
+		draw_texture_rect(tex, Rect2(trip["p"] + Vector2(-half, -16.0 - half * 2.0), Vector2(half * 2.0, half * 2.0)), false)
 	# trip arrow: pickup or drop
 	if not trip.is_empty() and car != null:
 		var target: Vector2 = trip["drop"] if trip_active else trip["p"]
