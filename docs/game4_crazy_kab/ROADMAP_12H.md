@@ -82,6 +82,12 @@
 - หมดเวลา: ภารกิจที่ครบ = โบนัส**เข้าเงินกะเดียวกัน** (รวมใน record_run → total_cash) · จอจบแสดงรายการโบนัส
 - **เทสเพิ่มขั้น mission-bonus** (test_2_fare ขยายเป็น 5 ขั้น + backup/restore เซฟ) — เทส 3/3 PASS
 
+## G16 — เสียงกลางคืน (โค้ดฟรี) ✅
+- `generate_audio.ps1` เพิ่ม **ชุดราตรี**: `music_night.wav` (88 BPM, Am–F–C–G ลูป 4 บาร์ — bass sine 2 โน้ต/บาร์ + pad r+5/r+12 ค้างทั้งบาร์ + arp สโลว์ 12-16-19-16 + hat จังหวะ 3 + kick นุ่ม 2/บาร์) และ `sfx_cricket.wav` (4 ชิรป × 3 พัลส์ ~4.2±0.3kHz ใน 2 วิ) — รวม 15 ไฟล์ WAV
+- `sfx.gd`: `start_music(night:=false)` สลับ stream day/night + `_amb` player จิ้งหรีดวนอัตโนมัติ (finished→play, -16dB) + `set_ambience(on)`; `game_over()` ตัดจิ้งหรีดให้เอง; mute ครอบ `_amb`
+- `main.gd`: เริ่มกะกลางคืน → `start_music(true)` + `set_ambience(true)`; `_to_title` → `set_ambience(false)` ทุกทางออก
+- **เทสชุด 4 ใหม่** `test_4_audio.gd` (สลับเพลง/จิ้งหรีด + จบกะตัดหมด) — เทส 4/4 PASS
+
 ## กันพลาด (เหมือนเกม 2)
 - `FileAccess.close()` ทุกครั้ง · สั่งจัดฉากใน `_initialize` ไม่ได้ — รอ `_process` เฟรมแรก
 - commit + push ทุกถังงาน แม้เล็ก ตรวจ `main -> main` แทน exit code

@@ -139,7 +139,76 @@ function Build-DayMusic {
     return $mix
 }
 
+# ============ เพลงราตรี (chill) — 88 BPM, 4 บาร์, Am–F–C–G ============
+function Build-NightMusic {
+    $bpm = 88.0
+    $beat = [int][Math]::Round($sr * 60.0 / $bpm)
+    $bar = $beat * 4
+    $total = $bar * 4
+    $mix = New-Object 'double[]' $total
+    $prog = 45, 41, 48, 43    # Am F C G
+    for ($b = 0; $b -lt 4; $b++) {
+        $r = $prog[$b]
+        # bass sine นุ่ม: 2 โน้ตต่อบาร์ (root เกาะ 2 บีทต่อโน้ต)
+        for ($k = 0; $k -lt 2; $k++) {
+            $n = $beat * 2
+            $s = New-Object 'double[]' $n
+            for ($i = 0; $i -lt $n; $i++) {
+                $t = $i / $sr
+                $s[$i] = [Math]::Sin(2 * [Math]::PI * (Freq ($r - 12)) * $t) * 0.22
+            }
+            At (ADS $s 0.02 0.08 0.3) $mix ($b * $bar + $k * $n)
+        }
+        # pad ยามดึก: คอร์ดบางค้างทั้งบาร์ (r+5 คู่ห้า + r+12 ออคเตฟ)
+        At (ADS (Tri (Freq ($r + 5)) $bar 0.05) 0.15 0.2 0.2) $mix ($b * $bar)
+        At (ADS (Tri (Freq ($r + 12)) $bar 0.04) 0.15 0.2 0.2) $mix ($b * $bar)
+        # arp สโลว์ 4 ต่อบาร์ (1 บีทต่อโน้ต)
+        $arpIdx = @(12, 16, 19, 16)
+        for ($k = 0; $k -lt 4; $k++) {
+            At (ADS (Sq (Freq ($r + $arpIdx[$k])) $beat 0.05 0.45) 0.01 0.05 0.5) $mix ($b * $bar + $k * $beat)
+        }
+        # hat เบา เฉพาะจังหวะ 3
+        $sn = Noise ([int]($beat / 4)) 0.07 20262
+        ADS $sn 0.001 0.01 0.9 | Out-Null
+        At $sn $mix ($b * $bar + 2 * $beat)
+        # kick นุ่ม 2 ต่อบาร์ (1 และ 3)
+        for ($k = 0; $k -lt 2; $k++) {
+            $n2 = [int]($beat / 4)
+            $s2 = New-Object 'double[]' $n2
+            for ($i = 0; $i -lt $n2; $i++) {
+                $t = $i / $sr
+                $f = 90.0 * [Math]::Exp(-16.0 * $t) + 38.0
+                $s2[$i] = [Math]::Sin(2 * [Math]::PI * $f * $t) * 0.26 * (1.0 - $i / $n2)
+            }
+            At $s2 $mix ($b * $bar + $k * 2 * $beat)
+        }
+    }
+    return $mix
+}
+
 # ============ SFX ============
+
+# จิ้งหรีดยามดึก: 4 ชิรปใน ~2 วิ แต่ละชิรป 3 พัลส์เสียงสูงบาง ๆ
+function Sfx-Cricket {
+    $n = [int]($sr * 2.0)
+    $m = New-Object 'double[]' $n
+    $rnd = New-Object System.Random 20263
+    for ($c = 0; $c -lt 4; $c++) {
+        $start = [int]($c * 0.5 * $sr)
+        for ($p = 0; $p -lt 3; $p++) {
+            $pn = [int]($sr * 0.03)          # พัลส์ 30ms
+            $f = 4200.0 + ($rnd.NextDouble() * 2.0 - 1.0) * 300.0
+            $off = $start + [int]($p * $sr * 0.055)
+            $s = New-Object 'double[]' $pn
+            for ($i = 0; $i -lt $pn; $i++) {
+                $t = $i / $sr
+                $s[$i] = [Math]::Sin(2 * [Math]::PI * $f * $t) * [Math]::Exp(-60.0 * $t) * 0.3
+            }
+            At $s $m $off
+        }
+    }
+    return $m
+}
 
 # ลูกค้าขึ้นรถ: เหนี่ยวเขา 2 โน้ต (E5 → A5) ต้อนรับ
 function Sfx-PickupReal {
@@ -282,4 +351,6 @@ Save-Wav (Join-Path $outDir 'sfx_horn.wav')   (Sfx-Horn) $true
 Save-Wav (Join-Path $outDir 'sfx_click.wav')  (Sfx-Click) $true
 Save-Wav (Join-Path $outDir 'sfx_win.wav')    (Sfx-Win) $true
 Save-Wav (Join-Path $outDir 'sfx_lose.wav')   (Sfx-Lose) $true
+Save-Wav (Join-Path $outDir 'music_night.wav') (Build-NightMusic) $true
+Save-Wav (Join-Path $outDir 'sfx_cricket.wav') (Sfx-Cricket) $true
 Write-Host "เสร็จสิ้น — เสียงครบทั้งเกม 4"

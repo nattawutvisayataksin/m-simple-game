@@ -56,6 +56,7 @@ func _to_title() -> void:
 	best = SaveScript.load_best()   # รอบใหม่: โหลดเงินสะสม/อัปเกรด/รถที่เลือกล่าสุด
 	if sfx != null:
 		sfx.resume_music()
+		sfx.set_ambience(false)   # กลับเมนู: หยุดจิ้งหรีดอัตโนมัติ
 	if play_node != null:
 		play_node.queue_free()
 		play_node = null
@@ -127,7 +128,8 @@ func _start_play(night_run := false) -> void:
 	add_child(play_node)
 	play_node.back_to_menu.connect(_to_title)
 	if sfx != null:
-		sfx.start_music()
+		sfx.start_music(night_run)   # กะกลางคืนสลับเพลงราตรี 88 BPM
+		sfx.set_ambience(night_run)  # จิ้งหรีดเฉพาะกลางคืน
 		sfx.play("horn")
 	screen = SCR.PLAY
 	buttons = []

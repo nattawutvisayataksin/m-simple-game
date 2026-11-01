@@ -24,12 +24,15 @@
 - หมุด POI / ตึกเมือง+ไฟหน้าต่าง / ฟุตบาท / ทางม้าลาย / แรมพ์ / ลูกศรชี้เป้า = `play.gd`
 - เงารถ / ไฟเบรกแดง / ดาวหมุนตอนโดนโกเลม = `car.gd`
 
-## เสียง (G8) — สังเคราะห์สัญญาณล้วน ฟรี ไม่กินโควตา PixelLab
+## เสียง (G8 + G16) — สังเคราะห์สัญญาณล้วน ฟรี ไม่กินโควตา PixelLab
 
-- ตัวสร้าง: `games/game4_crazy_kab/tools/generate_audio.ps1` (pattern เดียวกับ `generate_td_audio.ps1` เกม 2) → `assets/audio/` 13 ไฟล์ WAV
-- เพลง: `music_day.wav` (124 BPM funky ลูป 8 บาร์) วนตลอดทั้ง 5 จอหลัก, จบเกมตัดเพลงเปิดจิงเกิล win/lose
+- ตัวสร้าง: `games/game4_crazy_kab/tools/generate_audio.ps1` (pattern เดียวกับ `generate_td_audio.ps1` เกม 2) → `assets/audio/` **15 ไฟล์ WAV**
+- เพลงกลางวัน: `music_day.wav` (124 BPM funky, C–Am–F–G ลูป 8 บาร์) ใช้ทุกจอปกติ
+- **เพลงราตรี (G16)**: `music_night.wav` (88 BPM chill, Am–F–C–G 3 โน้ตสโลว์ + pad ค้างทั้งบาร์ ลูป 4 บาร์) — สลับอัตโนมัติเมื่อ `sfx.start_music(true)`
+- **จิ้งหรีดยามดึก (G16)**: `sfx_cricket.wav` (4 ชิรป ~2 วิ × 3 พัลส์ ~4.2kHz) — player แยกวนตลอดเฉพาะกะกลางคืน (`set_ambience`), หยุดทันทีเมื่อกลับเมนู/จบกะ
 - SFX: pickup / drop / fail / squeal (ยางดริฟท์) / whoosh (เฉียด) / boing (แรมพ์) / thud (ชนโกเลม) / squish (สไลม์) / horn (เริ่มเกม) / click (เมนู)
 - เดรัมเบล: `sfx.gd` พูล 10 ผู้เล่น + throttle ต่อชนิด (เช่น squeal 0.5 วิ) — จบเกมจิงเกิลตาม rides_ok ≥ 5 = "win"
+- **เทสเสียงแยก**: `tools/test_4_audio.gd` (สลับเพลง/จิ้งหรีดตามกะ + จบกะตัดหมด) — exit 0 = ผ่าน
 
 ## ยอดบัญชี PixelLab Key C (ยืนยันจาก get_balance จริง)
 

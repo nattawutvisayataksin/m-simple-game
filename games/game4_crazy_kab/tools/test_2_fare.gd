@@ -14,7 +14,6 @@ var _sim_t := 0.0
 var _phase := 0
 var _bak_exists := false
 var _bak_txt := ""
-
 func _initialize() -> void:
 	_bak_exists = FileAccess.file_exists(SAVE_PATH)
 	if _bak_exists:
@@ -103,22 +102,24 @@ func _process(dt: float) -> bool:
 			print("TEST_FARE offers-3 PASS")
 			_phase = 4
 		4:
-			# กะกลางคืน: ค่าโดยสาร x1.5 (ส่งทัน 60% = mult 2.0)
-			var before: int = play.cash
-			var fare: int = int(play.offers[0]["fare"])
+			# กะกลางคืน: หยุด เอนจินเกมเดินเอง (เทสคุมจ่ายตัวเองแบบเฟรมเดียว) — เงินรีเซ็ต 0 จ่ายชัด ๆ
+			play.set_process(false)
+			play.cash = 0
+			play.rides_ok = 0
+			play.combo = 0
+			play.night = true
+			var fare4: int = int(play.offers[0]["fare"])
 			play.trip = play.offers[0]
 			play.trip_active = true
-			play.night = true
 			play.car.position = play.trip["drop"]
 			play.car.velocity = Vector2.ZERO
 			play._update_trip(0.01)
-			var exp2 := int(round(float(fare) * 2.0 * 1.5))
-			if play.trip.is_empty() and play.cash - before == exp2:
+			var exp2 := int(round(float(fare4) * 2.0 * 1.5))   # frac=1.0 → mult 2.0 × night 1.5
+			if play.trip.is_empty() and play.cash == exp2:
 				print("TEST_FARE night x1.5 PASS total=%d" % exp2)
 				_phase = 5
-			elif _sim_t > 10.0:
-				# แถม: ลูกศรลอยอาจบวกเงินแวบ — ตรวจด้วยช่วงขยาย x2 (คูณค่า mult อธิบายไม่พัง)
-				print("TEST_FARE FAIL night total+%d expect=%d fare=%d" % [play.cash - before, exp2, fare])
+			else:
+				print("TEST_FARE FAIL night cash=%d expect=%d fare=%d rides=%d nearmiss=%d drift=%.1f" % [play.cash, exp2, fare4, play.rides_ok, play.nearmiss_n, play.drift_secs])
 				quit(1); return true
 		5:
 			# ภารกิจ: _finish ต้องให้โบนัส (แตะเซฟจริง — restore ท้ายขั้น)

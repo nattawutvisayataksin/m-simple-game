@@ -3,6 +3,8 @@ extends Node
 # ไฟล์ synth ล้วนจาก tools/generate_audio.ps1 (ไม่กินโควตา PixelLab)
 
 const MUSIC_DAY := preload("res://assets/audio/music_day.wav")
+const MUSIC_NIGHT := preload("res://assets/audio/music_night.wav")
+const SFX_CRICKET := preload("res://assets/audio/sfx_cricket.wav")
 
 const STREAMS := {
 	"pickup": preload("res://assets/audio/sfx_pickup.wav"),
@@ -32,6 +34,8 @@ var _pool: Array[AudioStreamPlayer] = []
 var _pool_i := 0
 var _last_t := {}
 var _music: AudioStreamPlayer
+var _amb: AudioStreamPlayer
+var _amb_on := false
 var _muted := false
 
 func _ready() -> void:
@@ -44,14 +48,31 @@ func _ready() -> void:
 	_music.volume_db = -10.0
 	add_child(_music)
 	_music.finished.connect(func(): _music.play())
+	# จิ้งหรีดยามดึก: วนเรื่อย ๆ เฉพาะตอนกะกลางคืน
+	_amb = AudioStreamPlayer.new()
+	_amb.stream = SFX_CRICKET
+	_amb.volume_db = -16.0
+	add_child(_amb)
+	_amb.finished.connect(func(): if _amb_on: _amb.play())
 
-func start_music() -> void:
-	if _music.stream == null:
-		_music.stream = MUSIC_DAY
+func start_music(night := false) -> void:
+	var target: AudioStream = MUSIC_NIGHT if night else MUSIC_DAY
+	if _music.stream != target or not _music.playing:
+		_music.stream = target
 		_music.play()
 
+func set_ambience(on: bool) -> void:
+	_amb_on = on
+	if _amb == null or not is_instance_valid(_amb):
+		return
+	if on and not _amb.playing:
+		_amb.play()
+	elif not on and _amb.playing:
+		_amb.stop()
+
 func game_over(won: bool) -> void:
-	# จบ 120 วิ: ตัดเพลง เปิดจิงเกิลสรุป
+	# จบ 120 วิ: ตัดเพลง+จิ้งหรีด เปิดจิงเกิลสรุป
+	set_ambience(false)
 	if _music != null and is_instance_valid(_music):
 		_music.stop()
 	play("win" if won else "lose")
@@ -81,4 +102,6 @@ func toggle_mute() -> bool:
 	_muted = not _muted
 	if _music != null:
 		_music.stream_paused = _muted
+	if _amb != null:
+		_amb.stream_paused = _muted
 	return _muted
