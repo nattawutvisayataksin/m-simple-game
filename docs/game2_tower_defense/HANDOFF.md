@@ -18,7 +18,7 @@ The current build includes:
 ## Resume checklist
 
 1. Run all twelve headless tests listed in [ARCHITECTURE.md](ARCHITECTURE.md).
-2. Play both maps; tune `PATH_B` / `TOWER_SPOTS_B` in `scripts/main.gd` if the Director wants different routing against the generated background art.
+2. Play all maps; tune the path and free-placement clearance rules in `scripts/main.gd` if routing or tower coverage needs adjustment.
 3. Phase F (docs) is done for GDD/ARCHITECTURE/ASSETS/HANDOFF/ROADMAP; no further doc debt known.
 4. PixelLab Key C has 31/40 generations left — spend only on key visuals.
 

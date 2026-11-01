@@ -23,7 +23,7 @@ func _process(delta: float) -> bool:
 	_timer += delta
 	if _phase == 0 and _timer >= 0.1:
 		var mage_cost := int(_main.TOWER_DEFS["mage"]["cost"])
-		_main._open_menu(2)
+		_main._open_menu(Vector2(100, 100))
 		var layout: VBoxContainer = _main._menu.get_child(0)
 		var options: HBoxContainer = layout.get_child(1)
 		if options.get_child_count() != 4:
@@ -36,7 +36,7 @@ func _process(delta: float) -> bool:
 			return true
 		var mage_button: TextureButton = mage_option.get_child(0)
 		mage_button.pressed.emit()
-		var mage: Node2D = _main._towers[2]
+		var mage: Node2D = _main._towers[0]
 		if mage == null or mage.kind != _main.TowerScript.MAGE or _main._gold != 180 - mage_cost:
 			_fail("mage tower purchase failed")
 			return true

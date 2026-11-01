@@ -168,7 +168,7 @@ var _lives_label: Label
 var _gold_label: Label
 var _hud: CanvasLayer
 var _towers: Array[Node2D] = []
-var _menu: Control            # แผงเลือกป้อม (เปิดเมื่อคลิกลานว่าง)
+var _menu: Control            # แผงเลือกสร้าง/จัดการป้อม
 var _menu_mode := ""          # T5: "build" = เลือกสร้าง / "built" = อัปเกรด-ขาย
 var _menu_tower: Node2D
 var _placement_mode := false
@@ -176,7 +176,7 @@ var _placement_position := Vector2.ZERO
 var _sandbox_map := false
 var _rally_tower: Node2D       # Phase B: โหมดสั่งย้ายจุดยืนทหาร (ค่ายทหาร)
 var _hero                     # T5: ฮีโร่ Kubi (คลิกขวาสั่งเดิน)
-var _spots_layer: SpotsOverlay  # ชั้นวาดตัวชี้ตำแหน่งวางป้อมและประตู
+var _placement_overlay: PlacementOverlay
 var _path_layer: PathOverlay
 var _wave_label: Label        # แถวข้อมูลคลื่นบน HUD (T4)
 var _wave_btn: Button         # ปุ่มเรียกคลื่นถัดไปก่อนพร้อมโบนัส (T4)
@@ -192,7 +192,7 @@ var _kills := 0
 var _gold_earned := 0
 var _prev_best := 0                           # สถิติเดิมของแผนที่ตอนเริ่มรอบ (โชว์ "สถิติใหม่")
 
-class SpotsOverlay:
+class PlacementOverlay:
 	extends Node2D
 	var cursor_position := Vector2.ZERO
 	var cursor_valid := false
@@ -302,11 +302,11 @@ func _ready() -> void:
 	_hero.position = _road[_road.size() - 1]
 	add_child(_hero)
 	# ชั้นวาดวงทอง (T5.1 fix): ประกาศใน SpotsOverlay การันตีวาดเหนือพื้นหลัง (สาเหตุรายแก้ไม่จบ: วงถูก Background ทับ)
-	_spots_layer = SpotsOverlay.new()
-	_spots_layer.z_index = 30
-	_spots_layer.gate = _road[0]
-	_spots_layer.castle = _road[_road.size() - 1]
-	add_child(_spots_layer)
+	_placement_overlay = PlacementOverlay.new()
+	_placement_overlay.z_index = 30
+	_placement_overlay.gate = _road[0]
+	_placement_overlay.castle = _road[_road.size() - 1]
+	add_child(_placement_overlay)
 	_load_best()
 	_build_title()   # Phase E: เริ่มที่หน้าเลือกแผนที่ (หยุดจนกว่าผู้เล่นจะเลือก)
 	queue_redraw()
@@ -327,14 +327,14 @@ func _process(delta: float) -> void:
 		position = Vector2(randf_range(-_shake, _shake), randf_range(-_shake, _shake))
 	elif position != Vector2.ZERO:
 		position = Vector2.ZERO
-	if _spots_layer:
-		_spots_layer.queue_redraw()
+	if _placement_overlay:
+		_placement_overlay.queue_redraw()
 		if _placement_mode:
 			_placement_position = get_global_mouse_position()
-			_spots_layer.cursor_position = _placement_position
-			_spots_layer.cursor_valid = _valid_tower_position(_placement_position)
+			_placement_overlay.cursor_position = _placement_position
+			_placement_overlay.cursor_valid = _valid_tower_position(_placement_position)
 		else:
-			_spots_layer.cursor_position = Vector2.ZERO
+			_placement_overlay.cursor_position = Vector2.ZERO
 	# ตัวรันคลื่น (T4): prep = นับถอยหลังโชว์ปุ่มเรียกก่อน ; wave = เกิดตามคิวกันฉาวจนจบ
 	if _state == "prep":
 		_prep_t -= delta
@@ -891,7 +891,7 @@ func _build_title() -> void:
 		box.add_child(btn)
 
 func _start_map(idx: int) -> void:
-	# เปลี่ยนแผนที่: ภาพพื้นหลัง + เส้นทาง + ลานป้อม + ประตู/ปราสาท + จุดพักฮีโร่ -> แล้วเริ่มเกม
+	# เปลี่ยนแผนที่: ภาพพื้นหลัง + เส้นทาง + ประตู/ปราสาท + จุดพักฮีโร่ -> แล้วเริ่มเกม
 	if _state != "title":
 		return
 	_map_idx = clampi(idx, 0, MAPS.size() - 1)
@@ -903,7 +903,7 @@ func _start_map(idx: int) -> void:
 	_sandbox_map = bool(cfg.get("sandbox", false))
 	if _controls_label != null:
 		_controls_label.position = Vector2(920, 78) if _sandbox_map else Vector2(16, 108)
-		_controls_label.text = "1-4 ฐาน · B วางอิสระ · คลิกเลือกป้อม" if _sandbox_map else "1-4: ฐาน/ป้อม · B+คลิก: วางอิสระ · เมนูป้อม: กด 4 สลับโหมดเล็ง · ค่ายทหาร: ปุ่ม 3 สั่งจุดยืน"
+		_controls_label.text = "B+คลิกพื้น: วางป้อม · คลิกป้อม: จัดการ" if _sandbox_map else "B+คลิกพื้น: วางป้อม · คลิกป้อม: จัดการ · คลิกขวา: สั่ง Kubi"
 	_path_layer.polished = _sandbox_map
 	_path_layer.queue_redraw()
 	var bg := get_node_or_null("Background")
@@ -919,9 +919,9 @@ func _start_map(idx: int) -> void:
 	if ground != null:
 		ground.visible = _sandbox_map
 	_path_layer.points = PackedVector2Array(_road)
-	_spots_layer.gate = _road[0]
-	_spots_layer.castle = _road[_road.size() - 1]
-	_spots_layer.queue_redraw()
+	_placement_overlay.gate = _road[0]
+	_placement_overlay.castle = _road[_road.size() - 1]
+	_placement_overlay.queue_redraw()
 	queue_redraw()
 	_hero.home = _road[_road.size() - 1]
 	_hero.position = _road[_road.size() - 1]
@@ -941,16 +941,13 @@ func _start_rally_move(tower: Node2D) -> void:
 	_rally_tower = tower
 	sfx("click")
 
-func _cycle_targeting_menu(spot_idx: int, tower: Node2D) -> void:
+func _cycle_targeting_menu(tower: Node2D) -> void:
 	# Phase D: สลับโหมดเล็งของป้อมนี้แล้วเปิดเมนูใหม่ (รีเฟรชชื่อโหมดบนป้าย)
 	if tower == null or not is_instance_valid(tower):
 		return
 	tower.cycle_targeting()
 	sfx("click")
-	if spot_idx >= 0:
-		_open_menu(spot_idx)
-	else:
-		_open_menu(-1, Vector2.ZERO, tower)
+	_open_menu(tower.position, tower)
 
 func _unhandled_input(event: InputEvent) -> void:
 	if _state == "title":
@@ -997,38 +994,29 @@ func _unhandled_input(event: InputEvent) -> void:
 		if _placement_mode:
 			for p in candidates:
 				if _valid_tower_position(p):
-				_open_menu(p)
+					_open_menu(p)
 					_placement_mode = false
 					break
 		elif _menu != null:
 			_close_menu()
 	elif event is InputEventKey and event.pressed and not event.echo:
-		# B เปิดโหมดวางอิสระ; 1-4 ใช้เลือกชนิดป้อมในเมนูเท่านั้น
+		# B เปิดโหมดวางป้อม; 1-4 ใช้เลือกชนิดป้อมในเมนูเท่านั้น
 		var code: int = event.keycode
 		if code == KEY_B and _menu == null:
 			_placement_mode = not _placement_mode
-			if not _placement_mode and _spots_layer:
-				_spots_layer.cursor_position = Vector2.ZERO
+			if not _placement_mode and _placement_overlay:
+				_placement_overlay.cursor_position = Vector2.ZERO
 		elif _state == "prep" and code == KEY_N:
 			# ทางลัดเรียกคลื่นก่อน = เหมือนกดปุ่มมุมขวาบน (ได้โบนัสตามวินาทีคงเหลือ)
 			_on_wave_btn()
 		elif _menu != null:
 			if _menu_mode == "build":
 				if code == KEY_1:
-					if _menu_spot >= 0:
-						_build_tower(_menu_spot, "archer")
-					else:
-						_build_free_tower(_placement_position, "archer")
+					_build_free_tower(_placement_position, "archer")
 				elif code == KEY_2:
-					if _menu_spot >= 0:
-						_build_tower(_menu_spot, "cannon")
-					else:
-						_build_free_tower(_placement_position, "cannon")
+					_build_free_tower(_placement_position, "cannon")
 				elif code == KEY_3:
-					if _menu_spot >= 0:
-						_build_tower(_menu_spot, "mage")
-					else:
-						_build_free_tower(_placement_position, "mage")
+					_build_free_tower(_placement_position, "mage")
 			elif _menu_mode == "built":
 				if code == KEY_1 and _menu_tower != null and _menu_tower.level < 2:
 					_upgrade_selected_tower()
@@ -1045,20 +1033,12 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed("ui_cancel") and _menu != null:
 		_close_menu()
 
-func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_tower: Node2D = null) -> void:
+func _open_menu(free_position: Vector2 = Vector2.ZERO, selected_tower: Node2D = null) -> void:
 	_close_menu()
 	sfx("click")
-	_menu_spot = spot_idx
 	_menu_tower = selected_tower
-	if _menu_tower == null and spot_idx >= 0 and _towers[spot_idx] != null:
-		_menu_tower = _towers[spot_idx]
 	_menu_mode = "built" if _menu_tower != null else "build"
-	# T5: เมนู 2 โหมด - ลานว่าง = สร้างป้อม / ลานที่มีป้อม = อัปเกรด + ขาย
-	if spot_idx < 0:
-		_placement_position = _menu_tower.position if _menu_tower != null else free_position
-	if _spots_layer:
-		_spots_layer.selected = spot_idx
-		_spots_layer.queue_redraw()
+	_placement_position = _menu_tower.position if _menu_tower != null else free_position
 	if _menu_mode == "built":
 		_menu_tower.show_range = true
 		_menu_tower.queue_redraw()
@@ -1070,9 +1050,9 @@ func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_t
 	panel.add_child(layout)
 	var heading := Label.new()
 	if _menu_mode == "build":
-		heading.text = "สร้างป้อม · ลาน %d" % [spot_idx + 1] if spot_idx >= 0 else "สร้างป้อม · จุดอิสระ"
+		heading.text = "สร้างป้อม · จุดอิสระ"
 	else:
-		heading.text = "จัดการป้อม · ลาน %d" % [spot_idx + 1] if spot_idx >= 0 else "จัดการป้อม"
+		heading.text = "จัดการป้อม"
 	heading.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var heading_style := LabelSettings.new()
 	heading_style.font_size = 14
@@ -1090,7 +1070,7 @@ func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_t
 		for key in ["archer", "cannon", "mage", "barracks"]:
 			var def: Dictionary = TOWER_DEFS[key]
 			var tip: String = "%s (รัศมี %d, ดาเมจ %.0f)" % [def["name"], def["range"], def["dmg"]]
-			var build_action := _build_tower.bind(spot_idx, key) if spot_idx >= 0 else _build_free_tower.bind(_placement_position, key)
+			var build_action := _build_free_tower.bind(_placement_position, key)
 			_menu_entry(hb, def["icon"], "%d %s" % [option_number, def["name"]], int(def["cost"]), tip, build_action)
 			option_number += 1
 	else:
@@ -1100,7 +1080,7 @@ func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_t
 			# อัปเกรด Lv2: ไอคอนประจำป้อม + ราคาต่ำงาน
 			var upg: Dictionary = def["upg"]
 			var tip2: String = "อัปเกรด %s Lv2 (ดาเมจ %.0f, รัศมี %d)" % [def["name"], upg["dmg"], upg["range"]]
-			var upgrade_action := _upgrade_tower.bind(spot_idx) if spot_idx >= 0 else _upgrade_selected_tower
+			var upgrade_action := _upgrade_selected_tower
 			_menu_entry(hb, def["upg_icon"], "1 อัปเกรด", int(def["upg_cost"]), tip2, upgrade_action)
 		if t.kind == TowerScript.BARRACKS:
 			# Phase B: สั่งทหารย้ายจุดยืน (rally) คลิกจุดต่อไป
@@ -1108,10 +1088,10 @@ func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_t
 			_menu_entry(hb, ICON_SCROLL, "3 ย้ายจุด", 0, "คลิกจุดบนสนามเพื่อสั่งทหารยืนกั้นทางที่นั่น", rally_action)
 		# ขายคืน 60% ของเงินที่ลงไป (ไอคอนเหรียญ Kubi เดิม)
 		var refund := _tower_refund(t)
-		var sell_action := _sell_tower.bind(spot_idx) if spot_idx >= 0 else _sell_selected_tower
+		var sell_action := _sell_selected_tower
 		_menu_entry(hb, ICON_COIN, "2 ขายคืน", refund, "ขายคืน 60%% ของเงินที่ลงไป (%d)" % refund, sell_action)
 		# Phase D: ปุ่มสลับโหมดเล็ง (First/Last/Strong/Weak) — ทุกสายป้อม
-		var tgt_action := _cycle_targeting_menu.bind(spot_idx, t)
+		var tgt_action := _cycle_targeting_menu.bind(t)
 		_menu_entry(hb, ICON_TARGET, "เล็ง: %s" % t.targeting_name(), 0, t.targeting_tip() + " (กดเพื่อสลับ)", tgt_action)
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(0.10, 0.07, 0.03, 0.9)
@@ -1121,7 +1101,7 @@ func _open_menu(spot_idx: int, free_position: Vector2 = Vector2.ZERO, selected_t
 	style.content_margin_top = 7
 	style.content_margin_bottom = 7
 	panel.add_theme_stylebox_override("panel", style)
-	var anchor := _spots[spot_idx] if spot_idx >= 0 else _placement_position
+	var anchor := _placement_position
 	panel.position = anchor + Vector2(-100, -78)
 	panel.position.x = clampf(panel.position.x, 8.0, 1152.0 - menu_width - 8.0)
 	panel.position.y = clampf(panel.position.y, 8.0, 648.0 - 178.0)
@@ -1168,56 +1148,27 @@ func _close_menu() -> void:
 	if _menu_tower != null and is_instance_valid(_menu_tower):
 		_menu_tower.show_range = false
 		_menu_tower.queue_redraw()
-	if _spots_layer:
-		_spots_layer.selected = -1
-		_spots_layer.queue_redraw()
-	_menu_spot = -1
 	_menu_tower = null
 	_menu_mode = ""
 
 func _open_tower_menu(tower: Node2D) -> void:
-	_open_menu(_towers.find(tower), tower.position, tower)
+	_open_menu(tower.position, tower)
 
 func _tower_def_key(t: Node2D) -> String:
-	# T5: หาแถว def ของป้อมต่อลาน (จาก kind) สำหรับอัปเกรด/ขาย
+	# หาแถว def ของป้อม (จาก kind) สำหรับอัปเกรด/ขาย
 	for key in TOWER_DEFS:
 		if t.kind == int(TOWER_DEFS[key]["kind"]):
 			return key
 	return "archer"
 
-func _refund(spot_idx: int) -> int:
-	return int(round(float(_inv[spot_idx]) * SELL_REFUND))
-
 func _tower_refund(tower: Node2D) -> int:
 	return int(round(float(tower.invested_gold) * SELL_REFUND))
 
 func _upgrade_selected_tower() -> void:
-	_upgrade_tower_node(_menu_tower, _menu_spot)
+	_upgrade_tower_node(_menu_tower)
 
 func _sell_selected_tower() -> void:
-	_sell_tower_node(_menu_tower, _menu_spot)
-
-func _build_tower(spot_idx: int, key: String) -> void:
-	if spot_idx < 0 or _towers[spot_idx] != null:
-		return
-	var def: Dictionary = TOWER_DEFS[key]
-	if _gold < int(def["cost"]):
-		_flash_gold()
-		return
-	_gold -= int(def["cost"])
-	_update_gold()
-	var t := TowerScript.new()
-	t.setup(def["kind"], def["tex"], def["dmg"], def["interval"], def["range"], def["shot"], def["splash"])
-	t.position = _spots[spot_idx]
-	t.invested_gold = int(def["cost"])
-	add_child(t)
-	sfx("build")
-	# T5: จำสถานะต่อลาน (node / เลเวล / เงินที่ลงไป ใช้คิดคืนขาย)
-	_towers[spot_idx] = t
-	_lvl[spot_idx] = 1
-	_inv[spot_idx] = int(def["cost"])
-	_close_menu()
-	queue_redraw()
+	_sell_tower_node(_menu_tower)
 
 func _build_free_tower(at: Vector2, key: String) -> void:
 	if not _valid_tower_position(at):
@@ -1236,16 +1187,11 @@ func _build_free_tower(at: Vector2, key: String) -> void:
 	tower.invested_gold = int(def["cost"])
 	add_child(tower)
 	sfx("build")
-	_free_towers.append(tower)
+	_towers.append(tower)
 	_close_menu()
 	queue_redraw()
 
-func _upgrade_tower(spot_idx: int) -> void:
-	if spot_idx < 0 or spot_idx >= _towers.size():
-		return
-	_upgrade_tower_node(_towers[spot_idx], spot_idx)
-
-func _upgrade_tower_node(t: Node2D, spot_idx: int) -> void:
+func _upgrade_tower_node(t: Node2D) -> void:
 	if t == null or t.level >= 2:
 		return
 	var def: Dictionary = TOWER_DEFS[_tower_def_key(t)]
@@ -1256,22 +1202,13 @@ func _upgrade_tower_node(t: Node2D, spot_idx: int) -> void:
 		return
 	_gold -= cost
 	t.invested_gold += cost
-	if spot_idx >= 0:
-		_inv[spot_idx] += cost
 	_update_gold()
 	sfx("build")
 	t.apply_upgrade(float(upg["dmg"]), float(upg["interval"]), float(upg["range"]), float(upg["shot"]), float(upg["splash"]))
-	if spot_idx >= 0:
-		_lvl[spot_idx] = 2
 	_close_menu()
 	queue_redraw()
 
-func _sell_tower(spot_idx: int) -> void:
-	if spot_idx < 0 or spot_idx >= _towers.size():
-		return
-	_sell_tower_node(_towers[spot_idx], spot_idx)
-
-func _sell_tower_node(t: Node2D, spot_idx: int) -> void:
+func _sell_tower_node(t: Node2D) -> void:
 	if t == null:
 		return
 	var refund := _tower_refund(t)
@@ -1284,12 +1221,7 @@ func _sell_tower_node(t: Node2D, spot_idx: int) -> void:
 		for s in t._soldiers:
 			if s != null and is_instance_valid(s):
 				s.queue_free()
-	if spot_idx >= 0:
-		_towers[spot_idx] = null
-		_lvl[spot_idx] = 0
-		_inv[spot_idx] = 0
-	else:
-		_free_towers.erase(t)
+	_towers.erase(t)
 	_close_menu()
 	queue_redraw()
 
@@ -1297,12 +1229,6 @@ func _tower_at(at: Vector2) -> Node2D:
 	var nearest: Node2D
 	var nearest_distance := 38.0
 	for tower in _towers:
-		if tower is Node2D and is_instance_valid(tower):
-			var distance := at.distance_to(tower.position)
-			if distance < nearest_distance:
-				nearest = tower
-				nearest_distance = distance
-	for tower in _free_towers:
 		if is_instance_valid(tower):
 			var distance := at.distance_to(tower.position)
 			if distance < nearest_distance:
@@ -1331,23 +1257,12 @@ func _distance_to_path(at: Vector2) -> float:
 func _valid_tower_position(at: Vector2) -> bool:
 	if at.x < 52.0 or at.x > 1100.0 or at.y < 48.0 or at.y > 600.0:
 		return false
-	if _distance_to_path(at) < (76.0 if _sandbox_map else 62.0):
+	if _distance_to_path(at) < 62.0:
 		return false
-	if _sandbox_map and not _inside_sandbox_clearing(at):
-		return false
-	for spot in _spots:
-		if at.distance_to(spot) < 70.0:
-			return false
 	for tower in _towers:
-		if tower is Node2D and is_instance_valid(tower) and at.distance_to(tower.position) < 72.0:
-			return false
-	for tower in _free_towers:
 		if is_instance_valid(tower) and at.distance_to(tower.position) < 72.0:
 			return false
 	return true
-
-func _inside_sandbox_clearing(at: Vector2) -> bool:
-	return Rect2(92, 258, 178, 132).has_point(at) or Rect2(330, 548, 322, 72).has_point(at) or Rect2(765, 275, 230, 137).has_point(at)
 
 func _update_lives() -> void:
 	if _lives_label:
@@ -1404,7 +1319,7 @@ func _build_lives_label() -> void:
 	_wave_label.position = Vector2(16, 80)
 	_hud.add_child(_wave_label)
 	_controls_label = Label.new()
-	_controls_label.text = "1-4: ฐาน/ป้อม · B+คลิก: วางอิสระ · เมนูป้อม: กด 4 สลับโหมดเล็ง · ค่ายทหาร: ปุ่ม 3 สั่งจุดยืน"
+	_controls_label.text = "B+คลิกพื้น: วางป้อม · คลิกป้อม: จัดการ · คลิกขวา: สั่ง Kubi"
 	_controls_label.add_theme_font_size_override("font_size", 13)
 	_controls_label.add_theme_color_override("font_color", Color(0.95, 0.93, 0.86))
 	_controls_label.add_theme_color_override("font_shadow_color", Color(0.08, 0.06, 0.04, 0.95))

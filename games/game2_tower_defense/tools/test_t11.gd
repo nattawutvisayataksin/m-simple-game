@@ -63,6 +63,12 @@ func _click(pos: Vector2) -> void:
 	ev.global_position = pos
 	_main._unhandled_input(ev)
 
+func _press(code: int) -> void:
+	var ev := InputEventKey.new()
+	ev.keycode = code
+	ev.pressed = true
+	_main._unhandled_input(ev)
+
 func _deep_buttons(node: Node) -> int:
 	# นับ Button ทุกระดับใต้ Layer
 	var n := 0
@@ -85,7 +91,7 @@ func _process(delta: float) -> bool:
 				var btns := _deep_buttons(_main._title_layer)
 				if btns < 2:
 					return _fail("title must offer >=2 map buttons, got %d" % btns)
-				_click(Vector2(420, 615))   # ลานป้ามปกติ
+			_click(Vector2(420, 615))   # คลิกพื้นโดยไม่เข้าโหมดวางต้องไม่เปิดเมนู
 				if _main._menu != null:
 					return _fail("game click must be blocked in title")
 				if _main._state != "title":
@@ -95,7 +101,7 @@ func _process(delta: float) -> bool:
 				_main._prep_t = 1e9
 				_phase = 1
 		1:
-			# เริ่มกีแผนที่ A: สถานะ + เส้นทาง/ลาน + ประตู-ปราสาท-ฮีโร่ + title หาย
+			# เริ่มแผนที่ A: สถานะ + เส้นทาง/ประตู-ปราสาท-ฮีโร่ + title หาย
 			if _t >= 0.3:
 				if _main._state != "prep":
 					return _fail("after start_map(0) state must be prep")
@@ -105,17 +111,16 @@ func _process(delta: float) -> bool:
 					return _fail("map A road must have 10 waypoints")
 				if _main._road[0] != Vector2(258, 190) or _main._road[_main._road.size() - 1] != Vector2(810, 450):
 					return _fail("map A road endpoints mismatch")
-				if _main._spots.size() != 4 or _main._spots[0] != Vector2(160, 445):
-					return _fail("map A spots mismatch")
-				if _main._spots_layer.spots != _main._spots:
-					return _fail("spots overlay must follow current map")
-				if _main._spots_layer.gate != _main._road[0] or _main._spots_layer.castle != _main._road[_main._road.size() - 1]:
+				if not _main._valid_tower_position(Vector2(160, 445)):
+					return _fail("map A free placement should accept clear grass")
+				if _main._placement_overlay.gate != _main._road[0] or _main._placement_overlay.castle != _main._road[_main._road.size() - 1]:
 					return _fail("portal/castle markers must follow road")
 				if _main.get_node("Background").texture != _main.MAP_A_TEX:
 					return _fail("background texture must be map A")
 				if _main._hero.home != Vector2(810, 450) or _main._hero.position != Vector2(810, 450):
 					return _fail("hero gate must be road end of map A")
-				# อินพุตกลับมาปกติ: คลิกลานเดิมเปิดเมนูได้
+				# อินพุตกลับมาปกติ: B + คลิกพื้นเปิดเมนูสร้าง
+				_press(KEY_B)
 				_click(Vector2(420, 615))
 				if _main._menu == null:
 					return _fail("click route after start_map(0) must open menu")
@@ -134,11 +139,11 @@ func _process(delta: float) -> bool:
 					return _fail("background texture must be map B")
 				if _main._road[0] != Vector2(258, 140) or _main._road[_main._road.size() - 1] != Vector2(850, 380):
 					return _fail("map B road endpoints mismatch")
-				if _main._spots[0] != Vector2(340, 370):
-					return _fail("map B spots mismatch")
+				if not _main._valid_tower_position(Vector2(340, 370)):
+					return _fail("map B free placement should accept clear grass")
 				if _main._hero.home != Vector2(850, 380) or _main._hero.position != Vector2(850, 380):
 					return _fail("hero gate must be road end of map B")
-				if _main._spots_layer.gate != _main._road[0] or _main._spots_layer.castle != _main._road[_main._road.size() - 1]:
+				if _main._placement_overlay.gate != _main._road[0] or _main._placement_overlay.castle != _main._road[_main._road.size() - 1]:
 					return _fail("portal/castle markers must follow road (map B)")
 				# มอนเกิดจากปากสุสานเดินเส้น PATH_B (สุ่มชนิดปกติ = ใช้ _road ของแผนที่ปัจจุบัน)
 				var s0: Vector2 = _main._road[0]

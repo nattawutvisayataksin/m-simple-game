@@ -19,6 +19,7 @@ const STREAMS := {
 	"click": preload("res://assets/audio/sfx_click.wav"),
 	"win": preload("res://assets/audio/sfx_win.wav"),
 	"lose": preload("res://assets/audio/sfx_lose.wav"),
+	"tut": preload("res://assets/audio/sfx_tut.wav"),
 }
 
 # เดซิเบล + throttle กันยิงรัวจนตอแหล (วิ)
@@ -27,6 +28,7 @@ const PROFILE := {
 	"squeal": [-9.0, 0.5], "whoosh": [-8.0, 0.4], "boing": [-6.0, 0.5],
 	"thud": [-4.0, 0.4], "squish": [-8.0, 0.4], "horn": [-6.0, 1.0],
 	"click": [-14.0, 0.04], "win": [-3.0, 1.2], "lose": [-3.0, 1.2],
+	"tut": [-6.0, 0.15],
 }
 const POOL_SIZE := 10
 

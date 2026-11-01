@@ -51,7 +51,7 @@ func _process(delta: float) -> bool:
 			# ---- รอบ 1a: ค้างคาว + ปืนใหญ่ (ยิงไม่โดน) ----
 			if not _bat_spawned and _t > 0.2:
 				_bat_spawned = true
-				_main._build_tower(0, "cannon")
+				_main._build_free_tower(CANNON_FREE_AT, "cannon")
 				if _main._towers[0] == null:
 					return _fail("cannon build at spot 0")
 				# บินช้าหน่อยให้ช่วง "อยู่ในวง" ยาว: เข้าวง t≈8.5 · จุดสุดท้าย x=140 → รั่ว t≈12.2
@@ -75,8 +75,8 @@ func _process(delta: float) -> bool:
 			# ---- รอบ 1b: นักธนูยิงค้างคาวตาย ----
 			if not _archer_swapped:
 				_archer_swapped = true
-				_main._sell_tower(0)
-				_main._build_tower(0, "archer")
+				_main._sell_tower_node(_main._towers[0])
+				_main._build_free_tower(CANNON_FREE_AT, "archer")
 				if _main._towers[0] == null or _main._towers[0].kind != 0:
 					return _fail("archer rebuild at spot 0")
 			if not _alive(_bat):

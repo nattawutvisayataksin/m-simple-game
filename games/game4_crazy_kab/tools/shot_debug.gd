@@ -83,6 +83,16 @@ func _process(delta: float) -> bool:
 		9:
 			if _t > 7.6:
 				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game4_tutor.png")
+				# ต่อทันที: จอสรุปท้ายกะฝึก (step 3) + สถิติจำลอง
+				var tp: Node2D = _main.play_node
+				tp.tut_step = 3
+				tp.rides_ok = 1
+				tp.drift_secs = 2.3
+				tp.cash = 208
+				_stage = 10
+		10:
+			if _t > 8.2:
+				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game4_tutor_done.png")
 				quit(0)
 				return true
 	return false

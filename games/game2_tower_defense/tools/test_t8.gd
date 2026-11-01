@@ -23,7 +23,7 @@ func _initialize() -> void:
 	_main._prep_t = 1e9
 	_main._gold = 500
 	_main._update_gold()
-	_main._build_tower(0, "barracks")
+	_main._build_free_tower(Vector2(160, 445), "barracks")
 	if _main._towers[0] == null or _main._towers[0].kind != 3:
 		print("TEST_T8 FAIL barracks build")
 		quit(1)

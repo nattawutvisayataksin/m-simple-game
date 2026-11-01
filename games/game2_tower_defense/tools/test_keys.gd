@@ -1,5 +1,5 @@
 extends SceneTree
-# เทสทางลัดคีย์บอร์ด: กด 4 เปิดเมนูลานที่ 4 -> กด 2 สร้างปืนใหญ่ (เงินพอ 180>=150)
+# เทสคีย์ลัด: กด B แล้วคลิกพื้นที่สนาม -> กด 2 สร้างปืนใหญ่
 var _f := 0
 var _main: Node2D
 
@@ -25,24 +25,32 @@ func _press(code: int) -> void:
 	ev.pressed = true
 	_main._unhandled_input(ev)
 
+func _click(at: Vector2) -> void:
+	var ev := InputEventMouseButton.new()
+	ev.button_index = MOUSE_BUTTON_LEFT
+	ev.pressed = true
+	ev.position = at
+	_main._unhandled_input(ev)
+
 func _process(_delta: float) -> bool:
 	_f += 1
 	if _f == 1:
 		_seed_map()   # ต้องรอ _ready ของ main จบก่อน (_initialize ยังไม่มี layers)
 	if _f == 2:
-		_press(KEY_4)
+		_press(KEY_B)
+		_click(Vector2(100, 100))
 	if _f == 4:
-		if _main._menu == null or _main._menu_spot != 3:
-			print("TEST_KEYS FAIL menu_open_after_4 menu=", _main._menu, " spot=", _main._menu_spot)
+		if _main._menu == null or _main._menu_mode != "build":
+			print("TEST_KEYS FAIL free-placement menu missing")
 			quit(1)
 			return true
 		_press(KEY_2)
 	if _f >= 6:
-		var ok: bool = _main._towers[3] != null and _main._menu == null and _main._gold == 30
+		var ok: bool = _main._towers.size() == 1 and _main._towers[0].kind == _main.TowerScript.CANNON and _main._menu == null and _main._gold == 30
 		if ok:
 			print("TEST_KEYS PASS tower_built_gold=", _main._gold)
 			quit(0)
 		else:
-			print("TEST_KEYS FAIL built=", _main._towers[3], " menu=", _main._menu, " gold=", _main._gold)
+			print("TEST_KEYS FAIL towers=", _main._towers.size(), " menu=", _main._menu, " gold=", _main._gold)
 			quit(1)
 	return false

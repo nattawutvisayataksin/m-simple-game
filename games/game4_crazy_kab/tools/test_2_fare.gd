@@ -110,6 +110,7 @@ func _process(dt: float) -> bool:
 			play.night = true
 			var fare4: int = int(play.offers[0]["fare"])
 			play.trip = play.offers[0]
+			play.trip["vip"] = false   # ล็อคลูกค้าธรรมดา (สูตรคาดหวังให้ถูกทุกรอบ — VIP x3 ยิงเทสตอนรับขึ้นตนเอง)
 			play.trip_active = true
 			play.car.position = play.trip["drop"]
 			play.car.velocity = Vector2.ZERO
@@ -117,6 +118,19 @@ func _process(dt: float) -> bool:
 			var exp2 := int(round(float(fare4) * 2.0 * 1.5))   # frac=1.0 → mult 2.0 × night 1.5
 			if play.trip.is_empty() and play.cash == exp2:
 				print("TEST_FARE night x1.5 PASS total=%d" % exp2)
+				# ต่อทันที: stack VIP×3 × กลางคืน×1.5 ต้องจ่าย ×6 ของ fare (same offer, เวลาเต็ม → mult 2)
+				var fare_v: int = int(play.offers[0]["fare"])
+				play.trip = play.offers[0]
+				play.trip["vip"] = true
+				play.trip_active = true
+				play.car.position = play.trip["drop"]
+				play.car.velocity = Vector2.ZERO
+				var exp9 := int(round(float(fare_v) * 2.0 * 1.5 * 3.0))
+				play._update_trip(0.01)
+				if play.cash - exp2 != exp9 or play.trip_active:
+					print("TEST_FARE FAIL night-vip-stack cash=%d base=%d expect9=%d fare=%d" % [play.cash, exp2, exp9, fare_v])
+					quit(1); return true
+				print("TEST_FARE night-vip-stack x9 PASS +%d" % exp9)
 				_phase = 5
 			else:
 				print("TEST_FARE FAIL night cash=%d expect=%d fare=%d rides=%d nearmiss=%d drift=%.1f" % [play.cash, exp2, fare4, play.rides_ok, play.nearmiss_n, play.drift_secs])

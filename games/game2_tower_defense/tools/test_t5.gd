@@ -31,61 +31,41 @@ func _seed_map() -> void:
 	_main._gold = 180 # ทดสอบระบบป้อมด้วยทุน fixture; เกมจริงเริ่มจาก 0
 	_main._update_gold()
 
-	# ---- ช่วง 0: คลิกจำลองทั้ง 4 ลานต้องเปิดเมนูครบ (ฟีดแบ็ค T5.1: หาจุดซื้อไม่ได้) ----
-	for i in range(4):
-		var me := InputEventMouseButton.new()
-		me.button_index = MOUSE_BUTTON_LEFT
-		me.pressed = true
-		me.position = _main.TOWER_SPOTS[i]
-		_main._unhandled_input(me)
-		if _main._menu_spot != i or _main._menu_mode != "build":
-			print("TEST_T5 FAIL click spot=%d menu_spot=%s mode=%s" % [i, _main._menu_spot, _main._menu_mode])
-			quit(1)
-			return
-		_main._close_menu()
-	print("TEST_T5 click-4-spots PASS")
-
 	# ---- ช่วง 1: ป้อม สร้าง -> อัปเกรด -> อัปเกรดซ้ำ -> ขาย ----
-	_main._open_menu(0)                      # ลาน 0 = build mode
-	if _main._menu_mode != "build":
-		print("TEST_T5 FAIL build-mode menu_mode=", _main._menu_mode)
+	var build_position := Vector2(100.0, 100.0)
+	if not _main._valid_tower_position(build_position) or _main._valid_tower_position(_main.PATH_A[0]):
+		print("TEST_T5 FAIL free placement validation")
 		quit(1)
 		return
-	_main._build_tower(0, "archer")
+	_main._build_free_tower(build_position, "archer")
 	var t: Node2D = _main._towers[0]
 	var ok1: bool = _main._gold == 90 and t != null and t.damage == 9.0 and t.level == 1
 	if not ok1:
 		print("TEST_T5 FAIL build gold=", _main._gold, " dmg=", t.damage, " lvl=", t.level)
 		quit(1)
 		return
-	_main._upgrade_tower(0)
+	_main._open_tower_menu(t)
+	_main._upgrade_selected_tower()
 	var ok2: bool = _main._gold == 20 and t.damage == 15.0 and t.level == 2 and t.fire_interval == 0.6
 	if not ok2:
 		print("TEST_T5 FAIL upgrade gold=", _main._gold, " dmg=", t.damage, " lvl=", t.level, " iv=", t.fire_interval)
 		quit(1)
 		return
 	var gold_before: int = _main._gold
-	_main._upgrade_tower(0)                  # lv แล้ว = no-op ไม่กระตุกทอง
+	_main._open_tower_menu(t)
+	_main._upgrade_selected_tower()          # lv แล้ว = no-op ไม่กระตุกทอง
 	if _main._gold != gold_before or t.level != 2:
 		print("TEST_T5 FAIL upgrade-again gold=", _main._gold, " (ควร ", gold_before, ")")
 		quit(1)
 		return
-	_main._sell_tower(0)
-	var ok3: bool = _main._gold == 116 and _main._towers[0] == null and _main._lvl[0] == 0 and _main._inv[0] == 0
+	_main._open_tower_menu(t)
+	_main._sell_selected_tower()
+	var ok3: bool = _main._gold == 116 and _main._towers.is_empty()
 	if not ok3:
-		print("TEST_T5 FAIL sell gold=", _main._gold, " (ควร 116) towers0=", _main._towers[0])
+		print("TEST_T5 FAIL sell gold=", _main._gold, " (ควร 116) towers=", _main._towers.size())
 		quit(1)
 		return
 	print("TEST_T5 tower PASS build+upgrade+sell gold=", _main._gold)
-	_main._build_tower(2, "archer")
-	var spot3_tower: Node2D = _main._towers[2]
-	var background: Sprite2D = _main.get_node("Background")
-	if spot3_tower == null or spot3_tower.position != _main.TOWER_SPOTS[2] or background.z_index >= spot3_tower.z_index:
-		print("TEST_T5 FAIL spot-3 tower render order background_z=", background.z_index,
-			" tower_z=", spot3_tower.z_index if spot3_tower != null else "missing")
-		quit(1)
-		return
-	print("TEST_T5 spot-3 visibility PASS background_z=", background.z_index, " tower_z=", spot3_tower.z_index)
 	var free_position := Vector2(1020.0, 580.0)
 	if not _main._valid_tower_position(free_position) or _main._valid_tower_position(_main.PATH_A[0]):
 		print("TEST_T5 FAIL free placement validation")
@@ -102,16 +82,16 @@ func _seed_map() -> void:
 	placement_click.pressed = true
 	placement_click.position = free_position
 	_main._unhandled_input(placement_click)
-	if _main._menu == null or _main._menu_mode != "build" or _main._menu_spot != -1:
+	if _main._menu == null or _main._menu_mode != "build":
 		print("TEST_T5 FAIL B-click placement menu")
 		quit(1)
 		return
 	_main._build_free_tower(free_position, "archer")
-	if _main._free_towers.size() != 1 or _main._free_towers[0].position != free_position:
+	if _main._towers.size() != 1 or _main._towers[0].position != free_position:
 		print("TEST_T5 FAIL free placement build")
 		quit(1)
 		return
-	var free_tower: Node2D = _main._free_towers[0]
+	var free_tower: Node2D = _main._towers[0]
 	if _main._valid_tower_position(free_position + Vector2(30.0, 0.0)):
 		print("TEST_T5 FAIL overlapping free placement was accepted")
 		quit(1)
@@ -124,7 +104,7 @@ func _seed_map() -> void:
 		return
 	_main._open_tower_menu(free_tower)
 	_main._sell_selected_tower()
-	if _main._free_towers.size() != 0 or _main._gold != 236:
+	if not _main._towers.is_empty() or _main._gold != 236:
 		print("TEST_T5 FAIL free tower sale gold=", _main._gold)
 		quit(1)
 		return

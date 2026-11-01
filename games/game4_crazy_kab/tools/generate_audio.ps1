@@ -210,6 +210,15 @@ function Sfx-Cricket {
     return $m
 }
 
+# ปิ๊งสอน (กะฝึกผ่านขั้น): 2 โน้ตขึ้นสั้น ๆ ให้รู้ว่าผ่านหรือยัง
+function Sfx-TutPing {
+    $n = [int]($sr * 0.28)
+    $m = New-Object 'double[]' $n
+    At (ADS (Sq 988 500 0.4 0.5) 0.002 0.03 0.5) $m 0
+    At (ADS (Sq 1319 700 0.45 0.5) 0.002 0.04 0.5) $m 120
+    return $m
+}
+
 # ลูกค้าขึ้นรถ: เหนี่ยวเขา 2 โน้ต (E5 → A5) ต้อนรับ
 function Sfx-PickupReal {
     $n = [int]($sr * 0.4)
@@ -353,4 +362,5 @@ Save-Wav (Join-Path $outDir 'sfx_win.wav')    (Sfx-Win) $true
 Save-Wav (Join-Path $outDir 'sfx_lose.wav')   (Sfx-Lose) $true
 Save-Wav (Join-Path $outDir 'music_night.wav') (Build-NightMusic) $true
 Save-Wav (Join-Path $outDir 'sfx_cricket.wav') (Sfx-Cricket) $true
+Save-Wav (Join-Path $outDir 'sfx_tut.wav')     (Sfx-TutPing) $true
 Write-Host "เสร็จสิ้น — เสียงครบทั้งเกม 4"

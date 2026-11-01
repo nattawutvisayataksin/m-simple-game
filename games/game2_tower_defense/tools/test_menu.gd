@@ -1,5 +1,5 @@
 extends SceneTree
-# เทสเมนูสร้างป้อม: จำลองคลิกลานทอง (420,615) -> ต้องมีแผงเมนูเด้งขึ้น
+# เทสเมนูสร้างป้อม: กด B แล้วคลิกพื้นว่าง -> ต้องมีแผงเมนูเด้งขึ้น
 # (เรียก handler ใน _process หลังเข้า tree แล้ว - ไม่ใช่ _initialize)
 var _f := 0
 var _main: Node2D
@@ -16,10 +16,14 @@ func _process(_delta: float) -> bool:
 		_main._start_map(0)
 		_main._prep_t = 1e9
 	if _f == 2:
+		var key := InputEventKey.new()
+		key.keycode = KEY_B
+		key.pressed = true
+		_main._unhandled_input(key)
 		var ev := InputEventMouseButton.new()
 		ev.button_index = MOUSE_BUTTON_LEFT
 		ev.pressed = true
-		ev.position = Vector2(420, 615)
+		ev.position = Vector2(100, 100)
 		_main._unhandled_input(ev)   # เรียกสายประมวลคลิกตรง ๆ
 	if _f >= 4:
 		if _main._menu == null:

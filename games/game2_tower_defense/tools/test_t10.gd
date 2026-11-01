@@ -61,7 +61,7 @@ func _process(delta: float) -> bool:
 	match _phase:
 		0:
 			if _t > 0.2:
-				_main._build_tower(0, "archer")
+				_main._build_free_tower(Vector2(160, 445), "archer")
 				_tower = _main._towers[0]
 				if _tower == null:
 					return _fail("archer build at spot 0")
@@ -111,7 +111,7 @@ func _process(delta: float) -> bool:
 		1:
 			# ปืนใหญ่: flying filter ทุกโหมด (โหมดนำหน้าเลือกค้างคาวชิง แต่ถูกกรองทิ้ง)
 			if _t > 0.2 and _cannon == null:
-				_main._build_tower(1, "cannon")
+				_main._build_free_tower(Vector2(470, 450), "cannon")
 				_cannon = _main._towers[1]
 				if _cannon == null:
 					return _fail("cannon build at spot 1")

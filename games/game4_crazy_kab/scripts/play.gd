@@ -458,10 +458,12 @@ func _update_tutor(dt: float) -> void:
 		0:
 			if trip_active and not trip.is_empty():
 				tut_step = 1
+				_sfx("tut")
 				add_tip(car.position + Vector2(0.0, -50.0), "ได้ธุระ! ตอนนี้พาลูกค้าไปหมุดฟ้า", Color(0.4, 0.9, 1.0))
 		1:
 			if rides_ok >= 1:
 				tut_step = 2
+				_sfx("tut")
 				add_tip(car.position + Vector2(0.0, -50.0), "ส่งสำเร็จ! ขั้นสุดท้ายนะใหนวิ่งเร็วแล้วดริฟท์", Color(0.4, 0.9, 1.0))
 			elif trip.is_empty():
 				tut_step = 0   # ลูกหนี → ฝึกรับใหม่ (กะฝึกไม่ตัดบัญชี)
@@ -719,7 +721,8 @@ func _draw_hud() -> void:
 	# top bar
 	draw_rect(Rect2(0, 0, W, 34), Color(0.08, 0.08, 0.12, 0.85))
 	if tutor:
-		draw_string(ThemeDB.fallback_font, Vector2(14, 23), "กะฝึกขับ %d/3" % (tut_step + 1), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.4, 0.9, 1.0))
+		var tut_lab: String = "กะฝึกขับ %d/3" % mini(tut_step + 1, 3)
+		draw_string(ThemeDB.fallback_font, Vector2(14, 23), tut_lab, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.4, 0.9, 1.0))
 	else:
 		draw_string(ThemeDB.fallback_font, Vector2(14, 23), "เวลา %.1f" % time_left, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(1.0, 0.85, 0.3) if time_left < 20.0 else Color(0.95, 0.95, 0.9))
 	draw_string(ThemeDB.fallback_font, Vector2(180, 23), "เงิน %d" % cash, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.2, 0.95, 0.4))
@@ -743,6 +746,16 @@ func _draw_hud() -> void:
 		draw_rect(Rect2(W * 0.5 - 300.0, H - 66.0, 600.0, 30.0), Color(0.08, 0.08, 0.12, 0.85))
 		draw_rect(Rect2(W * 0.5 - 300.0, H - 66.0, 4.0, 30.0), Color(0.3, 0.75, 1.0) if tut_step < 3 else Color(0.35, 0.95, 0.5))
 		draw_string(ThemeDB.fallback_font, Vector2(W * 0.5 - 286.0, H - 46.0), _tut_text(), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, Color(0.95, 0.95, 0.85) if tut_step < 3 else Color(0.35, 0.95, 0.5))
+	# จอสรุปท้ายกะฝึก (แผนทับกลาง ไม่บังโลก — ไม่หยุดเกม กด ESC ออกเอง)
+	if tutor and tut_step >= 3:
+		var px := W * 0.5 - 220.0
+		draw_rect(Rect2(px, 140.0, 440.0, 158.0), Color(0.06, 0.10, 0.14, 0.92))
+		draw_rect(Rect2(px, 140.0, 440.0, 4.0), Color(0.35, 0.95, 0.5))
+		draw_string(ThemeDB.fallback_font, Vector2(px + 18.0, 174.0), "จบกะฝึกแล้ว!", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 26, Color(0.35, 0.95, 0.5))
+		draw_string(ThemeDB.fallback_font, Vector2(px + 18.0, 206.0), "ส่งสำเร็จ %d ตน · พลาด %d ครั้ง" % [rides_ok, rides_fail], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(0.95, 0.95, 0.9))
+		draw_string(ThemeDB.fallback_font, Vector2(px + 18.0, 232.0), "ดริฟท์รวม %.1f วิ · เงินที่เก็บได้ในกะฝึก %d บาท" % [drift_secs, cash], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(0.95, 0.95, 0.9))
+		draw_string(ThemeDB.fallback_font, Vector2(px + 18.0, 258.0), "กะฝึกไม่ติดบัญชีเงินสะสมอู่ — เริ่มเล่นจริงเท่านั้นที่นับ", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, Color(0.75, 0.85, 0.95))
+		draw_string(ThemeDB.fallback_font, Vector2(px + 18.0, 284.0), "พร้อมจริงแล้ว? กด ESC กลับเมนู แล้วกด 'เริ่มเล่น'", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, Color(1.0, 0.85, 0.3))
 	# trip info panel
 	draw_rect(Rect2(700, 4, 200, 26).grow(1.5), Color(0.12, 0.12, 0.16))
 	if trip_active and not trip.is_empty():
