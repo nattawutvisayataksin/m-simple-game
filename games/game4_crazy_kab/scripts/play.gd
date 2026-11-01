@@ -24,6 +24,14 @@ const PICK_RADIUS := 70.0
 const STOP_SPEED := 70.0
 const RAMP_TIP := 20
 const NEARMISS_TIP := 5
+# ภารกิจต่อกะ: สุ่ม 3 จาก pool ท้ายกะโบนัส (เทสยึดโครง: val นับจาก counter จริง)
+const MISSION_POOL := [
+	{"id": "rides", "goal": 6, "reward": 150},
+	{"id": "vip", "goal": 2, "reward": 250},
+	{"id": "drift", "goal": 4.0, "reward": 200},
+	{"id": "nearmiss", "goal": 5, "reward": 150},
+	{"id": "ramp", "goal": 2, "reward": 200},
+]
 const DRIFT_TIP := 10
 
 # roads: 3 horizontal + 3 vertical strips
@@ -48,6 +56,11 @@ var over := false
 var over_info := {}
 var best := {}                 # สถานะอู่จากเซฟ (main ยัดก่อน add_child): {car_pick, upgrades}
 var night := false             # กะกลางคืน: ค่าโดยสาร x1.5 · โกเลมเกิด 2 เท่า
+var missions := []             # ภารกิจ 3 อย่างของกะ: {id, goal, reward, done}
+var vip_ok := 0                # ส่ง VIP สำเร็จ
+var drift_secs := 0.0          # รวมเวลาดริฟท์
+var nearmiss_n := 0            # จำนวนเฉียดรถ
+var ramp_n := 0                # จำนวนใช้แรมพ์
 var car: CharacterBody2D = null
 var trip := {}                 # {p, drop, limit, left, dist, fare}
 var trip_active := false
@@ -88,6 +101,18 @@ func _start() -> void:
 	tip_texts = []
 	drift_bank = 0.0
 	nearmiss_cd = 0.0
+	vip_ok = 0
+	drift_secs = 0.0
+	nearmiss_n = 0
+	ramp_n = 0
+	# ภารกิจ 3 อย่างต่อกะ: สุ่มไม่ซ้ำ
+	missions = []
+	var mpool: Array = MISSION_POOL.duplicate()
+	for i in 3:
+		var mi := randi() % mpool.size()
+		var src: Dictionary = mpool[mi]
+		mpool.remove_at(mi)
+		missions.append({"id": src["id"], "goal": src["goal"], "reward": src["reward"], "done": false})
 	golem_timer = 5.0
 	if car != null:
 		car.queue_free()
@@ -150,6 +175,7 @@ func _process(dt: float) -> void:
 	if drift_bank > 0.0 or car.drifting:
 		if car.drifting:
 			drift_bank += dt
+			drift_secs += dt
 			if drift_bank >= 0.8:
 				drift_bank -= 0.8
 				cash += DRIFT_TIP
@@ -176,6 +202,7 @@ func _serve_input(_dt: float) -> void:
 	if RAMP_ZONE.has_point(car.position) and car.speed_abs() > 250.0:
 		if not bool(car.get_meta("ramp_cd")):
 			car.set_meta("ramp_cd", true)
+			ramp_n += 1
 			cash += RAMP_TIP
 			combo += 1
 			add_tip(car.position, "+%d แรมพ์!" % RAMP_TIP, Color(0.6, 1.0, 0.6))
@@ -234,6 +261,7 @@ func _update_trip(dt: float) -> void:
 		var is_vip := bool(trip.get("vip", false))
 		if is_vip:
 			total *= 3
+			vip_ok += 1
 		if night:
 			total = int(round(float(total) * NIGHT_MULT))
 		cash += total
@@ -325,6 +353,7 @@ func _update_traffic(dt: float) -> void:
 			var dx := car.position.distance_to(t["pos"])
 			if dx < 48.0 and rel.length() > 240.0:
 				nearmiss_cd = 1.0
+				nearmiss_n += 1
 				cash += NEARMISS_TIP
 				combo += 1
 				add_tip(t["pos"], "+%d เฉียดสวย!" % NEARMISS_TIP, Color(1.0, 0.95, 0.4))
@@ -386,9 +415,39 @@ func _update_tips(dt: float) -> void:
 			keep.append(t)
 	tip_texts = keep
 
+func _mval(id: String) -> float:
+	# ค่าความคืบหน้าภารกิจ = นับจาก counter จริงของกะ
+	match id:
+		"rides": return float(rides_ok)
+		"vip": return float(vip_ok)
+		"drift": return drift_secs
+		"nearmiss": return float(nearmiss_n)
+		"ramp": return float(ramp_n)
+	return 0.0
+
+func _mtext(m: Dictionary) -> String:
+	var v := _mval(str(m["id"]))
+	var g := float(m["goal"])
+	match str(m["id"]):
+		"rides": return "ส่งลูกค้า %d/%d" % [int(v), int(g)]
+		"vip": return "ส่ง VIP %d/%d" % [int(v), int(g)]
+		"drift": return "ดริฟท์รวม %.1f/%.1f วิ" % [v, g]
+		"nearmiss": return "เฉียดรถ %d/%d ครั้ง" % [int(v), int(g)]
+		"ramp": return "ใช้แรมพ์ %d/%d" % [int(v), int(g)]
+	return ""
+
 func _finish() -> void:
 	over = true
+	# ภารกิจ: ที่ครบจบตอนหมดเวลา = โบนัสเข้ากะเดียวกัน (record ก่อนเซฟ)
+	var mb := []
+	for m: Dictionary in missions:
+		if not bool(m["done"]) and _mval(str(m["id"])) >= float(m["goal"]):
+			m["done"] = true
+			cash += int(m["reward"])
+			mb.append(str(m["id"]))
 	over_info = SaveScript.record_run(cash, rides_ok)
+	over_info["mission_bonus"] = mb
+	over_info["missions"] = missions
 	# จังหวะปิด: ตัดเพลง + จิงเกิล ส่งคืนคู่คืงอย่างน้อย 5 = จัดว่ารวย
 	if sfx != null and is_instance_valid(sfx):
 		sfx.game_over(rides_ok >= 5)
@@ -622,6 +681,16 @@ func _draw_hud() -> void:
 	draw_string(ThemeDB.fallback_font, Vector2(640, 23), "คอมโบ x%d" % combo, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(1.0, 0.75, 0.3))
 	if night:
 		draw_string(ThemeDB.fallback_font, Vector2(905, 23), "กลางคืน x1.5", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, Color(0.55, 0.85, 1.0))
+	# ภารกิจของกะ (แผงซ้ายบน)
+	if not missions.is_empty():
+		draw_rect(Rect2(6, 40, 252, 16.0 + 30.0 * float(missions.size())), Color(0.08, 0.08, 0.12, 0.75))
+		draw_string(ThemeDB.fallback_font, Vector2(14, 56), "ภารกิจกระเป๋า", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, Color(1.0, 0.85, 0.25))
+		for mi2 in missions.size():
+			var m: Dictionary = missions[mi2]
+			var md: bool = bool(m["done"])
+			var row_y := 86.0 + 30.0 * float(mi2)
+			draw_string(ThemeDB.fallback_font, Vector2(14, row_y), _mtext(m) + (" ✓" if md else ""), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, Color(0.35, 0.95, 0.5) if md else Color(0.92, 0.92, 0.9))
+			draw_string(ThemeDB.fallback_font, Vector2(200, row_y), "+%d" % int(m["reward"]), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, Color(1.0, 0.85, 0.3) if md else Color(0.6, 0.7, 0.75))
 	# trip info panel
 	draw_rect(Rect2(700, 4, 200, 26).grow(1.5), Color(0.12, 0.12, 0.16))
 	if trip_active and not trip.is_empty():
@@ -666,6 +735,13 @@ func _draw_over() -> void:
 	var gpid: String = str(over_info.get("car_pick", "kubi"))
 	var glv: int = int((over_info.get("upgrades", {}) as Dictionary).get(gpid, 0))
 	draw_string(ThemeDB.fallback_font, center + Vector2(-260, 6), "เงินสะสมทุกกะ: %d บาท · รถ %s Lv%d — ไปดูที่เมนู 'รถและอู่อัปเกรด'" % [int(over_info.get("total_cash", 0)), str(CAR_NAMES.get(gpid, "Kubi Cab")), glv], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(1.0, 0.85, 0.45))
+	# โบนัสภารกิจที่ครบถ้วน
+	var parts := []
+	for m: Dictionary in over_info.get("missions", []):
+		if bool(m.get("done", false)):
+			parts.append(_mtext(m) + " (+%d)" % int(m.get("reward", 0)))
+	if not parts.is_empty():
+		draw_string(ThemeDB.fallback_font, center + Vector2(-260, 34), "โบนัสภารกิจ: " + ", ".join(parts), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, Color(0.35, 0.95, 0.5))
 	for u: Variant in over_info.get("new_unlocked", []):
 		draw_string(ThemeDB.fallback_font, center + Vector2(-260, 12), "ปลดล็อกรถใหม่: %s" % str(u), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 17, Color(0.6, 0.9, 1.0))
 	draw_string(ThemeDB.fallback_font, center + Vector2(-190, 70), "R เล่นใหม่ · ESC กลับเมนู", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.85, 0.85, 0.8))

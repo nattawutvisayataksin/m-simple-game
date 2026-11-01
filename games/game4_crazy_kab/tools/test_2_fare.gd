@@ -2,16 +2,36 @@ extends SceneTree
 # test_2_fare: trip lifecycle + money math
 # A: fares: รับ → ส่ง -- fare = 50 + dist/10, mult ตาม % เวลาที่เหลือ
 # B: หมดเวลา → ลูกหนี, rides_fail+1
+# C: ป้าย 3 วง — จอดวงที่ 2 ต้องได้วงนั้น
+# D: กะกลางคืน — ค่าโดยสาร x1.5
+# E: ภารกิจ — _finish ให้โบนัส (เซฟถูกแตะ: backup → restore)
 # ผ่านทุกรอบ = exit 0
+
+const SAVE_PATH := "user://taxi_best.json"
 
 var play: Node2D
 var _sim_t := 0.0
 var _phase := 0
+var _bak_exists := false
+var _bak_txt := ""
 
 func _initialize() -> void:
+	_bak_exists = FileAccess.file_exists(SAVE_PATH)
+	if _bak_exists:
+		var f := FileAccess.open(SAVE_PATH, FileAccess.READ)
+		_bak_txt = f.get_as_text()
+		f.close()
 	play = Node2D.new()
 	play.set_script(load("res://scripts/play.gd"))
 	root.add_child(play)
+
+func _restore() -> void:
+	DirAccess.remove_absolute(SAVE_PATH)
+	DirAccess.remove_absolute(SAVE_PATH + ".tmp")
+	if _bak_exists:
+		var f := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+		f.store_string(_bak_txt)
+		f.close()
 
 func _process(dt: float) -> bool:
 	_sim_t += dt
@@ -95,11 +115,24 @@ func _process(dt: float) -> bool:
 			var exp2 := int(round(float(fare) * 2.0 * 1.5))
 			if play.trip.is_empty() and play.cash - before == exp2:
 				print("TEST_FARE night x1.5 PASS total=%d" % exp2)
-				print("TEST_FARE ALL PASS")
-				quit(0); return true
+				_phase = 5
 			elif _sim_t > 10.0:
 				# แถม: ลูกศรลอยอาจบวกเงินแวบ — ตรวจด้วยช่วงขยาย x2 (คูณค่า mult อธิบายไม่พัง)
 				print("TEST_FARE FAIL night total+%d expect=%d fare=%d" % [play.cash - before, exp2, fare])
+				quit(1); return true
+		5:
+			# ภารกิจ: _finish ต้องให้โบนัส (แตะเซฟจริง — restore ท้ายขั้น)
+			play.missions = [{"id": "rides", "goal": 1, "reward": 151, "done": false}]
+			play._finish()
+			var mm: Array = play.over_info["missions"]
+			if play.over_info["mission_bonus"].size() == 1 and bool(mm[0]["done"]):
+				print("TEST_FARE mission-bonus PASS %s" % str(play.over_info["mission_bonus"]))
+				_restore()
+				print("TEST_FARE ALL PASS")
+				quit(0); return true
+			elif _sim_t > 14.0:
+				_restore()
+				print("TEST_FARE FAIL mission bonus=%s missions=%s" % [str(play.over_info.get("mission_bonus", [])), str(mm)])
 				quit(1); return true
 	if _sim_t > 10.0:
 		print("TEST_FARE FAIL global timeout phase=%d" % _phase)
