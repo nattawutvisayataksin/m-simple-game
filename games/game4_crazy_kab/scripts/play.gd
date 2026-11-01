@@ -14,6 +14,7 @@ const PASS_LIZ_TEX := preload("res://assets/sprites/pass_liz.png")
 const PASS_CHICK_TEX := preload("res://assets/sprites/pass_chick.png")
 const TRAFFIC_TEX := preload("res://assets/sprites/car_traffic.png")
 const CAR_ANG := PI * 0.75   # ภาพรถหันลงซ้าย 135° (ชุดเดียวกับ car.gd)
+const CAR_NAMES := {"kubi": "Kubi Cab", "liz": "กิ้งก่าซิ่ง", "golem": "โกเลมแท็กซี่"}
 
 const W := 1152.0
 const H := 648.0
@@ -44,6 +45,7 @@ var combo := 0
 var playing := false
 var over := false
 var over_info := {}
+var best := {}                 # สถานะอู่จากเซฟ (main ยัดก่อน add_child): {car_pick, upgrades}
 var car: CharacterBody2D = null
 var trip := {}                 # {p, drop, limit, left, dist, fare}
 var trip_active := false
@@ -88,6 +90,10 @@ func _start() -> void:
 	car.position = Vector2(170, 60 + 50.0)
 	car.rotation = 0.0
 	car.set_meta("ramp_cd", false)
+	# รถประจำกะจากอู่: เลือกคัน + เลเวลอัปเกรดจากเซฟ (best ต้องยัดก่อน add_child)
+	var gpick: String = str(best.get("car_pick", "kubi"))
+	car.car_id = gpick
+	car.call("set_lv", int((best.get("upgrades", {}) as Dictionary).get(gpick, 0)))
 	add_child(car)
 	traffic = _build_traffic()
 	slime_list = _build_slimes()
@@ -548,9 +554,9 @@ func _draw_hud() -> void:
 	draw_rect(Rect2(0, 0, W, 34), Color(0.08, 0.08, 0.12, 0.85))
 	draw_string(ThemeDB.fallback_font, Vector2(14, 23), "เวลา %.1f" % time_left, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(1.0, 0.85, 0.3) if time_left < 20.0 else Color(0.95, 0.95, 0.9))
 	draw_string(ThemeDB.fallback_font, Vector2(180, 23), "เงิน %d" % cash, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.2, 0.95, 0.4))
-	var st: String = "รับได้ %d · พลาด %d" % [rides_ok, rides_fail]
+	var st: String = "รับได้ %d · พลาด %d · %s Lv%d" % [rides_ok, rides_fail, str(CAR_NAMES.get(car.car_id, "Kubi Cab")), int((best.get("upgrades", {}) as Dictionary).get(car.car_id, 0))]
 	draw_string(ThemeDB.fallback_font, Vector2(340, 23), st, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(0.9, 0.9, 0.95))
-	draw_string(ThemeDB.fallback_font, Vector2(560, 23), "คอมโบ x%d" % combo, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(1.0, 0.75, 0.3))
+	draw_string(ThemeDB.fallback_font, Vector2(640, 23), "คอมโบ x%d" % combo, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(1.0, 0.75, 0.3))
 	# trip info panel
 	if not trip.is_empty():
 		var head: String = "รับ: ไปหมุดเหลือง" if not trip_active else "ส่ง: ไปหมุดฟ้า"
@@ -576,6 +582,9 @@ func _draw_over() -> void:
 	var is_new: bool = bool(over_info.get("new_best_cash", false))
 	var bc := Color(0.35, 0.95, 0.5) if is_new else Color(0.9, 0.9, 0.9)
 	draw_string(ThemeDB.fallback_font, center + Vector2(-260, -24), "รับได้ %d · พลาด %d · สถิติเงินดีสุด %d%s" % [rides_ok, rides_fail, best_cash, " (ใหม่!)" if is_new else ""], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 19, bc)
+	var gpid: String = str(over_info.get("car_pick", "kubi"))
+	var glv: int = int((over_info.get("upgrades", {}) as Dictionary).get(gpid, 0))
+	draw_string(ThemeDB.fallback_font, center + Vector2(-260, 6), "เงินสะสมทุกกะ: %d บาท · รถ %s Lv%d — ไปดูที่เมนู 'รถและอู่อัปเกรด'" % [int(over_info.get("total_cash", 0)), str(CAR_NAMES.get(gpid, "Kubi Cab")), glv], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(1.0, 0.85, 0.45))
 	for u: Variant in over_info.get("new_unlocked", []):
 		draw_string(ThemeDB.fallback_font, center + Vector2(-260, 12), "ปลดล็อกรถใหม่: %s" % str(u), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 17, Color(0.6, 0.9, 1.0))
 	draw_string(ThemeDB.fallback_font, center + Vector2(-190, 70), "R เล่นใหม่ · ESC กลับเมนู", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.85, 0.85, 0.8))

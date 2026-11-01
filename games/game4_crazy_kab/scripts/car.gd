@@ -11,6 +11,8 @@ const DEFS := [
 ]
 
 var car_id := "kubi"
+var lv := 0                 # อัปเกรดถาวร Lv0-3 (+8% สปีด / +6% ท่ีเหลือต่อเลเวล)
+var _stat := {}
 var steer_throttle := 0.0   # -1 ถอย, 1 เร่ง
 var steer_turn := 0.0       # -1 ซ้าย, 1 ขวา
 var handbrake := false
@@ -18,8 +20,17 @@ var slow_timer := 0.0       # slime hit = slow
 var spin_timer := 0.0       # golem hit = spin out
 var drifting := false
 
+func set_lv(v: int) -> void:
+	lv = clampi(v, 0, 3)
+	var d: Dictionary = DEFS[NAMES[car_id]]
+	_stat = d.duplicate()
+	_stat["max_speed"] = float(d["max_speed"]) * (1.0 + 0.08 * float(lv))
+	_stat["accel"] = float(d["accel"]) * (1.0 + 0.06 * float(lv))
+	_stat["brake"] = float(d["brake"]) * (1.0 + 0.06 * float(lv))
+	_stat["turn"] = float(d["turn"]) * (1.0 + 0.06 * float(lv))
+
 func def() -> Dictionary:
-	return DEFS[NAMES[car_id]]
+	return _stat if _stat.is_empty() else _stat
 
 func _physics_process(dt: float) -> void:
 	queue_redraw()   # เงา/ไฟเบรก/ดาวหมุนเปลี่ยนทุกเฟรม
