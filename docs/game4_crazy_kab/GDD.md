@@ -1,4 +1,4 @@
-# GDD — แท็กซี่คู่ฟ้า (Kubi Crazy Cab) · เกม 3
+# GDD — แท็กซี่คู่ฟ้า (Kubi Crazy Cab) · เกม 4
 
 > สร้าง 2026-11-01 · แรงบันดาลใจ: Crazy Taxi (1999, Hitmaker/Sega), The Simpsons: Road Rage, Micro Machines (top-down), Burnout (tips จากการเสี่ยง) — เครื่องมือ: Godot 4.7.2 + PixelLab (Key C: 31/40 คงเหลือ 31)
 

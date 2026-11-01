@@ -102,15 +102,15 @@ git push origin main
 4. **ข้อความไทยยาว** — เขียนผ่าน write/edit tool เสมอ (PS heredoc เสี่ยง BOM/มอจิบาเกะ)
 5. **ตัวเลขในเอกสาร** — ต้องยืนยันจากโค้ด/get_balance จริงก่อนลงเอกสาร
 
-## 10. โครงสร้างเกมใหม่ (template เกม 3)
+## 10. โครงสร้างเกมใหม่ (template เกม 4)
 
 ```
-games/<game3>/
+games/<game4>/
   project.godot             # copy pattern จากเกม 2: window 1152×648, stretch canvas_items
   scripts/                  # main.gd (ใหญ่เป็นหลักตามสไตล์ repo), ระบบรองแยกไฟล์
   tools/                    # test_*.gd (SceneTree) + shot_debug.gd
   assets/sprites|audio/
-docs/<game3>/
+docs/<game4>/
   GDD.md · ARCHITECTURE.md · PLAYER_GUIDE.md · ROADMAP_12H.md · ASSETS.md
 ```
 

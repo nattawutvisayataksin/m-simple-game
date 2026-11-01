@@ -1,6 +1,6 @@
 # m-sample-game — คลังฝึกทำเกม (Godot 4.7)
 
-Repo นี้เก็บ **เกมฝึกพัฒนา 3 เกม (แยกโฟลเดอร์เกมของตัวเอง มี `project.godot` อิสระแต่ละเกม)** + เครื่องมือทั่วไป + เอกสารแยกต่อเกม
+Repo นี้เก็บ **เกมฝึกพัฒนา 4 เกม (แยกโฟลเดอร์เกมของตัวเอง มี `project.godot` อิสระแต่ละเกม)** + เครื่องมือทั่วไป + เอกสารแยกต่อเกม
 
 ## เกมที่มีและเล่นได้
 
@@ -9,9 +9,11 @@ Repo นี้เก็บ **เกมฝึกพัฒนา 3 เกม (แ�
 | 1 | **Kubi Coin Dash** 🪙 | `games/game1_coin_rush/` | Platformer 8 ด่าน: วิ่ง/กระโดด, เก็บเหรียญ, ศัตรู 4 ชนิด + มินิบอส (ด่าน 8), ธีมฉาก 3 แบบใหม่ (ท่อระบาย/ท้องฟ้า/ปราสาท) + เพลงรายธีม, สกินฮีโร่ 5 สีเลือกในเมนู · คูบี้ กระโดดเก็บเหรียญ | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game1_coin_rush` |
 | 2 | **หอคอยคู่ฟ้า (Kub Kingdom Rush)** 🏰 | `games/game2_tower_defense/` | Tower defense: มอนเดินเส้นเดียว ซื้อ/อัปเกรด/ขายป้อม · กลิ้ง 10 คลื่น + ฮีโร่ Kubi · ปุ่ม 1-4 ลานป้อม | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game2_tower_defense` |
 | 3 | **Kubi Grand Prix ราชวงศ์ทอง** 🚗 | `games/game3_car/` | แข่งรถ 3D ในเมือง Kubi · WASD ขับ/เบรก/เลี้ยว · เก็บเหรียญและผ่านประตูให้ครบ 3 รอบ | ดับเบิลคลิก `games/game3_car/play.bat` หรือ `godot --path games/game3_car` |
+| 4 | **แท็กซี่คู่ฟ้า (Kubi Crazy Cab)** 🚕 | `games/game4_crazy_kab/` | แท็กซี่อาร์เคด top-down แนว Crazy Taxi: นาฬิกาเกม 120 วิ รับ-ส่งลูกค้าตามหมุด · ทิปส่งเร็ว/ดริฟท์/เฉียด/แรมพ์ · ปลดล็อกรถ 3 คัน · คู่มือค่าเกมในเมนู | ดับเบิลคลิก `games/game4_crazy_kab/play.bat` หรือ `godot --path games/game4_crazy_kab` |
 
 > สถานะเกม 2: **ปิดโปรเจกต์** ที่ T5.2 (คำวินิจฉัยผู้อำนวยการ + บทเรียนเก็บไว้เต็ม ๆ ใน GDD เกม 2)
 > สถานะเกม 3: **T1.1 WIP** — เกมรถ 3D พร้อมระบบหลัก กำลังต่อยอดภาพเมือง Kubi (`docs/game3_car/GDD.md`)
+> สถานะเกม 4: **เกมเล่นได้ (G4)** — เมนูครบทั้งเรื่อง/วิธีเล่น/คู่มือ/สถิติ · เทส 3 ชุด PASS · กำลังติดสไปรต์ PixelLab (`docs/game4_crazy_kab/`)
 
 ## โครงสร้าง repo
 
@@ -20,11 +22,14 @@ m-sample-game/
 ├─ games/
 │  ├─ game1_coin_rush/      # เกม 1 (project.godot + scenes/scripts/assets/tools + play.bat)
 │  ├─ game2_tower_defense/  # เกม 2 (โครงเดียวกัน, tools มีสูทเทสอัตโนมัติ)
-│  └─ game3_car/            # เกม 3 (Kubi Grand Prix; โปรเจกต์เล่นได้ใน ./)
+│  ├─ game3_car/            # เกม 3 (Kubi Grand Prix; โปรเจกต์เล่นได้ใน ./)
+│  └─ game4_crazy_kab/      # เกม 4 (แท็กซี่คู่ฟ้า; โครงเดียวกันกับเกม 2)
 ├─ shared/                  # เครื่องมือพิกเซล/ภาพใช้ร่วมทุกเกม (gen_pixen, pixellab_anim, upscale_nearest, ...)
 ├─ docs/
 │  ├─ game1_coin_rush/      # GDD · ART_DIRECTION · ARCHITECTURE · ASSETS
 │  ├─ game2_tower_defense/  # GDD · ARCHITECTURE · ASSETS
+│  ├─ game3_car/            # GDD · ROADMAP · PLAYER_GUIDE · ASSETS
+│  ├─ game4_crazy_kab/      # GDD · ARCHITECTURE · ROADMAP_12H (แท็กซี่คู่ฟ้า)
 │  ├─ ASSET_MANIFEST.md     # สมุดบัญชี asset+โควตา key (รัวมทั้ง 2 เกม, พยานบันทึกทั้งหมด)
 │  ├─ MACHINE_PATHS.md      # สมุด path รายเครื่อง + ระเบียบ "ห้ามฝัง path ตามเครื่อง"
 │  └─ MCP_SETUP.md          # MCP ทั้งหมด + ตำแหน่งตั้งค่า + บทเรียน 401/422/timeout

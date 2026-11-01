@@ -1,4 +1,4 @@
-# ROADMAP 12 ชม. — แท็กซี่คู่ฟ้า (Kubi Crazy Cab) · เกม 3
+# ROADMAP 12 ชม. — แท็กซี่คู่ฟ้า (Kubi Crazy Cab) · เกม 4
 
 > เริ่ม 2026-11-01 หลังเที่ยง · กฎ: commit+push ทุก G กันไฟฟ้าดับ · เทส headless ทุกรอบแก้โค้ด · ห้ามเขียนไทยยาวผ่าน shell
 
@@ -6,7 +6,7 @@
 - GDD.md (เรื่อง เป้า ตัวเลข) · ROADMAP_12H.md · ARCHITECTURE.md · ASSETS.md · PLAYER_GUIDE.md (ร่างแรก)
 
 ## G2 — โครงสร้าง + เมนู (0:40-1:40)
-- `games/game3_crazy_kab/project.godot` (1152×648, canvas_items, copy pattern เกม 2)
+- `games/game4_crazy_kab/project.godot` (1152×648, canvas_items, copy pattern เกม 2)
 - Title scene เขียนโค้ดล้วน (แนวเดียวกับเกม 2): [เริ่มเล่น] [เรื่องของเกม] [วิธีเล่น] [คู่มือค่าเกม] [รถ/สถิติ]
 - เทส: `test_1_boot.gd` — ฉากโหลดได้ ไม่ error, exit 0
 

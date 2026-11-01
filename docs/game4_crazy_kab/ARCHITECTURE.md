@@ -1,11 +1,11 @@
-# ARCHITECTURE — แท็กซี่คู่ฟ้า (game3_crazy_kab)
+# ARCHITECTURE — แท็กซี่คู่ฟ้า (game4_crazy_kab)
 
 > สไตล์เดียวกับเกม 2: โค้ดใน `scripts/main.gd` เป็นหลัก + ไฟล์ระบบรองแยก, เทส SceneTree headless ที่ `tools/`
 
 ## โครงโฟลเดอร์
 
 ```
-games/game3_crazy_kab/
+games/game4_crazy_kab/
   project.godot          # 1152×648, stretch canvas_items (pattern เกม 2)
   scripts/main.gd        # title/menu ทุกจอ (เรื่อง/วิธีเล่น/คู่มือ) + ตัวจัดการ scene
   scripts/play.gd        # ห้องเล่น (เกิด map, HUD, เข็มเวลา 120 วิ)
@@ -16,7 +16,7 @@ games/game3_crazy_kab/
   tools/test_*.gd        # SceneTree headless, exit 0/1
   tools/shot_debug.gd    # แคปจอจริง
   assets/sprites/  audio/
-docs/game3_crazy_kab/    # GDD/ROADMAP/PLAYER_GUIDE/ASSETS
+docs/game4_crazy_kab/    # GDD/ROADMAP/PLAYER_GUIDE/ASSETS
 ```
 
 ## สถานะเกม (Play state)

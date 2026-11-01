@@ -1,5 +1,5 @@
 ; Engine configuration file.
-; แท็กซี่คู่ฟ้า (Kubi Crazy Cab) — เกมที่ 3: แท็กซี่อาร์เคด (โครงตาม Crazy Taxi)
+; แท็กซี่คู่ฟ้า (Kubi Crazy Cab) — เกมที่ 4: แท็กซี่อาร์เคด (โครงตาม Crazy Taxi)
 ; ใช้โครงเดียวกับเกม 2: ฉากเดียว 1152x648  stretch canvas_items + gl_compatibility
 
 [application]
