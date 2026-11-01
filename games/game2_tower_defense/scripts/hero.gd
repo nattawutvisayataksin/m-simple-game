@@ -7,6 +7,29 @@ const WALK_TEX := preload("res://assets/art/gen/kubi_hero_sheet.png")
 const IDLE_TEX := preload("res://assets/art/gen/kubi_hero_neutral.png")
 const GATE := Vector2(810, 450)   # จุดเกิดใหม่เริ่มต้น (ประตูปราสาทแผนที่ 1)
 
+class HeroSwordVisual extends Node2D:
+	var swing_progress := -1.0
+
+	func _draw() -> void:
+		# A compact pixel-art styled blade, drawn independently so the arm can swing
+		# without stretching or rotating Kubi's body sprite.
+		draw_line(Vector2(-8.0, 0.0), Vector2(3.0, 0.0), Color(0.20, 0.12, 0.09), 5.0, true)
+		draw_line(Vector2(-7.0, -1.0), Vector2(2.0, -1.0), Color(0.92, 0.63, 0.22), 2.0, true)
+		draw_line(Vector2(1.0, -7.0), Vector2(1.0, 7.0), Color(0.47, 0.24, 0.10), 3.0, true)
+		draw_line(Vector2(-2.0, -6.0), Vector2(4.0, 6.0), Color(1.0, 0.79, 0.32), 2.0, true)
+		var blade := PackedVector2Array([
+			Vector2(3.0, -3.5), Vector2(24.0, -2.4),
+			Vector2(32.0, 0.0), Vector2(24.0, 2.4), Vector2(3.0, 3.5)
+		])
+		draw_colored_polygon(blade, Color(0.63, 0.82, 0.91))
+		draw_line(Vector2(5.0, -1.0), Vector2(29.0, 0.0), Color(0.97, 1.0, 0.94), 1.5, true)
+		if swing_progress >= 0.0:
+			var slash_alpha := sin(clampf(swing_progress, 0.0, 1.0) * PI) * 0.72
+			var end_angle := lerpf(-1.18, 0.96, smoothstep(0.18, 0.72, swing_progress))
+			var start_angle := end_angle - 0.8
+			draw_arc(Vector2(14.0, 0.0), 25.0, start_angle, end_angle,
+				16, Color(1.0, 0.84, 0.39, slash_alpha), 3.5, true)
+
 var home: Vector2 = GATE          # Phase E: จุดพัก/เกิดใหม่ตามแผนที่ปัจจุบัน (main ตั้งให้ตอนเลือกแผนที่)
 
 var speed := 155.0
@@ -30,9 +53,11 @@ var _hurt_cd := 0.0
 var _regen_cd := 0.0
 var _anim_t := 0.0
 var _attack_direction := Vector2.RIGHT
-var _attack_flash_t := 0.0
+var _swing_t := 0.0
+var _facing_direction := Vector2.RIGHT
 var _command_marker_t := 0.0
 var _sprite: Sprite2D
+var _weapon: HeroSwordVisual
 
 func _ready() -> void:
 	_sprite = Sprite2D.new()
@@ -40,6 +65,9 @@ func _ready() -> void:
 	_sprite.offset = Vector2(0, -14)
 	_sprite.scale = Vector2(1.35, 1.35)
 	add_child(_sprite)
+	_weapon = HeroSwordVisual.new()
+	_weapon.position = Vector2(8.0, -26.0)
+	add_child(_weapon)
 	add_to_group("hero")
 	_hp = max_hp
 
@@ -77,6 +105,7 @@ func _die() -> void:
 	_sprite.hframes = 1
 	_sprite.frame = 0
 	_sprite.modulate = Color(1.0, 1.0, 1.0, 0.25)
+	_weapon.visible = false
 
 func _respawn() -> void:
 	_dead = false
@@ -85,10 +114,11 @@ func _respawn() -> void:
 	_moving = false
 	_velocity = Vector2.ZERO
 	_sprite.modulate = Color.WHITE
+	_weapon.visible = true
 
 func _physics_process(delta: float) -> void:
 	queue_redraw()
-	_attack_flash_t = maxf(_attack_flash_t - delta, 0.0)
+	_swing_t = maxf(_swing_t - delta, 0.0)
 	_command_marker_t = maxf(_command_marker_t - delta, 0.0)
 	if _dead:
 		_respawn_t -= delta
@@ -131,6 +161,7 @@ func _physics_process(delta: float) -> void:
 	position.y = clampf(position.y, 24.0, 624.0)
 	if absf(_velocity.x) > 1.0:
 		_sprite.flip_h = _velocity.x > 0.0
+		_facing_direction = _velocity.normalized()
 	_sprite.rotation = clampf(_velocity.x / speed * 0.08, -0.08, 0.08)
 	_sprite.offset.y = -14.0 + sin(_anim_t * 0.5) * (1.2 if _velocity.length() < 5.0 else 0.0)
 
@@ -156,7 +187,8 @@ func _physics_process(delta: float) -> void:
 	if best != null and _attack_cd <= 0.0:
 		_attack_cd = attack_interval
 		_attack_direction = (best.position - position).normalized()
-		_attack_flash_t = 0.24
+		_facing_direction = _attack_direction
+		_swing_t = 0.44
 		_sprite.scale = Vector2(1.55, 1.12)
 		var attack_tween := create_tween()
 		attack_tween.tween_property(_sprite, "scale", Vector2(1.35, 1.35), 0.18).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -165,6 +197,11 @@ func _physics_process(delta: float) -> void:
 			get_parent().sfx("slash")
 		if best.dead and _combat_target == best:
 			_combat_target = null
+	var sword_dir := _attack_direction if _swing_t > 0.0 else _facing_direction
+	_weapon.position = Vector2(8.0 + sword_dir.x * 3.0, -26.0 + sword_dir.y * 3.0)
+	_weapon.rotation = sword_dir.angle() + (-1.18 + 2.14 * smoothstep(0.08, 0.82, 1.0 - _swing_t / 0.44) if _swing_t > 0.0 else -0.72)
+	_weapon.swing_progress = 1.0 - _swing_t / 0.44 if _swing_t > 0.0 else -1.0
+	_weapon.queue_redraw()
 	# โดนรุม: ตัวใดยืนติดกันนานจนเย็น 0.9 วิ = บีบเลือดหนึ่งจังหวะ
 	if _hurt_cd <= 0.0:
 		for e2 in get_tree().get_nodes_in_group("enemies"):
@@ -182,16 +219,6 @@ func _draw() -> void:
 		draw_arc(marker, 13.0, 0.0, TAU, 24, Color(1.0, 0.84, 0.34, alpha), 2.5, true)
 		draw_line(marker + Vector2(-5.0, 0.0), marker + Vector2(5.0, 0.0), Color(1.0, 0.92, 0.58, alpha), 2.0, true)
 		draw_line(marker + Vector2(0.0, -5.0), marker + Vector2(0.0, 5.0), Color(1.0, 0.92, 0.58, alpha), 2.0, true)
-	if _attack_flash_t > 0.0:
-		var slash_center := Vector2(0.0, -18.0) + _attack_direction * 25.0
-		var slash_side := _attack_direction.orthogonal()
-		var slash_alpha := clampf(_attack_flash_t / 0.24, 0.0, 1.0)
-		draw_line(slash_center - slash_side * 11.0 - _attack_direction * 7.0,
-			slash_center + slash_side * 11.0 + _attack_direction * 7.0,
-			Color(1.0, 0.72, 0.24, slash_alpha), 6.0, true)
-		draw_line(slash_center - slash_side * 8.0 - _attack_direction * 5.0,
-			slash_center + slash_side * 8.0 + _attack_direction * 5.0,
-			Color(1.0, 0.96, 0.72, slash_alpha), 2.0, true)
 	if _hp < max_hp - 0.01:
 		var w := 46.0
 		draw_rect(Rect2(-w / 2.0, -52.0, w, 7.0), Color(0.08, 0.05, 0.03, 0.85))
