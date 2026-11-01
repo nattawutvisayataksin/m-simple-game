@@ -22,8 +22,8 @@ func _initialize() -> void:
 		_save_backup = f.get_as_text()
 		f.close()
 		_had_save = true
-	if _main.WAVES.size() == 13:
-		print("TEST_T4 structure PASS waves=13")
+	if _main.WAVES.size() == 2:
+		print("TEST_T4 structure PASS waves=2 (100 ตัว + บอส 3)")
 	else:
 		print("TEST_T4 FAIL waves=%d" % _main.WAVES.size())
 	# คลื่นแรกตั้งค่าผ่าน code path จริง (prep หมดเวลา -> _start_wave) ไม่เรียกแทนมือ
@@ -35,15 +35,20 @@ func _kill_all() -> void:
 	for e in get_nodes_in_group("enemies"):
 		if e is Node2D and not e.dead:
 			e.take_damage(9999.0)
+	# ดักเวลาเทส (เช่นเดียวกับ gap): ซากตายตันปากประตูจนกู 100 ตัวเสมอซ้ำทุกเฟรม = วิ่งช้ามากใน sim
+	# ธุรกิจเกมจริงไม่พังกลูปนี้ (มอนเดินออกห่างปาก) — เจนเทสด้วยการเลื่อนซากออกห่าง
+	for e2 in get_nodes_in_group("enemies"):
+		if e2 is Node2D and e2.dead and e2.position.distance_to(_main._road[0] as Vector2) < 120.0:
+			e2.position = Vector2(-300.0, -300.0)
 
 func _process(delta: float) -> bool:
 	_sim_t += delta
 	match _phase:
 		0:
-			# คลื่น 1: เช็คคิวเกิดข้อมูล + เลือดตัวแรก (ควร = 26.0 = 26 * 1.15^0) + กระทบจนจบคลื่น
+			# คลื่น 1: เช็คคิวเกิดข้อมูล (กบ 40 + อื่น 6×12 = 100) + เลือดตัวแรก (ควร = 26.0 = 26 * 1.15^0) + กระทบจนจบคลื่น
 			if _main._state == "wave" and not _assembly_checked:
-				if _main._wave_idx == 0 and _main._queue.size() == 5:
-					print("TEST_T4 wave1 assembly PASS queue=%d" % _main._queue.size())
+				if _main._wave_idx == 0 and _main._queue.size() == 100:
+					print("TEST_T4 wave1 assembly PASS queue=%d (กองใหญ่)" % _main._queue.size())
 				else:
 					print("TEST_T4 wave1 assembly FAIL idx=%d queue=%d" % [_main._wave_idx, _main._queue.size()])
 				_assembly_checked = true

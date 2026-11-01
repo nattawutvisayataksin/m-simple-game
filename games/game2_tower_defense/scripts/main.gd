@@ -40,7 +40,8 @@ const MAPS := [
 	{"name": "สุสานหลวง", "tex": MAP_B_TEX, "path": PATH_B},
 	{"name": "ที่ราบรอยแยก · ทดลอง", "tex": null, "path": PATH_C, "sandbox": true},
 ]
-const HeroScript := preload("res://scripts/hero.gd")                     # T5 ฮีโร่ Kubi
+const HeroScript := preload("res://scripts/hero.gd")                     # ฮีโร่ Kubi เดิม
+const BladeHeroScript := preload("res://scripts/hero_blade.gd")          # ฮีโร่ทางเลือก: อัศวินดาบแสง
 const SfxScript := preload("res://scripts/sfx.gd")                       # T6 ระบบเสียง
 
 var _audio                                                                # Sfx node (เรียกผ่าน method sfx())
@@ -130,30 +131,20 @@ const LANE_OFFSET := 13.0  # ระยะเลื่อนข้างถนน
 
 # T4 ระบบคลื่น: หัวใจคลื่นเป็นข้อมูล + เลือดโต 1.15^คลื่น + โบนัสจบคลื่น
 # + ปุ่มเรียกคลื่นถัดไปก่อนได้โบนัสตามวินาทีคงเหลือ (ตัดสินใจเสี่ยง) + ชนะ/แพ้
-const SPD_GAP := 1.3             # ช่วงห่างเกิดรายตัวในคลื่น (วิ)
+# คลื่น 2 รอบ (ตามคำขอผู้เล่น):
+#   คลื่น 1: กองรัว ๆ 100 ตัว — กบ 40 หัวเสด็จ, ชนิดอื่นอย่างน้อย 12 (ยกเว้นบอส)
+#   คลื่น 2 สุดท้าย: ทุกชนิดเต็มทีม + บอส Kubit 3 ตัว
+# WAVE_GAPS = ช่วงเกิดต่อคลื่น (วิ) — คลื่น 1 รัวเร็วต่อเนื่อง, คลื่น 2 เสียงปกติ
+const WAVE_GAPS: Array = [0.42, 1.0]
 const HP_GROWTH := 1.15          # เลือดโตต่อคลื่น
 const WAVE_PREP := 7.0           # นับถอยหลังก่อนคลื่นถัดไป
 const FIRST_PREP := 10.0         # ก่อนคลื่นแรก: เผื่อเวลาสร้างป้อมแรก
 const EARLY_BONUS_PER_SEC := 3.0 # ทองโบนัสต่อวินาทีที่ยังเหลือตอนเรียกก่อน
 const WAVE_BONUS_BASE := 25      # โบนัสจบคลื่น = base + (คลื่นที่ * step)
 const WAVE_BONUS_STEP := 5
-# คลื่น 13 รอบ: [ชนิด, จำนวน] — Phase C ใส่ hard-counter การแก้:
-#   คลื่น 4 ค้างคาว = ปืนใหญ่/ทหารโม้ (ต้องมีธนู/เวท) · สไลม์แตกลุกชน
-#   แชแมนฮีลกลุ่ม = ต้องเร่งเคลียร์เฟส · คลื่น 13 บอสคุ้มกันหนัก
 const WAVES: Array = [
-	[["frog", 5]],
-	[["frog", 6]],
-	[["frog", 4], ["lizard", 3]],
-	[["bat", 5]],
-	[["frog", 5], ["slime", 3]],
-	[["lizard", 5], ["bat", 3]],
-	[["frog", 6], ["slime", 3], ["shaman", 1]],
-	[["lizard", 6], ["stone_golem", 2], ["bat", 3]],
-	[["frog", 7], ["shaman", 2], ["slime", 4]],
-	[["lizard", 8], ["stone_golem", 2], ["bat", 4]],
-	[["frog", 8], ["slime", 5], ["shaman", 2], ["lizard", 5]],
-	[["lizard", 8], ["stone_golem", 3], ["frog", 6], ["bat", 5]],
-	[["kubit_boss", 1], ["lizard", 5], ["shaman", 2], ["bat", 4], ["frog", 5]],
+	[["frog", 40], ["lizard", 12], ["slime", 12], ["stone_golem", 12], ["shaman", 12], ["bat", 12]],
+	[["frog", 20], ["lizard", 15], ["slime", 12], ["stone_golem", 10], ["shaman", 8], ["bat", 10], ["kubit_boss", 3]],
 ]
 
 var _state := "title"       # title | prep | wave | won | lost (Phase E: เริ่มที่หน้าเลือกแผนที่)
@@ -175,7 +166,10 @@ var _placement_mode := false
 var _placement_position := Vector2.ZERO
 var _sandbox_map := false
 var _rally_tower: Node2D       # Phase B: โหมดสั่งย้ายจุดยืนทหาร (ค่ายทหาร)
-var _hero                     # T5: ฮีโร่ Kubi (คลิกขวาสั่งเดิน)
+var _hero                     # ฮีโร่ที่เลือก (คลิกขวาสั่งเดิน)
+var _selected_hero_kind := "kubi"
+var _active_hero_kind := "kubi"
+var _hero_choice_buttons: Array[Button] = []
 var _placement_overlay: PlacementOverlay
 var _path_layer: PathOverlay
 var _wave_label: Label        # แถวข้อมูลคลื่นบน HUD (T4)
@@ -345,7 +339,7 @@ func _process(delta: float) -> void:
 		while _queue.size() > 0 and _gap_t <= 0.0:
 			if _spawn_point_clear():
 				_spawn_kind(_queue.pop_front())
-				_gap_t += SPD_GAP
+				_gap_t += float(WAVE_GAPS[mini(_wave_idx, WAVE_GAPS.size() - 1)])
 			else:
 				_gap_t = 0.45   # ปากประตูแน่น: เลื่อนเกิดไปก่อน 0.45 วิ
 				break
@@ -832,7 +826,7 @@ func _map_best_text(idx: int) -> String:
 	var key := "m%d" % idx
 	if _best.has(key):
 		var won_txt := " ★ผ่านแล้ว" if _best.get(key + "_won", false) else ""
-		return "คลื่นสูงสุด %d/%d%s" % [int(_best[key]), WAVES.size(), won_txt]
+		return "คลื่นสูงสุด %d/%d%s" % [mini(int(_best[key]), WAVES.size()), WAVES.size(), won_txt]
 	return "ยังไม่มีสถิติ"
 
 func _build_title() -> void:
@@ -863,7 +857,7 @@ func _build_title() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(title)
 	var story := Label.new()
-	story.text = "เหล่ามอนปลุกจากสุสานสาบานมุ่งหมายปราสาทหลวง\nจงตั้งป้อม ซ่อมแม่ทัพ Kubi และขับไล่ถึง %d คลื่น" % WAVES.size()
+	story.text = "เหล่ามอนปลุกจากสุสานสาบานมุ่งหมายปราสาทหลวง\nเลือกฮีโร่ ตั้งป้อม และขับไล่ศัตรูให้ครบ %d คลื่น" % WAVES.size()
 	var ss := LabelSettings.new()
 	ss.font_size = 19
 	ss.font_color = Color(0.95, 0.93, 0.9)
@@ -872,6 +866,32 @@ func _build_title() -> void:
 	story.label_settings = ss
 	story.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	box.add_child(story)
+	var hero_pick := Label.new()
+	hero_pick.text = "เลือกฮีโร่"
+	hero_pick.add_theme_font_size_override("font_size", 21)
+	hero_pick.add_theme_color_override("font_color", Color(0.95, 0.83, 0.48))
+	hero_pick.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	box.add_child(hero_pick)
+	var hero_row := HBoxContainer.new()
+	hero_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	hero_row.add_theme_constant_override("separation", 10)
+	box.add_child(hero_row)
+	_hero_choice_buttons.clear()
+	for hero_option in [
+		{"id": "kubi", "name": "Kubi · เดิม"},
+		{"id": "swordmaster", "name": "อัศวินดาบแสง"},
+	]:
+		var hero_button := Button.new()
+		hero_button.text = hero_option["name"]
+		hero_button.custom_minimum_size = Vector2(174, 42)
+		hero_button.toggle_mode = true
+		hero_button.button_pressed = _selected_hero_kind == hero_option["id"]
+		hero_button.focus_mode = Control.FOCUS_NONE
+		hero_button.set_meta("hero_kind", hero_option["id"])
+		hero_button.set_meta("hero_name", hero_option["name"])
+		hero_button.pressed.connect(_choose_hero.bind(hero_option["id"]))
+		_hero_choice_buttons.append(hero_button)
+		hero_row.add_child(hero_button)
 	var pick := Label.new()
 	pick.text = "เลือกแผนที่บุก"
 	var ps := LabelSettings.new()
@@ -890,6 +910,14 @@ func _build_title() -> void:
 		btn.pressed.connect(_start_map.bind(idx))
 		box.add_child(btn)
 
+func _choose_hero(kind: String) -> void:
+	_selected_hero_kind = kind
+	for hero_button in _hero_choice_buttons:
+		hero_button.button_pressed = hero_button.get_meta("hero_kind") == kind
+
+func _make_selected_hero() -> Node2D:
+	return BladeHeroScript.new() if _selected_hero_kind == "swordmaster" else HeroScript.new()
+
 func _start_map(idx: int) -> void:
 	# เปลี่ยนแผนที่: ภาพพื้นหลัง + เส้นทาง + ประตู/ปราสาท + จุดพักฮีโร่ -> แล้วเริ่มเกม
 	if _state != "title":
@@ -903,7 +931,8 @@ func _start_map(idx: int) -> void:
 	_sandbox_map = bool(cfg.get("sandbox", false))
 	if _controls_label != null:
 		_controls_label.position = Vector2(920, 78) if _sandbox_map else Vector2(16, 108)
-		_controls_label.text = "B+คลิกพื้น: วางป้อม · คลิกป้อม: จัดการ" if _sandbox_map else "B+คลิกพื้น: วางป้อม · คลิกป้อม: จัดการ · คลิกขวา: สั่ง Kubi"
+		var hero_name := "อัศวินดาบแสง" if _selected_hero_kind == "swordmaster" else "Kubi"
+		_controls_label.text = "B+คลิกพื้น: วางป้อม · คลิกป้อม: จัดการ" if _sandbox_map else "B+คลิกพื้น: วางป้อม · คลิกป้อม: จัดการ · คลิกขวา: สั่ง %s" % hero_name
 	_path_layer.polished = _sandbox_map
 	_path_layer.queue_redraw()
 	var bg := get_node_or_null("Background")
@@ -923,6 +952,12 @@ func _start_map(idx: int) -> void:
 	_placement_overlay.castle = _road[_road.size() - 1]
 	_placement_overlay.queue_redraw()
 	queue_redraw()
+	if _active_hero_kind != _selected_hero_kind:
+		_hero.queue_free()
+		_hero = _make_selected_hero()
+		_hero.position = _road[_road.size() - 1]
+		add_child(_hero)
+		_active_hero_kind = _selected_hero_kind
 	_hero.home = _road[_road.size() - 1]
 	_hero.position = _road[_road.size() - 1]
 	_prev_best = int(_best.get("m%d" % _map_idx, 0))

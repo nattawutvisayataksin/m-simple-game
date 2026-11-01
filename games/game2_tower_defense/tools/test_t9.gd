@@ -149,14 +149,14 @@ func _process(delta: float) -> bool:
 		4:
 			# ---- รอบ 4: บอส Kubit ----
 			if _boss == null and _t > 0.2:
-				_main._wave_idx = 12      # คลื่นบอสจริง (สุดท้าย)
+				_main._wave_idx = _main.WAVES.size() - 1 # คลื่นบอสจริง (สุดท้าย)
 				_main._spawn_kind("kubit_boss")
 				for e in _live_enemies():
 					if e.is_boss:
 						_boss = e
 				if _boss == null:
 					return _fail("boss never spawned")
-				if not _boss.is_boss or _boss.flying or _boss.split_kind != "" or _boss.max_hp < 3000.0:
+				if not _boss.is_boss or _boss.flying or _boss.split_kind != "" or _boss.max_hp < 1000.0:
 					return _fail("boss stats wrong hp=%.0f" % _boss.max_hp)
 				print("TEST_T9 boss-spawn PASS hp=%.0f scale=%.1f" % [_boss.max_hp, _boss.base_scale])
 			elif _boss != null:

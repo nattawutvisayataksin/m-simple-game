@@ -19,6 +19,7 @@
 | ค่ายทหาร (ป้อมสายที่ 4) | `assets/art/gen/tower_barracks.png` | Pixen Key C (Phase B) | ✅ ส่งทหาร 1-2 ตน + rally |
 | ทหาร Kubi (บล็อกทาง) | `assets/art/gen/soldier_knight.png` | Pixen Key C (Phase B) | ✅ Lv1 1 ตน / Lv2 2 ตน, respawn 6 วิ |
 | ฮีโร่ Kubi เดิน 8f + neutral | `assets/art/gen/kubi_hero_sheet.png` (512×64) + `kubi_hero_neutral.png` | animate `e285f2e8` + คัดเฟรมยืน | ✅ |
+| ฮีโร่อัศวินดาบแสง (ตัวเลือกแยก) | `scripts/hero_blade.gd` วาดด้วย Godot CanvasItem; แขน/มือ/ดาบรวมใน pose เดียว | วาด procedural ในโปรเจกต์; เอฟเฟกต์ฟันฟ้า-ขาวและประกายวาด runtime | ✅ ต้นแบบเล่นได้ เลือกได้จากหน้าแผนที่ |
 | ป้อมนักธนู / ปืนใหญ่ / เวท | `assets/art/gen/tower_archer.png` / `tower_cannon.png` / `tower_mage.png` | Pixen mage job `399468d4-435b-4ead-a115-2dbccfaa9670`; ของเดิม pixflux `5801ea35` / `faf8a0e4` | ✅ ฐานใช้ภาพเดิม; ลำกล้อง/อาวุธหมุนเล็งเป้าและแสดง flash ด้วยภาพวาด runtime |
 | ไอคอน tables มือวาด | `assets/art/icons/bow, hammer, scroll, x, upg_bow, upg_hammer.png` (64px) | **Ravenmore Icon Pack 2.0** (ฟรี itch.io ไม่กิน gen; ให้ credit Ravenmore) | ✅ T3-T4 |
 | ไอคอนเหรียญ / หัวใจ (HUD) | `assets/art/icons/coin.png` / `heart.png` (ราว `assets/art/gen/raw/coin_v2.png` / `heart_v2.png` ไว้สต็อก) | pixen Key B (2 gen — เดิมไม่สวยตามฟีดแบ็ก T5.1) | ✅ v2 regenerated |
@@ -31,7 +32,7 @@
 
 - ประกอบ/ตรวจภาพ: `build_frog_sheet.ps1`, `build_lizard_front_sheet.ps1`, `build_lizard_sheet.ps1`, `build_lizard_side_sheet.ps1`, `check_bgs_size.ps1`, `check_lizard_front.ps1`, `check_props.ps1`, `compose_big_mock.ps1`, `compose_mockup.ps1`, `compose_mockup_world_v3.ps1`, `compose_world.ps1`, `crop_master_portal.ps1`, `cut_lizard_front.ps1`, `grid_master.ps1`, `sample_master_colors.ps1`, `sample_seam_colors.ps1`, `measure_feet.ps1` (วัดแถวเท้าเพื่อ offset ยุติธรรม)
 - เทส OS-click / ภาพ: `frog_contact.ps1`, `frog_diff.ps1`, `lizard_contact.ps1`, `lizard_front_diff.ps1`, `lizard_pair.ps1`, `test_click_log.ps1`, `test_click_win.ps1`
-- สูทเทส GDScript 12 ชุด (ต้อง PASS ทั้งหมด, exit 0): `test_t3`, `test_t4`, `test_keys`, `test_t5`, `test_t6`, `test_t7`, `test_menu`, `test_menu2`, `test_t8` (ค่ายทหาร), `test_t9` (มอนใหม่+บอส), `test_t10` (โหมดเล็ง+พรีวิวคลื่น), `test_t11` (แผนที่ 2+title+save — คืนไฟล์เซฟผู้เล่นหลังจบ) + `shot_debug.gd` (แคปจอจริง 2 จอ: title + แผนที่ B)
+- สูทเทส GDScript 12 ชุด (ต้อง PASS ทั้งหมด, exit 0): `test_t3`, `test_t4`, `test_keys`, `test_t5`, `test_t6`, `test_t7`, `test_menu`, `test_menu2`, `test_t8` (ค่ายทหาร), `test_t9` (มอนใหม่+บอส), `test_t10` (โหมดเล็ง+พรีวิวคลื่น), `test_t11` (แผนที่ 2+title+save — คืนไฟล์เซฟผู้เล่นหลังจบ) + `shot_debug.gd` (แคปจอจริง 2 จอ: title + แผนที่ B) + `shot_swordmaster.gd` (หน้าเลือกฮีโร่ + จังหวะฟันของอัศวินดาบแสง)
 - เสียง: `generate_td_audio.ps1` (สังเคราะห์ WAV ทั้ง 16 ไฟล์ — เขียน WAV header 16-bit หลัง block-align ให้ถูก)
 - เศษสคริปต์ legacy: บาง script อ้างพาธเครื่องเดิม `C:\m-simple-game\...` — เครื่องมือ one-shot ต้องตรวจ/แก้พาธก่อนรัน; **ไม่จำเป็นต้อง migrate** (ไม่โดนเรียกในสูทเทสหลัก)
 

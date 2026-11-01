@@ -9,10 +9,15 @@ func _initialize() -> void:
 	_main = main_scene
 
 func _dispatch_click() -> void:
+	# เกมปัจจุบัน: คลิกพื้นเปิดเมนูสร้างเฉพาะในโหมดวางป้อม (กด B สลับก่อน)
+	var kb := InputEventKey.new()
+	kb.keycode = KEY_B
+	kb.pressed = true
+	_main._unhandled_input(kb)
 	var ev := InputEventMouseButton.new()
 	ev.button_index = MOUSE_BUTTON_LEFT
 	ev.pressed = true
-	ev.position = Vector2(420, 615)
+	ev.position = Vector2(160, 445)
 	ev.global_position = ev.position
 	_main._unhandled_input(ev)
 

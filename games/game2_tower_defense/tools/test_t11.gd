@@ -17,6 +17,7 @@ var _had_backup := false
 var _frog: Node2D
 var _life0 := 0
 var _got_leak := false
+var _btns := -1
 
 func _initialize() -> void:
 	_main = load("res://scenes/main.tscn").instantiate()
@@ -88,15 +89,15 @@ func _process(delta: float) -> bool:
 					return _fail("game must boot into title state")
 				if _main._title_layer == null:
 					return _fail("title layer missing")
-				var btns := _deep_buttons(_main._title_layer)
-				if btns < 2:
-					return _fail("title must offer >=2 map buttons, got %d" % btns)
-			_click(Vector2(420, 615))   # คลิกพื้นโดยไม่เข้าโหมดวางต้องไม่เปิดเมนู
+				_btns = _deep_buttons(_main._title_layer)
+				if _btns < 2:
+					return _fail("title must offer >=2 map buttons, got %d" % _btns)
+				_click(Vector2(420, 615))   # คลิกพื้นโดยไม่เข้าโหมดวางต้องไม่เปิดเมนู
 				if _main._menu != null:
 					return _fail("game click must be blocked in title")
 				if _main._state != "title":
 					return _fail("title state must persist before start")
-				print("TEST_T11 title+map-select PASS (buttons=%d, คลิกเกมถูกปิด)" % btns)
+				print("TEST_T11 title+map-select PASS (buttons=%d, คลิกเกมถูกปิด)" % _btns)
 				_main._start_map(0)
 				_main._prep_t = 1e9
 				_phase = 1
@@ -202,18 +203,18 @@ func _process(delta: float) -> bool:
 			# save สถิติ: record/won/atomic/load + label หน้า title
 			if _t > 0.3:
 				_main._map_idx = 0
-				_main._wave_idx = 4      # ทำได้ถึงคลื่น 5
+				_main._wave_idx = 1      # ทำได้ถึงคลื่น 2 (เกมมี 2 คลื่น = จบขอบเกม)
 				_main._prev_best = 0
 				_main._best = {}
 				_main._record_best(false)
-				if _main._best.get("m0", 0) != 5:
-					return _fail("record_best must save reached=5, got %d" % int(_main._best.get("m0", 0)))
+				if _main._best.get("m0", 0) != 2:
+					return _fail("record_best must save reached=2, got %d" % int(_main._best.get("m0", 0)))
 				_main._record_best(true)
 				if not _main._best.get("m0_won", false):
 					return _fail("won must set m0_won flag")
-				_main._wave_idx = 2      # ครั้งถัดไปทำได้ถึงคลื่น 3 = ยังไม่มากว่าเดิม
+				_main._wave_idx = 0      # ครั้งถัดไปทำได้ถึงคลื่น 1 = ยังไม่มากว่าเดิม
 				_main._record_best(false)
-				if int(_main._best.get("m0", 0)) != 5:
+				if int(_main._best.get("m0", 0)) != 2:
 					return _fail("best must keep max, got %d" % int(_main._best.get("m0", 0)))
 				_main._save_best()
 				if not FileAccess.file_exists(_main.BEST_PATH):
@@ -225,12 +226,12 @@ func _process(delta: float) -> bool:
 					return _fail("save must be valid JSON dict")
 				_main._best = {}
 				_main._load_best()
-				if int(_main._best.get("m0", 0)) != 5 or not _main._best.get("m0_won", false):
-					return _fail("load_best must restore best after fresh dict")
+				if int(_main._best.get("m0", 0)) != 2 or not _main._best.get("m0_won", false):
+					return _fail("load_best must restore best after fresh dict, got %s" % str(_main._best))
 				var txt: String = _main._map_best_text(0)
-				if not txt.contains("5"):
-					return _fail("title best text must mention 5, got '%s'" % txt)
-				print("TEST_T11 best-save-load PASS (m0=5+won, atomic file, label '%s')" % txt)
+				if not txt.contains("2"):
+					return _fail("title best text must mention 2, got '%s'" % txt)
+				print("TEST_T11 best-save-load PASS (m0=2+won, atomic file, label '%s')" % txt)
 				_restore_save()
 				print("TEST_T11 ALL PASS")
 				quit(0)

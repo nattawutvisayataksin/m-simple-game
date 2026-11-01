@@ -44,6 +44,10 @@ var _wp_index := 0
 var _bob := 0.0
 var _anim_t := 0.0
 var _sprite: Sprite2D
+var _boss_anim_t := 0.0
+var _boss_attack_t := 0.0
+var _boss_attack_direction := Vector2.LEFT
+var _sprite_foot_local_y := 0.0
 var _heal_pulse_t := 0.0    # Phase C: จับเวลาวงเขียวฮีล (วาดนาฬิกาลดลงใน _process)
 var _fly_bob := 0.0         # Phase C: จังหวะลอยวนของมอนกลางอากาศ
 
@@ -52,7 +56,9 @@ func _apply_sheet(tex: Texture2D, bottom_row: int) -> void:
 	_sprite.texture = tex
 	@warning_ignore("integer_division")
 	_sprite.hframes = tex.get_width() / FRAME_SIZE   # หารแบบ int ตั้งใจ (จำนวนเฟรม)
-	_sprite.offset = Vector2(0, 2.0 / base_scale - (bottom_row - 32))
+	var frame_height := float(tex.get_height()) / float(maxi(_sprite.vframes, 1))
+	_sprite.offset = Vector2(0, 2.0 / base_scale - (bottom_row - frame_height * 0.5))
+	_sprite_foot_local_y = float(bottom_row) - frame_height * 0.5 + _sprite.offset.y
 
 func _ready() -> void:
 	_hp = max_hp
@@ -84,6 +90,17 @@ func _draw() -> void:
 		var a := 0.45 * clampf(_heal_pulse_t / 0.35, 0.0, 1.0)
 		draw_arc(Vector2.ZERO, HEAL_RADIUS, 0.0, TAU, 40, Color(0.3, 1.0, 0.45, a), 2.0, true)
 		draw_circle(Vector2.ZERO, HEAL_RADIUS * clampf(1.2 - _heal_pulse_t, 0.05, 1.0), Color(0.3, 1.0, 0.45, a * 0.18))
+	if is_boss and _boss_attack_t > 0.0:
+		var swing := 1.0 - _boss_attack_t / 0.48
+		var slash_center := Vector2(0.0, -36.0) + _boss_attack_direction * 28.0
+		var slash_side := _boss_attack_direction.orthogonal()
+		var slash_alpha := sin(clampf(swing / 0.72, 0.0, 1.0) * PI) * 0.82
+		draw_line(slash_center - slash_side * 22.0 - _boss_attack_direction * 8.0,
+			slash_center + slash_side * 22.0 + _boss_attack_direction * 8.0,
+			Color(1.0, 0.28, 0.12, slash_alpha), 9.0, true)
+		draw_line(slash_center - slash_side * 15.0 - _boss_attack_direction * 5.0,
+			slash_center + slash_side * 15.0 + _boss_attack_direction * 5.0,
+			Color(1.0, 0.86, 0.42, slash_alpha), 3.0, true)
 	# Phase C: บอส = แถบเลือดกว้างพิเศษ (เห็นชัดว่า "อึด" จริง)
 	if is_boss and _hp < max_hp:
 		var w := 78.0
@@ -103,6 +120,23 @@ func _pulse_green() -> void:
 	# แชแมน: วงเขียวลูปปั้ดตอนฮีล (วาดตอน _draw)
 	_heal_pulse_t = 0.35
 	queue_redraw()
+
+func _animate_boss(delta: float, walking: bool) -> void:
+	if not is_boss or _sprite == null:
+		return
+	_boss_anim_t += delta
+	_boss_attack_t = maxf(_boss_attack_t - delta, 0.0)
+	var breath := sin(_boss_anim_t * 2.35)
+	var stride := sin(_progress * 0.16) if walking else 0.0
+	var squash := breath * 0.018 + absf(stride) * 0.012
+	_sprite.scale = Vector2(base_scale * (1.0 - squash), base_scale * (1.0 + squash))
+	# Pin the feet to the ground while the body breathes or takes a weighted step.
+	_sprite.position.y = _sprite_foot_local_y * (base_scale - _sprite.scale.y)
+	var attack_pose := (1.0 - _boss_attack_t / 0.48) if _boss_attack_t > 0.0 else 0.0
+	var attack_lean := sin(attack_pose * PI) * signf(_boss_attack_direction.x) * 0.025
+	_sprite.rotation = sin(_boss_anim_t * 1.7) * 0.008 + stride * 0.006 + attack_lean
+	if _boss_attack_t > 0.0:
+		queue_redraw()
 
 func set_blocker(soldier: Node2D) -> void:
 	if dead or flying:      # กลางอากาศ: บล็อกไม่ได้ (Phase C ค้างคาว)
@@ -139,7 +173,12 @@ func _die() -> void:
 	t.chain().tween_callback(queue_free)
 
 func _process(delta: float) -> void:
-	if dead or _wp_index >= waypoints.size() - 1:
+	if dead:
+		return
+	if blocker != null and (not is_instance_valid(blocker) or blocker.dead):
+		blocker = null
+	_animate_boss(delta, blocker == null and _wp_index < waypoints.size() - 1)
+	if _wp_index >= waypoints.size() - 1:
 		return
 	# Phase C: แชแมนฮีลออร่า — ฮีลเป้าหมายรอบตัวเป็นจังหวะ (บินยืนพื้นก็ฮีลได้)
 	if heal_power > 0.0:
@@ -151,8 +190,6 @@ func _process(delta: float) -> void:
 			_heal_cd = 2.2
 			_heal_nearby()
 	# โดนทหารบล็อก: หยุดเดิน + ฟันทหารเป็นจังหวะ (Kingdom Rush style)
-	if blocker != null and (not is_instance_valid(blocker) or blocker.dead):
-		blocker = null
 	if blocker != null:
 		_atk_cd -= delta
 		if _atk_cd <= 0.0:
@@ -161,6 +198,10 @@ func _process(delta: float) -> void:
 			var to_b := b.position - position     # อ่านก่อนฟัน (การฟันอาจฆ่าทหาร → blocker ถูกล้างกลางอากาศ)
 			if absf(to_b.x) > 0.05:
 				_sprite.flip_h = to_b.x > 0.0
+			if is_boss:
+				_boss_attack_direction = to_b.normalized() if to_b.length_squared() > 0.001 else Vector2.LEFT
+				_boss_attack_t = 0.48
+				queue_redraw()
 			b.take_damage(melee_dmg)
 		return
 	var step := speed * delta
@@ -201,7 +242,9 @@ func _process(delta: float) -> void:
 		if absf(d.x) > 0.05:
 			_sprite.flip_h = d.x > 0.0   # ต้นฉบับ (ไม่ flip) หันซ้ายอยู่แล้ว -> เดินขวาต้องกลับ
 		animing = front != null and front.get_width() > FRAME_SIZE
-	if animing:
+	if is_boss:
+		pass # Boss uses a grounded breathing/stride/strike animation instead of a static bob.
+	elif animing:
 		_anim_t += delta * ANIM_FPS
 		_sprite.frame = int(_anim_t) % _sprite.hframes
 	else:
