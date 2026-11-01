@@ -73,6 +73,11 @@ func _process(delta: float) -> bool:
 				var play: Node2D = _main.play_node
 				print("SNAP6 time=%.2f pos=%s rot=%.2f" % [play.time_left, str(play.car.position), play.car.rotation])
 				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game3_play.png")
+				play.night = true   # แคปโหมดกลางคืนต่อทันที
+				_stage = 8
+		8:
+			if _t > 6.8:
+				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game3_night.png")
 				quit(0)
 				return true
 	return false

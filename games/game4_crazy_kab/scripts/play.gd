@@ -19,6 +19,7 @@ const CAR_NAMES := {"kubi": "Kubi Cab", "liz": "กิ้งก่าซิ่�
 const W := 1152.0
 const H := 648.0
 const GAME_TIME := 120.0
+const NIGHT_MULT := 1.5        # กะกลางคืนคูณค่าโดยสาร
 const PICK_RADIUS := 70.0
 const STOP_SPEED := 70.0
 const RAMP_TIP := 20
@@ -46,6 +47,7 @@ var playing := false
 var over := false
 var over_info := {}
 var best := {}                 # สถานะอู่จากเซฟ (main ยัดก่อน add_child): {car_pick, upgrades}
+var night := false             # กะกลางคืน: ค่าโดยสาร x1.5 · โกเลมเกิด 2 เท่า
 var car: CharacterBody2D = null
 var trip := {}                 # {p, drop, limit, left, dist, fare}
 var trip_active := false
@@ -99,6 +101,8 @@ func _start() -> void:
 	car.car_id = gpick
 	car.call("set_lv", int((best.get("upgrades", {}) as Dictionary).get(gpick, 0)))
 	add_child(car)
+	if night:
+		add_tip(car.position + Vector2(0.0, -46.0), "กะกลางคืน! ค่าโดยสาร x1.5 · โกเลมเกิด 2 เท่า", Color(0.5, 0.85, 1.0))
 	traffic = _build_traffic()
 	slime_list = _build_slimes()
 	golem_list = []
@@ -230,6 +234,8 @@ func _update_trip(dt: float) -> void:
 		var is_vip := bool(trip.get("vip", false))
 		if is_vip:
 			total *= 3
+		if night:
+			total = int(round(float(total) * NIGHT_MULT))
 		cash += total
 		rides_ok += 1
 		combo += 1
@@ -351,7 +357,8 @@ func _update_slimes(dt: float) -> void:
 func _update_golems(dt: float) -> void:
 	golem_timer -= dt
 	if golem_timer <= 0.0:
-		golem_timer = randf_range(4.0, 7.0)
+		# กะกลางคืน: โกเลมเกิดถี่ 2 เท่า (2-3.5 วิ แทน 4-7 วิ)
+		golem_timer = randf_range(2.0, 3.5) if night else randf_range(4.0, 7.0)
 		# golem crosses one horizontal road at a random x
 		var y: float = ROADS_H_Y[randi() % ROADS_H_Y.size()]
 		golem_list.append({"pos": Vector2(-40.0, y), "dir": Vector2(1.0, 0.0)})
@@ -513,6 +520,18 @@ func _draw() -> void:
 	# golems (walkers)
 	for g: Dictionary in golem_list:
 		draw_texture_rect(GOLEM_TEX, Rect2(g["pos"] + Vector2(-16, -30), Vector2(32, 32)), false)
+	# กะกลางคืน: ม่านน้ำเงินทั้งเมือง + แสงไฟหน้ารถ (tips/HUD วาดหลังม่านจึงยังคม)
+	if night:
+		draw_rect(Rect2(0, 0, W, H), Color(0.05, 0.09, 0.22, 0.5))
+		if car != null:
+			draw_circle(car.position, 150.0, Color(1.0, 0.9, 0.55, 0.13))
+			draw_circle(car.position, 95.0, Color(1.0, 0.92, 0.6, 0.1))
+			# ลำแสงยื่นตามทางหันรถ (ภาพฐานหันลงซ้าย 135° => หัวรถ = rotation + CAR_ANG)
+			var face: float = car.rotation + CAR_ANG
+			draw_set_transform(car.position, face, Vector2(1.0, 0.55))
+			draw_circle(Vector2(150.0, 0.0), 66.0, Color(1.0, 0.95, 0.65, 0.12))
+			draw_circle(Vector2(90.0, 0.0), 46.0, Color(1.0, 0.95, 0.65, 0.1))
+			draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# floating tips
 	for t: Dictionary in tip_texts:
 		var alpha: float = clampf(t["left"] / 1.6, 0.0, 1.0)
@@ -601,6 +620,8 @@ func _draw_hud() -> void:
 	var st: String = "รับได้ %d · พลาด %d · %s Lv%d" % [rides_ok, rides_fail, str(CAR_NAMES.get(car.car_id, "Kubi Cab")), int((best.get("upgrades", {}) as Dictionary).get(car.car_id, 0))]
 	draw_string(ThemeDB.fallback_font, Vector2(340, 23), st, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(0.9, 0.9, 0.95))
 	draw_string(ThemeDB.fallback_font, Vector2(640, 23), "คอมโบ x%d" % combo, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(1.0, 0.75, 0.3))
+	if night:
+		draw_string(ThemeDB.fallback_font, Vector2(905, 23), "กลางคืน x1.5", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 15, Color(0.55, 0.85, 1.0))
 	# trip info panel
 	draw_rect(Rect2(700, 4, 200, 26).grow(1.5), Color(0.12, 0.12, 0.16))
 	if trip_active and not trip.is_empty():
@@ -636,6 +657,8 @@ func _draw_over() -> void:
 	draw_rect(Rect2(0, 0, W, H), Color(0, 0, 0, 0.72))
 	var center := Vector2(W * 0.5, H * 0.5)
 	draw_string(ThemeDB.fallback_font, center + Vector2(-260, -70), "หมดเวลา! รวมได้ %d บาท" % cash, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 34, Color(1.0, 0.9, 0.3))
+	if night:
+		draw_string(ThemeDB.fallback_font, center + Vector2(-260, -96), "กะกลางคืน · ค่าโดยสาร x1.5", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 17, Color(0.55, 0.85, 1.0))
 	var best_cash := int(over_info.get("best_cash", cash))
 	var is_new: bool = bool(over_info.get("new_best_cash", false))
 	var bc := Color(0.35, 0.95, 0.5) if is_new else Color(0.9, 0.9, 0.9)

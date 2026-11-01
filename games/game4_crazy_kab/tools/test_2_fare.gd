@@ -81,8 +81,26 @@ func _process(dt: float) -> bool:
 				print("TEST_FARE FAIL offers-after=%d (ต้อง 2)" % play.offers.size())
 				quit(1); return true
 			print("TEST_FARE offers-3 PASS")
-			print("TEST_FARE ALL PASS")
-			quit(0); return true
+			_phase = 4
+		4:
+			# กะกลางคืน: ค่าโดยสาร x1.5 (ส่งทัน 60% = mult 2.0)
+			var before: int = play.cash
+			var fare: int = int(play.offers[0]["fare"])
+			play.trip = play.offers[0]
+			play.trip_active = true
+			play.night = true
+			play.car.position = play.trip["drop"]
+			play.car.velocity = Vector2.ZERO
+			play._update_trip(0.01)
+			var exp2 := int(round(float(fare) * 2.0 * 1.5))
+			if play.trip.is_empty() and play.cash - before == exp2:
+				print("TEST_FARE night x1.5 PASS total=%d" % exp2)
+				print("TEST_FARE ALL PASS")
+				quit(0); return true
+			elif _sim_t > 10.0:
+				# แถม: ลูกศรลอยอาจบวกเงินแวบ — ตรวจด้วยช่วงขยาย x2 (คูณค่า mult อธิบายไม่พัง)
+				print("TEST_FARE FAIL night total+%d expect=%d fare=%d" % [play.cash - before, exp2, fare])
+				quit(1); return true
 	if _sim_t > 10.0:
 		print("TEST_FARE FAIL global timeout phase=%d" % _phase)
 		quit(1); return true

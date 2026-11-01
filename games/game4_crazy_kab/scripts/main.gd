@@ -61,15 +61,19 @@ func _to_title() -> void:
 		play_node = null
 	buttons = [
 		{"rect": Rect2(W * 0.5 - 220, 250, 440, 48), "label": "เริ่มเล่น", "target": SCR.PLAY},
-		{"rect": Rect2(W * 0.5 - 220, 306, 440, 42), "label": "เรื่องของเกม", "target": SCR.STORY},
-		{"rect": Rect2(W * 0.5 - 220, 354, 440, 42), "label": "วิธีเล่น", "target": SCR.HOWTO},
-		{"rect": Rect2(W * 0.5 - 220, 402, 440, 42), "label": "คู่มือค่าต่างๆ ของเกม", "target": SCR.GUIDE},
-		{"rect": Rect2(W * 0.5 - 220, 450, 440, 42), "label": "รถและสถิติ", "target": SCR.OVER},
+		{"rect": Rect2(W * 0.5 - 220, 306, 440, 42), "label": "เริ่มกะกลางคืน (เงิน x1.5 · โกเลม 2 เท่า)", "target": 6},
+		{"rect": Rect2(W * 0.5 - 220, 354, 440, 42), "label": "เรื่องของเกม", "target": SCR.STORY},
+		{"rect": Rect2(W * 0.5 - 220, 402, 440, 42), "label": "วิธีเล่น", "target": SCR.HOWTO},
+		{"rect": Rect2(W * 0.5 - 220, 450, 440, 42), "label": "คู่มือค่าต่างๆ ของเกม", "target": SCR.GUIDE},
+		{"rect": Rect2(W * 0.5 - 220, 498, 440, 42), "label": "รถและอู่อัปเกรด", "target": SCR.OVER},
 	]
 
 func _click(t: int) -> void:
 	if sfx != null:
 		sfx.play("click")
+	if t == 6:   # เริ่มกะกลางคืน
+		_start_play(true)
+		return
 	if t == SCR.PLAY:
 		_start_play()
 		return
@@ -112,13 +116,14 @@ func _build_stat_buttons() -> void:
 			bts.append({"rect": Rect2(804, y, 250, 38), "label": ("อัปเกรด Lv%d (%d บาท)" % [lv + 1, cost]) if afford else ("ต้องการ %d บาท" % cost), "target": 10 + i})
 	buttons = bts
 
-func _start_play() -> void:
+func _start_play(night_run := false) -> void:
 	if play_node != null:
 		play_node.queue_free()
 	play_node = Node2D.new()
 	play_node.set_script(PlayScript)
 	play_node.sfx = sfx
 	play_node.best = best   # ยัดอู่ (car_pick + upgrades) ก่อน _ready สร้างรถ
+	play_node.night = night_run
 	add_child(play_node)
 	play_node.back_to_menu.connect(_to_title)
 	if sfx != null:
@@ -189,6 +194,7 @@ func _draw_howto() -> void:
 		["ลูกศร/WASD = ขับ · Space = เบรกมือ (ดริฟท์ ได้ทิป)", true],
 		["หยุดรถ (ช้ากว่า 70) ในวงหมุดเขียว = ลูกค้าขึ้นรถ", false],
 		["มี 3 ป้ายเกิดพร้อมกัน — กดจอดวงไหนก็รับวงนั้น เลือกเส้นทางกำไรดีสุด", true],
+		["กะกลางคืน (หน้าแรก): ค่าโดยสาร x1.5 · โกเลมเกิด 2 เท่า — ตามืดใช้แสงไฟหน้ารถ", false],
 		["หยุดในวงหมุดฟ้าก่อนเวลาหมด = ส่งสำเร็จ + ค่าโดยสาร", false],
 		["", false],
 		["ได้ทิปดีสุด: ส่งแล้วเหลือเวลา 50% ขึ้นไป = ค่าโดยสาร x2", true],
@@ -217,6 +223,9 @@ func _draw_guide() -> void:
 		["อู่อัปเกรด (หน้ารถและอู่อัปเกรด)", true],
 		["เงินทุกกะรวมกันสะสม = ซื้อเลเวลรถถาวร (ราคา 400/900/1800)", false],
 		["แต่ละเลเวล: สปีด +8% · เร่ง/เบรก/เลี้ยว +6% · สูงสุด Lv3 — ใช้ทุกกะถัดไป", false],
+		["", false],
+		["กะกลางคืน", true],
+		["ค่าโดยสาร x1.5 (ทิปเฉียด/ดริฟท์/แรมพ์ยังเดิม) · โกเลมเกิดทุก 2-3.5 วิ", false],
 	])
 
 func _draw_stats() -> void:
