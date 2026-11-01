@@ -7,6 +7,12 @@ signal back_to_menu
 const CarScript := preload("res://scripts/car.gd")
 const SaveScript := preload("res://scripts/save.gd")
 
+const SLIME_TEX := preload("res://assets/sprites/hazard_slime.png")
+const GOLEM_TEX := preload("res://assets/sprites/hazard_golem.png")
+const PASS_TEX := preload("res://assets/sprites/pass_frog.png")
+const TRAFFIC_TEX := preload("res://assets/sprites/car_traffic.png")
+const CAR_ANG := PI * 0.75   # ภาพรถหันลงซ้าย 135° (ชุดเดียวกับ car.gd)
+
 const W := 1152.0
 const H := 648.0
 const GAME_TIME := 120.0
@@ -47,6 +53,7 @@ var traffic := []
 var nearmiss_cd := 0.0
 var drift_bank := 0.0          # seconds accumulated of destructive drifting
 var golem_timer := 5.0
+var _anim_t := 0.0             # นาฬิกาแต่งภาพ (สไลม์หายใจ)
 
 func _ready() -> void:
 	_start()
@@ -93,6 +100,7 @@ func _process(dt: float) -> void:
 			back_to_menu.emit()
 		return
 	time_left -= dt
+	_anim_t += dt
 	if time_left <= 0.0:
 		time_left = 0.0
 		_finish()
@@ -184,6 +192,11 @@ func _update_trip(dt: float) -> void:
 
 func _new_trip() -> void:
 	var pickup: Vector2 = POIS[randi() % POIS.size()]
+	# หมุดรับต้องไกลจากรถ (ไม่งั้นเริ่มเกมขึ้นรถอัตโนมัติทันที)
+	for i in 24:
+		pickup = POIS[randi() % POIS.size()]
+		if car == null or pickup.distance_to(car.position) > 260.0:
+			break
 	var drop: Vector2 = pickup
 	var d := 0.0
 	for i in 24:
@@ -316,18 +329,37 @@ func _draw() -> void:
 			var ang := rel.angle()
 			var arrow_pos := car.position + Vector2.RIGHT.rotated(ang) * 52.0
 			_draw_arrow(arrow_pos, ang, Color(0.98, 0.85, 0.25))
-	# traffic cars (gray)
+	# ผู้โดยสารรอขึ้นรถที่หมุดรับ (ยืนเหนือหมุดเล็กน้อย)
+	if not trip.is_empty() and not trip_active:
+		draw_texture_rect(PASS_TEX, Rect2(trip["p"] + Vector2(-11, -38), (Vector2(22, 22))), false)
+	# trip arrow: pickup or drop
+	if not trip.is_empty() and car != null:
+		var target: Vector2 = trip["drop"] if trip_active else trip["p"]
+		var rel := target - car.position
+		if rel.length() > PICK_RADIUS:
+			var ang := rel.angle()
+			var arrow_pos := car.position + Vector2.RIGHT.rotated(ang) * 52.0
+			_draw_arrow(arrow_pos, ang, Color(0.98, 0.85, 0.25))
+	# traffic (civilian cars, rotated per lane direction)
 	for t: Dictionary in traffic:
-		draw_rect(Rect2(t["pos"] - Vector2(16, 10), Vector2(32, 20)), Color(0.62, 0.62, 0.66))
-		draw_rect(Rect2(t["pos"] - Vector2(10, 10), Vector2(18, 20)), Color(0.35, 0.4, 0.45))
-	# slimes (green blobs)
-	for s: Dictionary in slime_list:
-		draw_circle(s["pos"], 13.0, Color(0.35, 0.85, 0.4))
-		draw_circle(s["pos"] + Vector2(-3, -3), 5.0, Color(0.7, 1.0, 0.75))
-	# golems (gray walkers)
+		var face := 0.0
+		if t["axis"] == "h":
+			face = 0.0 if float(t["dir"]) > 0.0 else PI
+		else:
+			face = PI * 0.5 if float(t["dir"]) > 0.0 else -PI * 0.5
+		draw_set_transform(t["pos"], face - CAR_ANG, Vector2(0.9, 0.9))
+		draw_texture_rect(TRAFFIC_TEX, Rect2(-24, -24, 48, 48), false)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# slimes (squash-stretch blobs)
+	for i in slime_list.size():
+		var s: Dictionary = slime_list[i]
+		var puff: float = 0.1 * sin(_anim_t * 6.0 + float(i) * 1.7)
+		draw_set_transform(s["pos"], 0.0, Vector2(1.0 + puff, 1.0 - puff))
+		draw_texture_rect(SLIME_TEX, Rect2(-14, -14, 28, 28), false)
+	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+	# golems (walkers)
 	for g: Dictionary in golem_list:
-		draw_rect(Rect2(g["pos"] - Vector2(14, 16), Vector2(28, 32)), Color(0.5, 0.5, 0.55))
-		draw_rect(Rect2(g["pos"] + Vector2(-6, -10), Vector2(12, 8)), Color(0.2, 0.35, 0.25))
+		draw_texture_rect(GOLEM_TEX, Rect2(g["pos"] + Vector2(-16, -30), Vector2(32, 32)), false)
 	# floating tips
 	for t: Dictionary in tip_texts:
 		var alpha: float = clampf(t["left"] / 1.6, 0.0, 1.0)

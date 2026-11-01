@@ -22,6 +22,7 @@ func def() -> Dictionary:
 	return DEFS[NAMES[car_id]]
 
 func _physics_process(dt: float) -> void:
+	queue_redraw()   # เงา/ไฟเบรก/ดาวหมุนเปลี่ยนทุกเฟรม
 	var d := def()
 	var dt2 := dt if dt > 0.0 else 1.0 / 60.0
 	if spin_timer > 0.0:
@@ -63,20 +64,29 @@ func apply_slow(time_s: float) -> void:
 func apply_spin(time_s: float) -> void:
 	spin_timer = maxf(spin_timer, time_s)
 
-# รถวาดด้วยโค้ดก่อน — เปลี่ยนเป็น sprite PixelLab ตอน G5
+# สไปรต์รถ (PixelLab G5) — ภาพหันลงซ้าย 135°, ทางเกมรถหันตาม velocity
+const SPRITE_ANG := PI * 0.75
+const TEXES := {
+	"kubi": preload("res://assets/sprites/car_kubi.png"),
+	"liz": preload("res://assets/sprites/car_liz.png"),
+	"golem": preload("res://assets/sprites/car_golem.png"),
+}
+
 func _draw() -> void:
-	var d := def()
-	var c: Color = d["color"]
-	# เงา
-	draw_set_transform(Vector2(3.0, 3.0), 0.0, Vector2.ONE)
-	draw_rect(Rect2(-22, -13, 44, 26), Color(0, 0, 0, 0.35))
-	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
-	# ลำตัวรถ
-	draw_rect(Rect2(-22, -13, 44, 26), c)
-	# ป้าย TAXI (แถบเหลืองกลาง)
-	draw_rect(Rect2(-10, -13, 20, 26), Color(0.1, 0.08, 0.05, 0.55))
-	draw_rect(Rect2(-22, -3, 5, 6), Color(0.94, 0.93, 0.9))    # หัวไฟหน้า
-	draw_rect(Rect2(17, -3, 5, 6), Color(0.7, 0.1, 0.05))     # ไฟท้าย
-	# ล้อ 4 ตำแหน่งตามลำตัว
-	for w: Vector2 in [Vector2(-14, -15), Vector2(-14, 15), Vector2(12, -15), Vector2(12, 15)]:
-		draw_rect(Rect2(w.x - 5, w.y - 2.5, 10, 5), Color(0.05, 0.05, 0.05))
+	var drift_glow := drifting
+	# เงาวงรีใต้รถ (หมุนตามรถ)
+	draw_set_transform(Vector2(2.5, 3.5), rotation - SPRITE_ANG, Vector2(1.05, 0.62))
+	draw_circle(Vector2.ZERO, 24.0, Color(0, 0, 0, 0.32))
+	# ตัวรถ = สไปรต์ หมุนชดเชยมุมภาพ
+	draw_set_transform(Vector2.ZERO, rotation - SPRITE_ANG, Vector2.ONE)
+	draw_texture_rect(TEXES[car_id], Rect2(-26, -26, 52, 52), false)
+	# ไฟเบรกเรืองแดงเวลาเหยียบเบรกมือ/ถอย
+	if drift_glow or steer_throttle < 0.0:
+		draw_set_transform(Vector2.ZERO, rotation - SPRITE_ANG, Vector2.ONE)
+		draw_circle(Vector2(-17, 0), 4.0, Color(1.0, 0.25, 0.1, 0.75))
+	if spin_timer > 0.0:
+		# ดาวหัวหมุนตอนชนโกเลม
+		for i in 3:
+			var a := Time.get_ticks_msec() / 90.0 + float(i) * TAU / 3.0
+			var pos := Vector2.RIGHT.rotated(a) * 26.0 + Vector2(0, -30)
+			draw_circle(pos, 3.0, Color(1.0, 0.9, 0.3))
