@@ -206,10 +206,16 @@ func _update_trip(dt: float) -> void:
 		elif frac < 0.25:
 			mult = 1.0
 		var total := int(round(float(trip["fare"]) * mult))
+		var is_vip := bool(trip.get("vip", false))
+		if is_vip:
+			total *= 3
 		cash += total
 		rides_ok += 1
 		combo += 1
-		add_tip(trip["drop"], "+%d บาท x%.1f" % [total, mult], Color(0.2, 0.95, 0.4))
+		if is_vip:
+			add_tip(trip["drop"], "+%d บาท x%.1f · VIP!" % [total, mult], Color(1.0, 0.82, 0.2))
+		else:
+			add_tip(trip["drop"], "+%d บาท x%.1f" % [total, mult], Color(0.2, 0.95, 0.4))
 		_sfx("drop")
 		freeze_t = 0.06
 		trip = {}
@@ -232,7 +238,8 @@ func _new_trip() -> void:
 			break
 	var lim := clampf(15.0 + d / 60.0, 18.0, 45.0)
 	# สายพันธุ์ลูกค้า 3 แบบจากสไปรต์เดียว: กบปกติ / กบน้อง (เล็ก) / กบธุระ (ใหญ่)
-	trip = {"p": pickup, "drop": drop, "limit": lim, "left": lim, "dist": d, "fare": 50 + int(d / 10.0), "kind": randi() % 3}
+	# VIP ~12%: แหวนทอง + ค่าโดยสาร x3
+	trip = {"p": pickup, "drop": drop, "limit": lim, "left": lim, "dist": d, "fare": 50 + int(d / 10.0), "kind": randi() % 3, "vip": randf() < 0.12}
 	trip_active = false
 
 # ---------- traffic / hazards ----------
@@ -252,15 +259,27 @@ func _build_traffic() -> Array:
 			pos = Vector2(60.0 + 120.0 * float(i), float(lane["fixed"]))
 		else:
 			pos = Vector2(float(lane["fixed"]), 90.0 + 140.0 * float(i))
-		arr.append({"pos": pos, "axis": lane["axis"], "speed": float(lane["speed"]), "dir": 1.0 if i % 2 == 0 else -1.0})
+		arr.append({"pos": pos, "axis": lane["axis"], "speed": float(lane["speed"]), "dir": 1.0 if i % 2 == 0 else -1.0, "tint": TRAFFIC_TINTS[i % TRAFFIC_TINTS.size()]})
 	return arr
 
+# สีจราจรต่อคัน (ทาบบนภาพเทา = จำเลนง่ายขึ้น)
+const TRAFFIC_TINTS := [
+	Color(1.0, 1.0, 1.0),        # เทาเดิม
+	Color(0.45, 0.55, 1.0),     # ฟ้าสูตรเข้ม
+	Color(1.0, 0.5, 0.45),      # แดงอิฐ
+	Color(1.0, 0.85, 0.4),      # ทองแท็กซี่
+]
+
 func _update_traffic(dt: float) -> void:
+	# ครึ่งเกมหลัง: เมืองหน่วงหนัก — จราจรรุกเร็วขึ้น 30%
+	var rush := 1.0
+	if (120.0 - time_left) > 60.0:
+		rush = 1.3
 	for t: Dictionary in traffic:
 		if t["axis"] == "h":
-			t["pos"].x = wrapf(t["pos"].x + t["dir"] * t["speed"] * dt, 0.0, W)
+			t["pos"].x = wrapf(t["pos"].x + t["dir"] * t["speed"] * rush * dt, 0.0, W)
 		else:
-			t["pos"].y = wrapf(t["pos"].y + t["dir"] * t["speed"] * dt, 0.0, H)
+			t["pos"].y = wrapf(t["pos"].y + t["dir"] * t["speed"] * rush * dt, 0.0, H)
 		# near-miss: close while fast, once per second
 		if nearmiss_cd <= 0.0 and car != null:
 			var rel := car.velocity
@@ -282,8 +301,12 @@ func _build_slimes() -> Array:
 	return arr
 
 func _update_slimes(dt: float) -> void:
+	# ครึ่งเกมหลัง: สไลม์ออกเที่ยวพุ่งขึ้น 30% เท่ากัน
+	var rush := 1.0
+	if (120.0 - time_left) > 60.0:
+		rush = 1.3
 	for s: Dictionary in slime_list:
-		s["pos"] = s["pos"] + s["vel"] * dt
+		s["pos"] = s["pos"] + s["vel"] * rush * dt
 		if s["pos"].x < 130.0 or s["pos"].x > 1022.0:
 			s["vel"].x *= -1.0
 		if s["pos"].y < 70.0 or s["pos"].y > 580.0:
@@ -300,7 +323,8 @@ func _update_golems(dt: float) -> void:
 		var y: float = ROADS_H_Y[randi() % ROADS_H_Y.size()]
 		golem_list.append({"pos": Vector2(-40.0, y), "dir": Vector2(1.0, 0.0)})
 	for g: Dictionary in golem_list:
-		g["pos"] = g["pos"] + g["dir"] * 55.0 * dt
+		var grush := 1.3 if (120.0 - time_left) > 60.0 else 1.0
+		g["pos"] = g["pos"] + g["dir"] * 55.0 * grush * dt
 		if car != null and car.position.distance_to(g["pos"]) < 34.0 and car.spin_timer <= 0.0:
 			car.apply_spin(1.0)
 			add_tip(car.position, "ชนโกเลม!", Color(1.0, 0.3, 0.3))
@@ -382,6 +406,11 @@ func _draw() -> void:
 			c = Color(0.35, 0.75, 1.0)
 		draw_circle(p, 12.0, c)
 		draw_circle(p, 7.0, Color(0.08, 0.08, 0.08))
+		# VIP: แหวนทองกระพริบรอบหมุดรับ
+		if is_pick and not trip.is_empty() and bool(trip.get("vip", false)):
+			var rr := 15.0 + 2.5 * sin(_anim_t * 7.0)
+			draw_arc(p, rr, 0.0, TAU, 28, Color(1.0, 0.82, 0.2, 0.9), 3.0)
+			draw_arc(p, rr + 4.0, 0.0, TAU, 28, Color(1.0, 0.82, 0.2, 0.35), 1.5)
 	# ผู้โดยสารรอขึ้นรถที่หมุดรับ (ยืนเหนือหมุดเล็กน้อย) — สายพันธุ์จากสไปรต์จริง
 	if not trip.is_empty() and not trip_active:
 		var kind: int = int(trip.get("kind", 0))
@@ -394,6 +423,18 @@ func _draw() -> void:
 			tex = PASS_CHICK_TEX     # ไก่แก้วตัวกลมโตกว่า
 			half = 13.0
 		draw_texture_rect(tex, Rect2(trip["p"] + Vector2(-half, -16.0 - half * 2.0), Vector2(half * 2.0, half * 2.0)), false)
+		# มงกุฎทอง: ประชาสัมพันธ์ว่าคนนี้รวยเป็นสอง
+		if bool(trip.get("vip", false)):
+			var cy := -16.0 - half * 2.0
+			var base := Vector2(trip["p"].x - half * 0.55, trip["p"].y + cy - 3.0)
+			draw_rect(Rect2(base, Vector2(half * 1.1, 3.0)), Color(1.0, 0.82, 0.2))
+			draw_colored_polygon(PackedVector2Array([
+				trip["p"] + Vector2(-half * 0.55, cy - 3.0),
+				trip["p"] + Vector2(-half * 0.2, cy - 8.0),
+				trip["p"] + Vector2(0.0, cy - 4.0),
+				trip["p"] + Vector2(half * 0.2, cy - 8.0),
+				trip["p"] + Vector2(half * 0.55, cy - 3.0),
+			]), Color(1.0, 0.85, 0.25))
 	# trip arrow: pickup or drop
 	if not trip.is_empty() and car != null:
 		var target: Vector2 = trip["drop"] if trip_active else trip["p"]
@@ -410,7 +451,7 @@ func _draw() -> void:
 		else:
 			face = PI * 0.5 if float(t["dir"]) > 0.0 else -PI * 0.5
 		draw_set_transform(t["pos"], face - CAR_ANG, Vector2(0.9, 0.9))
-		draw_texture_rect(TRAFFIC_TEX, Rect2(-24, -24, 48, 48), false)
+		draw_texture_rect(TRAFFIC_TEX, Rect2(-24, -24, 48, 48), false, t.get("tint", Color(1.0, 1.0, 1.0)))
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	# slimes (squash-stretch blobs)
 	for i in slime_list.size():
@@ -513,11 +554,16 @@ func _draw_hud() -> void:
 	# trip info panel
 	if not trip.is_empty():
 		var head: String = "รับ: ไปหมุดเหลือง" if not trip_active else "ส่ง: ไปหมุดฟ้า"
+		if bool(trip.get("vip", false)):
+			head += " · VIP x3"
 		var bar := Rect2(700, 4, 200, 26)
 		draw_rect(bar.grow(1.5), Color(0.12, 0.12, 0.16))
 		var frac: float = trip["left"] / trip["limit"]
 		draw_rect(Rect2(bar.position, Vector2(bar.size.x * frac, bar.size.y)), Color(0.2, 0.9, 0.45) if frac > 0.4 else Color(0.95, 0.4, 0.3))
-		draw_string(ThemeDB.fallback_font, bar.position + Vector2(8, 18), "%s · %.1f วิ · %d บาท" % [head, trip["left"], trip["fare"]], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, Color(0.97, 0.97, 0.97))
+		var fc := Color(0.97, 0.97, 0.97)
+		if bool(trip.get("vip", false)):
+			fc = Color(1.0, 0.82, 0.2) if int(_anim_t * 4.0) % 2 == 0 else Color(0.97, 0.97, 0.97)
+		draw_string(ThemeDB.fallback_font, bar.position + Vector2(8, 18), "%s · %.1f วิ · %d บาท" % [head, trip["left"], trip["fare"]], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, fc)
 	# controls hint bottom
 	draw_rect(Rect2(0, H - 26, W, 26), Color(0.08, 0.08, 0.12, 0.7))
 	draw_string(ThemeDB.fallback_font, Vector2(12, H - 8), "ลูกศร/WASD ขับ · เคาะ Space เบรกมือ = ดริฟท์ · จอดใกล้หมุดเพื่อรับ/ส่ง · R เริ่มใหม่ · ESC เมนู", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, Color(0.9, 0.9, 0.85))
