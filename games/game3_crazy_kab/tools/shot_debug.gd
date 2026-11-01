@@ -1,0 +1,71 @@
+extends SceneTree
+# shot_debug: render main scene into SubViewport; capture title/story/howto/guide screens + gameplay
+# run WITHOUT --headless so rendering is real
+
+var _t := 0.0
+var _stage := 0
+var _main: Node2D
+var _sub: SubViewport
+
+func _initialize() -> void:
+	_sub = SubViewport.new()
+	_sub.size = Vector2i(1152, 648)
+	_sub.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+	root.add_child(_sub)
+	_main = load("res://scenes/main.tscn").instantiate()
+	_sub.add_child(_main)
+
+func _snap(path: String) -> void:
+	var img := _sub.get_texture().get_image()
+	img.save_png(path)
+	print("SHOT-SAVED ", path, " ", img.get_width(), "x", img.get_height())
+
+func _hold_wa() -> void:
+	var up := InputEventKey.new()
+	up.keycode = KEY_W
+	up.pressed = true
+	Input.parse_input_event(up)
+	var left := InputEventKey.new()
+	left.keycode = KEY_A
+	left.pressed = true
+	Input.parse_input_event(left)
+
+func _process(delta: float) -> bool:
+	_t += delta
+	match _stage:
+		0:
+			if _t > 0.8:
+				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game3_title.png")
+				_main._click(1)   # story
+				_stage = 1
+		1:
+			if _t > 1.4:
+				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game3_story.png")
+				_main._click(2)   # howto
+				_stage = 2
+		2:
+			if _t > 2.0:
+				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game3_howto.png")
+				_main._click(3)   # guide
+				_stage = 3
+		3:
+			if _t > 2.6:
+				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game3_guide.png")
+				_main._click(0)   # back to title
+				_stage = 4
+		4:
+			if _t > 3.0:
+				_main._click(4)   # start play
+				_stage = 5
+		5:
+			if _t > 3.4:
+				_hold_wa()
+				_stage = 6
+		6:
+			if _t > 5.4:
+				var play: Node2D = _main.play_node
+				print("SNAP6 time=%.2f pos=%s rot=%.2f" % [play.time_left, str(play.car.position), play.car.rotation])
+				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game3_play.png")
+				quit(0)
+				return true
+	return false

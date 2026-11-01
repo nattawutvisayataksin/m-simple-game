@@ -82,6 +82,7 @@ func _start() -> void:
 # ---------- life loop ----------
 
 func _process(dt: float) -> void:
+	queue_redraw()   # mark dirty: everything (timer/traffic/tips) redraws every frame
 	if not playing:
 		return
 	if over:
