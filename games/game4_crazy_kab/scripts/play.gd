@@ -49,6 +49,8 @@ var best := {}                 # สถานะอู่จากเซฟ (mai
 var car: CharacterBody2D = null
 var trip := {}                 # {p, drop, limit, left, dist, fare}
 var trip_active := false
+var offers := []               # ป้ายทริปพร้อมกันสูงสุด 3 วง — เลือกรับตัวไหนก็ได้
+var refill_gap := 0.0          # สร้างป้ายทดแทนที่ถูกเลือกไป
 var spawn_gap := 0.0           # delay before next passenger appears
 var tip_texts := []            # {pos, txt, left, color}
 var slime_list := []
@@ -78,6 +80,8 @@ func _start() -> void:
 	combo = 0
 	trip = {}
 	trip_active = false
+	offers = []
+	refill_gap = 0.0
 	spawn_gap = 0.4
 	tip_texts = []
 	drift_bank = 0.0
@@ -181,17 +185,28 @@ func _serve_input(_dt: float) -> void:
 # ---------- passenger flow ----------
 
 func _update_trip(dt: float) -> void:
+	# ป้ายที่ถูกรับไปสร้างทดแทนอัตโนมัติ (คง 3 วงตลอดกะ)
+	if offers.size() < 3:
+		refill_gap -= dt
+		if refill_gap <= 0.0:
+			refill_gap = 0.9
+			offers.append(_make_offer())
 	if trip.is_empty():
 		spawn_gap -= dt
 		if spawn_gap <= 0.0:
 			_new_trip()
 		return
 	if not trip_active:
-		# waiting at pickup point
-		if car.position.distance_to(trip["p"]) < PICK_RADIUS and car.speed_abs() < STOP_SPEED:
-			trip_active = true
-			add_tip(trip["p"], "ขึ้นรถ! ส่งทัน %d วิ" % int(trip["limit"]), Color(0.4, 0.9, 1.0))
-			_sfx("pickup")
+		# เลือกป้าย: จอดช้ากว่า 70 ในวงป้ายใดก็ได้ = รับลูกค้าป้ายนั้น
+		for i in offers.size():
+			var off: Dictionary = offers[i]
+			if car.position.distance_to(off["p"]) < PICK_RADIUS and car.speed_abs() < STOP_SPEED:
+				trip = off
+				trip_active = true
+				offers.remove_at(i)
+				add_tip(trip["p"], "ขึ้นรถ! ส่งทัน %d วิ" % int(trip["limit"]), Color(0.4, 0.9, 1.0))
+				_sfx("pickup")
+				break
 		return
 	# on board: countdown
 	trip["left"] -= dt
@@ -229,11 +244,24 @@ func _update_trip(dt: float) -> void:
 		spawn_gap = 0.6
 
 func _new_trip() -> void:
-	var pickup: Vector2 = POIS[randi() % POIS.size()]
-	# หมุดรับต้องไกลจากรถ (ไม่งั้นเริ่มเกมขึ้นรถอัตโนมัติทันที)
-	for i in 24:
+	# เติมป้ายให้ครบ 3 วง แล้วหลัก "ป้ายพรีเมียมแรก" ไว้เท่านั้น (trip = ตัวที่จะบอกเวลาถ้าขึ้นรถ)
+	while offers.size() < 3:
+		offers.append(_make_offer())
+	trip = offers[0]
+	trip_active = false
+
+func _make_offer() -> Dictionary:
+	var pickup: Vector2
+	# หมุดรับ: ไกลจากรถ (>260 ม.หน่วย) + ไม่ทับป้ายเดิม (ระยะป้ายต่อป้าย > 100)
+	for i in 32:
 		pickup = POIS[randi() % POIS.size()]
-		if car == null or pickup.distance_to(car.position) > 260.0:
+		var ok := car == null or pickup.distance_to(car.position) > 260.0
+		if ok:
+			for off: Dictionary in offers:
+				if pickup.distance_to(off["p"]) < 100.0:
+					ok = false
+					break
+		if ok:
 			break
 	var drop: Vector2 = pickup
 	var d := 0.0
@@ -243,10 +271,9 @@ func _new_trip() -> void:
 		if d > MIN_DROP_DIST:
 			break
 	var lim := clampf(15.0 + d / 60.0, 18.0, 45.0)
-	# สายพันธุ์ลูกค้า 3 แบบจากสไปรต์เดียว: กบปกติ / กบน้อง (เล็ก) / กบธุระ (ใหญ่)
+	# สายพันธุ์ลูกค้า 3 แบบจากสไปรต์จริง: กบ / กิ้งก่าลูก / ไก่
 	# VIP ~12%: แหวนทอง + ค่าโดยสาร x3
-	trip = {"p": pickup, "drop": drop, "limit": lim, "left": lim, "dist": d, "fare": 50 + int(d / 10.0), "kind": randi() % 3, "vip": randf() < 0.12}
-	trip_active = false
+	return {"p": pickup, "drop": drop, "limit": lim, "left": lim, "dist": d, "fare": 50 + int(d / 10.0), "kind": randi() % 3, "vip": randf() < 0.12}
 
 # ---------- traffic / hazards ----------
 
@@ -400,26 +427,31 @@ func _draw() -> void:
 	# ramp
 	draw_rect(RAMP_ZONE, Color(0.85, 0.9, 0.95))
 	draw_rect(RAMP_ZONE.grow(-4.0), Color(0.55, 0.6, 0.7))
-	# POI pins
+	# POI pins — เขียว = ป้ายรับทุกวงที่ยังเปิด, ฟ้า = ป้ายส่ง (เมื่อบนรถ)
+	var pick_set := {}
+	if not trip_active:
+		for off: Dictionary in offers:
+			pick_set[off["p"]] = off
+	var drop_set := {}
+	if trip_active and not trip.is_empty():
+		drop_set[trip["drop"]] = true
 	for i in POIS.size():
 		var p: Vector2 = POIS[i]
-		var is_pick: bool = not trip.is_empty() and not trip_active and trip["p"] == p
-		var is_drop: bool = not trip.is_empty() and trip_active and trip["drop"] == p
 		var c := Color(0.95, 0.75, 0.2)
-		if is_pick:
+		if pick_set.has(p):
 			c = Color(0.3, 0.95, 0.5)
-		elif is_drop:
+		elif drop_set.has(p):
 			c = Color(0.35, 0.75, 1.0)
 		draw_circle(p, 12.0, c)
 		draw_circle(p, 7.0, Color(0.08, 0.08, 0.08))
-		# VIP: แหวนทองกระพริบรอบหมุดรับ
-		if is_pick and not trip.is_empty() and bool(trip.get("vip", false)):
+		# VIP: แหวนทองกระพริบรอบป้ายทริป VIP
+		if pick_set.has(p) and bool((pick_set[p] as Dictionary).get("vip", false)):
 			var rr := 15.0 + 2.5 * sin(_anim_t * 7.0)
 			draw_arc(p, rr, 0.0, TAU, 28, Color(1.0, 0.82, 0.2, 0.9), 3.0)
 			draw_arc(p, rr + 4.0, 0.0, TAU, 28, Color(1.0, 0.82, 0.2, 0.35), 1.5)
-	# ผู้โดยสารรอขึ้นรถที่หมุดรับ (ยืนเหนือหมุดเล็กน้อย) — สายพันธุ์จากสไปรต์จริง
-	if not trip.is_empty() and not trip_active:
-		var kind: int = int(trip.get("kind", 0))
+	# ผู้โดยสารยืนรอตามป้าย (สายพันธุ์จากสไปรต์จริง + มงกุฎทอง VIP)
+	for off: Dictionary in offers:
+		var kind: int = int(off.get("kind", 0))
 		var tex: Texture2D = PASS_TEX
 		var half := 11.0
 		if kind == 1:
@@ -428,27 +460,39 @@ func _draw() -> void:
 		elif kind == 2:
 			tex = PASS_CHICK_TEX     # ไก่แก้วตัวกลมโตกว่า
 			half = 13.0
-		draw_texture_rect(tex, Rect2(trip["p"] + Vector2(-half, -16.0 - half * 2.0), Vector2(half * 2.0, half * 2.0)), false)
-		# มงกุฎทอง: ประชาสัมพันธ์ว่าคนนี้รวยเป็นสอง
-		if bool(trip.get("vip", false)):
+		draw_texture_rect(tex, Rect2(off["p"] + Vector2(-half, -16.0 - half * 2.0), Vector2(half * 2.0, half * 2.0)), false)
+		if bool(off.get("vip", false)):
 			var cy := -16.0 - half * 2.0
-			var base := Vector2(trip["p"].x - half * 0.55, trip["p"].y + cy - 3.0)
+			var base := Vector2(off["p"].x - half * 0.55, off["p"].y + cy - 3.0)
 			draw_rect(Rect2(base, Vector2(half * 1.1, 3.0)), Color(1.0, 0.82, 0.2))
 			draw_colored_polygon(PackedVector2Array([
-				trip["p"] + Vector2(-half * 0.55, cy - 3.0),
-				trip["p"] + Vector2(-half * 0.2, cy - 8.0),
-				trip["p"] + Vector2(0.0, cy - 4.0),
-				trip["p"] + Vector2(half * 0.2, cy - 8.0),
-				trip["p"] + Vector2(half * 0.55, cy - 3.0),
+				off["p"] + Vector2(-half * 0.55, cy - 3.0),
+				off["p"] + Vector2(-half * 0.2, cy - 8.0),
+				off["p"] + Vector2(0.0, cy - 4.0),
+				off["p"] + Vector2(half * 0.2, cy - 8.0),
+				off["p"] + Vector2(half * 0.55, cy - 3.0),
 			]), Color(1.0, 0.85, 0.25))
-	# trip arrow: pickup or drop
-	if not trip.is_empty() and car != null:
-		var target: Vector2 = trip["drop"] if trip_active else trip["p"]
-		var rel := target - car.position
-		if rel.length() > PICK_RADIUS:
-			var ang := rel.angle()
-			var arrow_pos := car.position + Vector2.RIGHT.rotated(ang) * 52.0
-			_draw_arrow(arrow_pos, ang, Color(0.98, 0.85, 0.25))
+	# trip arrow: ป้ายใกล้สุด (ยังไม่มีผู้โดยสาร) หรือ ป้ายส่ง (บนรถ)
+	if car != null:
+		var target: Vector2 = Vector2.ZERO
+		var has_t := false
+		if trip_active and not trip.is_empty():
+			target = trip["drop"]
+			has_t = true
+		elif not offers.is_empty():
+			var bd := 1e9
+			for off: Dictionary in offers:
+				var dd: float = off["p"].distance_to(car.position)
+				if dd < bd:
+					bd = dd
+					target = off["p"]
+					has_t = true
+		if has_t:
+			var rel := target - car.position
+			if rel.length() > PICK_RADIUS:
+				var ang := rel.angle()
+				var arrow_pos := car.position + Vector2.RIGHT.rotated(ang) * 52.0
+				_draw_arrow(arrow_pos, ang, Color(0.98, 0.85, 0.25))
 	# traffic (civilian cars, rotated per lane direction)
 	for t: Dictionary in traffic:
 		var face := 0.0
@@ -558,18 +602,32 @@ func _draw_hud() -> void:
 	draw_string(ThemeDB.fallback_font, Vector2(340, 23), st, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(0.9, 0.9, 0.95))
 	draw_string(ThemeDB.fallback_font, Vector2(640, 23), "คอมโบ x%d" % combo, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(1.0, 0.75, 0.3))
 	# trip info panel
-	if not trip.is_empty():
-		var head: String = "รับ: ไปหมุดเหลือง" if not trip_active else "ส่ง: ไปหมุดฟ้า"
+	draw_rect(Rect2(700, 4, 200, 26).grow(1.5), Color(0.12, 0.12, 0.16))
+	if trip_active and not trip.is_empty():
+		var head: String = "ส่ง: ไปหมุดฟ้า"
 		if bool(trip.get("vip", false)):
 			head += " · VIP x3"
 		var bar := Rect2(700, 4, 200, 26)
-		draw_rect(bar.grow(1.5), Color(0.12, 0.12, 0.16))
 		var frac: float = trip["left"] / trip["limit"]
 		draw_rect(Rect2(bar.position, Vector2(bar.size.x * frac, bar.size.y)), Color(0.2, 0.9, 0.45) if frac > 0.4 else Color(0.95, 0.4, 0.3))
 		var fc := Color(0.97, 0.97, 0.97)
 		if bool(trip.get("vip", false)):
 			fc = Color(1.0, 0.82, 0.2) if int(_anim_t * 4.0) % 2 == 0 else Color(0.97, 0.97, 0.97)
 		draw_string(ThemeDB.fallback_font, bar.position + Vector2(8, 18), "%s · %.1f วิ · %d บาท" % [head, trip["left"], trip["fare"]], HORIZONTAL_ALIGNMENT_LEFT, -1.0, 13, fc)
+	elif not offers.is_empty() and car != null:
+		# ยังรอเลือกป้าย: โชว์ทริปใกล้สุด
+		var nd := 1e9
+		var noff := {}
+		for off: Dictionary in offers:
+			var dd: float = off["p"].distance_to(car.position)
+			if dd < nd:
+				nd = dd
+				noff = off
+		var info: String = "เลือกป้าย x%d · ใกล้สุด %d บาท" % [offers.size(), int(noff.get("fare", 0))]
+		if bool(noff.get("vip", false)):
+			info += " (VIP!)"
+		draw_rect(Rect2(700, 4, 200, 26), Color(0.2, 0.9, 0.45, 0.3))
+		draw_string(ThemeDB.fallback_font, Vector2(708, 18), info, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 12, Color(0.95, 0.95, 0.9))
 	# controls hint bottom
 	draw_rect(Rect2(0, H - 26, W, 26), Color(0.08, 0.08, 0.12, 0.7))
 	draw_string(ThemeDB.fallback_font, Vector2(12, H - 8), "ลูกศร/WASD ขับ · เคาะ Space เบรกมือ = ดริฟท์ · จอดใกล้หมุดเพื่อรับ/ส่ง · R เริ่มใหม่ · ESC เมนู", HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, Color(0.9, 0.9, 0.85))

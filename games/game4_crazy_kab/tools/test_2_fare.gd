@@ -57,11 +57,32 @@ func _process(dt: float) -> bool:
 			play._update_trip(0.1)
 			if play.trip.is_empty() and play.rides_fail == 1:
 				print("TEST_FARE timeout-pass PASS fail=%d" % play.rides_fail)
-				print("TEST_FARE ALL PASS")
-				quit(0); return true
+				_phase = 3
 			elif _sim_t > 8.0:
 				print("TEST_FARE FAIL timeout path trip=%s fail=%d" % [str(play.trip), play.rides_fail])
 				quit(1); return true
+		3:
+			# 3 ป้าย: สร้าง 3 วง จอดที่วงที่ 2 แล้วต้องได้ทริปวงนั้น + เหลือ 2 วง
+			play.offers = []
+			play.trip = {}
+			play.trip_active = false
+			play._new_trip()
+			if play.offers.size() != 3:
+				print("TEST_FARE FAIL offers=%d (ต้อง 3)" % play.offers.size())
+				quit(1); return true
+			var tgt: Dictionary = play.offers[1]
+			play.car.position = tgt["p"]
+			play.car.velocity = Vector2.ZERO
+			play._update_trip(0.01)
+			if not play.trip_active or play.trip["p"] != tgt["p"]:
+				print("TEST_FARE FAIL pick-3 trip=%s tgt=%s" % [str(play.trip), str(tgt)])
+				quit(1); return true
+			if play.offers.size() != 2:
+				print("TEST_FARE FAIL offers-after=%d (ต้อง 2)" % play.offers.size())
+				quit(1); return true
+			print("TEST_FARE offers-3 PASS")
+			print("TEST_FARE ALL PASS")
+			quit(0); return true
 	if _sim_t > 10.0:
 		print("TEST_FARE FAIL global timeout phase=%d" % _phase)
 		quit(1); return true
