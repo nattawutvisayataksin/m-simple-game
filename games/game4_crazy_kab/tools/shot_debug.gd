@@ -78,6 +78,11 @@ func _process(delta: float) -> bool:
 		8:
 			if _t > 6.8:
 				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game3_night.png")
+				_main._start_play(false, true)   # กะฝึกขับ: แถบบทสอนล่างจอ + ป้ายขั้น 1/3
+				_stage = 9
+		9:
+			if _t > 7.6:
+				_snap("C:/Users/Administrator/AppData/Local/Temp/opencode/game4_tutor.png")
 				quit(0)
 				return true
 	return false

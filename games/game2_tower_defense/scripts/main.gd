@@ -34,10 +34,11 @@ const MAP_A_TEX := preload("res://assets/art/kub_kingdom_map_v2.png")
 const MAP_B_TEX := preload("res://assets/art/kub_kingdom_map_v3.png")     # Phase E: แผนที่ 2 (gen สุสาน+ปราสาท)
 const BEST_PATH := "user://td_best.json"   # Phase E: save คลื่นสูงสุด (atomic write)
 
-# แผนที่ต่อตัวเลือก: ชื่อ / ภาพ / เส้นทางมอน / ลานป้อม (4 จุด)
+# แผนที่ต่อตัวเลือก: ชื่อ / ภาพ / เส้นทางมอน
 const MAPS := [
-	{"name": "ป่า Kubi", "tex": MAP_A_TEX, "path": PATH_A, "spots": TOWER_SPOTS},
-	{"name": "สุสานหลวง", "tex": MAP_B_TEX, "path": PATH_B, "spots": TOWER_SPOTS_B},
+	{"name": "ป่า Kubi", "tex": MAP_A_TEX, "path": PATH_A},
+	{"name": "สุสานหลวง", "tex": MAP_B_TEX, "path": PATH_B},
+	{"name": "ที่ราบรอยแยก · ทดลอง", "tex": null, "path": PATH_C, "sandbox": true},
 ]
 const HeroScript := preload("res://scripts/hero.gd")                     # T5 ฮีโร่ Kubi
 const SfxScript := preload("res://scripts/sfx.gd")                       # T6 ระบบเสียง
@@ -94,15 +95,6 @@ const PATH_A: Array[Vector2] = [
 	Vector2(810, 450),
 ]
 
-# ลานจุดวางป้อม 4 จุด (หญ้าว่างการันตีบนฉากเดียว)
-const TOWER_SPOTS: Array[Vector2] = [
-	Vector2(160, 445),  # ยุ่มหญ้าทุ่งซ้าย (เลี่ยงต้นไม้กลุ่มบน - ว่างจริง)
-	Vector2(420, 615),  # ใต้โค้งเลี้ยวขวา
-	Vector2(395, 285),  # ยุ่มหญ้าระหว่างถนนตั้งกับต้นไม้ต้นใหญ่ (เดิม (620,350) ทับปราสาท - ฟีดแบ็ค T4.1)
-	Vector2(815, 607),  # ช่องหญ้าด้านล่างต่อจากแขนถนนเข้าปราสาท (เลี่ยงต้นไม้สองกลุ่ม ล่างขวา)
-]
-
-const SPOT_HIT_R := 44.0    # T5.1 คลิกอ้อมเผื่อ (เดิม 32 = ต้องคลิกเป๊ะ ๆ หาจุดไม่เจอ)
 const GATE_COLOR := Color(0.55, 0.25, 0.80, 0.80)
 const CASTLE_COLOR := Color(1.0, 0.35, 0.15, 0.85)
 
@@ -117,13 +109,11 @@ const PATH_B: Array[Vector2] = [
 	Vector2(770, 380),
 	Vector2(850, 380),
 ]
-const TOWER_SPOTS_B: Array[Vector2] = [
-	Vector2(340, 370),  # หญ้าใต้กุมภะเล็ก - คลุมแนวตั้งซ้าย + ตัดกลุ่มบน
-	Vector2(490, 520),  # ใต้แนวนอน y460 กลางล่าง
-	Vector2(760, 360),  # กลางขวา - คลุม 770 ตั้ง + สูงสุด 240
-	Vector2(895, 455),  # หน้ารั้วปราสาทขวา (เลี่ยงถนนที่วิ่งเข้าประตู)
+# แผนที่ทดลอง C: ทางกว้างอย่างต่อเนื่อง + จุดเลี้ยวมีพื้นที่หายใจ
+const PATH_C: Array[Vector2] = [
+	Vector2(76, 180), Vector2(284, 180), Vector2(284, 420), Vector2(486, 420),
+	Vector2(486, 228), Vector2(710, 228), Vector2(710, 492), Vector2(936, 492), Vector2(1050, 372),
 ]
-
 const FROG_SPEED := 35.0
 const LIZARD_SPEED := 60.0
 const GOLEM_SPEED := 27.0
@@ -177,28 +167,25 @@ var _gold := 0              # เริ่มจากศูนย์ ต้อ�
 var _lives_label: Label
 var _gold_label: Label
 var _hud: CanvasLayer
-var _towers: Array = [null, null, null, null]   # T5: node ป้อมต่อลาน (null = ว่าง, แทน _built เดิม)
-var _lvl: Array[int] = [0, 0, 0, 0]             # T5: เลเวลต่อลาน (0=ว่าง 1 2)
-var _inv: Array[int] = [0, 0, 0, 0]             # T5: เงินที่ลงทุนต่อลาน (สร้าง+อัปเกรด ใช้คิดคืนขาย)
-var _free_towers: Array[Node2D] = []
+var _towers: Array[Node2D] = []
 var _menu: Control            # แผงเลือกป้อม (เปิดเมื่อคลิกลานว่าง)
-var _menu_spot := -1          # ลานที่เมนูกำลังเปิด (สำหรับปุ่ม 1/2 เลือกป้อม)
 var _menu_mode := ""          # T5: "build" = เลือกสร้าง / "built" = อัปเกรด-ขาย
 var _menu_tower: Node2D
 var _placement_mode := false
 var _placement_position := Vector2.ZERO
+var _sandbox_map := false
 var _rally_tower: Node2D       # Phase B: โหมดสั่งย้ายจุดยืนทหาร (ค่ายทหาร)
 var _hero                     # T5: ฮีโร่ Kubi (คลิกขวาสั่งเดิน)
-var _spots_layer: SpotsOverlay  # T5.1: ชั้นวาดวงทองลานป้อม (z 30 เหนือพื้นหลัง)
+var _spots_layer: SpotsOverlay  # ชั้นวาดตัวชี้ตำแหน่งวางป้อมและประตู
 var _path_layer: PathOverlay
 var _wave_label: Label        # แถวข้อมูลคลื่นบน HUD (T4)
 var _wave_btn: Button         # ปุ่มเรียกคลื่นถัดไปก่อนพร้อมโบนัส (T4)
+var _controls_label: Label
 var _shake := 0.0             # Phase D juice: แรงเขย่าจอคงเหลือ
 var _preview_box: HBoxContainer  # Phase D: แถวไอคอนพรีวิวคลื่นถัดไป
 # Phase E: multi-map + save สถิติ + title
 var _map_idx := 0
 var _road: Array[Vector2] = PATH_A            # เส้นทางที่ใช้จริงของแผนที่ปัจจุบัน
-var _spots: Array[Vector2] = TOWER_SPOTS      # ลานป้อมของแผนที่ปัจจุบัน
 var _title_layer: CanvasLayer
 var _best: Dictionary = {}                    # {"m0": 5, "m1": 3, "m0_won": true}
 var _kills := 0
@@ -207,41 +194,15 @@ var _prev_best := 0                           # สถิติเดิมข�
 
 class SpotsOverlay:
 	extends Node2D
-	# ฐานหกเหลี่ยมแทนวงทองขนาดใหญ่; เลขเล็กช่วยจับคู่กับปุ่มลัด 1-4
-	const PAD_RADIUS := 23.0
-	const PAD_EDGE := Color(0.13, 0.10, 0.06, 0.92)
-	const PAD_FILL := Color(0.28, 0.34, 0.20, 0.90)
-	const PAD_ACCENT := Color(1.0, 0.79, 0.24, 0.95)
-
-	var spots: Array[Vector2] = []
-	var busy: Array = []        # ผูกอ้างอิงสดกับ main._towers (ลานที่มีป้อมไม่วาดวง)
-	var selected := -1
 	var cursor_position := Vector2.ZERO
 	var cursor_valid := false
 	var gate := Vector2(258, 190)          # Phase E: ปากมอนของแผนที่ปัจจุบัน (main set ให้)
 	var castle := Vector2(810, 450)        # Phase E: ปราสาทของแผนที่ปัจจุบัน
+	var sandbox := false
 
 	func _draw() -> void:
 		draw_circle(gate, 14.0, Color(0.55, 0.25, 0.80, 0.9))
 		draw_circle(castle, 14.0, Color(1.0, 0.35, 0.15, 0.9))
-		for i in range(spots.size()):
-			if busy[i] != null:
-				continue
-			var center := spots[i]
-			var vertices := PackedVector2Array()
-			for corner in range(6):
-				var angle := TAU * float(corner) / 6.0
-				vertices.append(center + Vector2.from_angle(angle) * PAD_RADIUS)
-			draw_colored_polygon(vertices, PAD_FILL)
-			draw_polyline(vertices, PAD_EDGE, 3.0, true)
-			draw_arc(center, 14.0, 0.0, TAU, 24, PAD_ACCENT, 1.5, true)
-			draw_line(center + Vector2(-5.0, 0.0), center + Vector2(5.0, 0.0), PAD_ACCENT, 3.0, true)
-			draw_line(center + Vector2(0.0, -5.0), center + Vector2(0.0, 5.0), PAD_ACCENT, 3.0, true)
-			draw_rect(Rect2(center + Vector2(-7.0, -35.0), Vector2(14.0, 14.0)), PAD_EDGE)
-			draw_string(ThemeDB.fallback_font, center + Vector2(-4.0, -24.0), str(i + 1),
-				HORIZONTAL_ALIGNMENT_CENTER, 8, 11, PAD_ACCENT)
-			if i == selected:
-				draw_arc(center, PAD_RADIUS + 5.0, 0.0, TAU, 32, PAD_ACCENT, 2.0, true)
 		if cursor_position != Vector2.ZERO:
 			var cursor_color := Color(0.35, 0.95, 0.45, 0.8) if cursor_valid else Color(1.0, 0.25, 0.2, 0.8)
 			draw_arc(cursor_position, 32.0, 0.0, TAU, 32, cursor_color, 3.0, true)
@@ -252,16 +213,72 @@ class PathOverlay:
 	extends Node2D
 
 	var points: PackedVector2Array = []
+	var polished := false
 
 	func _draw() -> void:
 		if points.size() < 2:
 			return
-		draw_polyline(points, Color(0.30, 0.18, 0.10, 0.88), 78.0, true)
-		draw_polyline(points, Color(0.70, 0.46, 0.25, 0.96), 68.0, true)
-		draw_polyline(points, Color(0.91, 0.71, 0.44, 0.96), 58.0, true)
-		draw_polyline(points, Color(0.98, 0.82, 0.57, 0.34), 2.0, true)
-		for point in points:
-			draw_circle(point, 29.0, Color(0.91, 0.71, 0.44, 0.96))
+		if polished:
+			# Draw the complete outer shoulder first, then the single continuous road ribbon.
+			draw_polyline(points, Color(0.16, 0.20, 0.14, 0.96), 104.0, true)
+			draw_polyline(points, Color(0.39, 0.31, 0.22, 1.0), 92.0, true)
+			draw_polyline(points, Color(0.58, 0.43, 0.28, 1.0), 78.0, true)
+			draw_polyline(points, Color(0.73, 0.57, 0.37, 1.0), 66.0, true)
+			draw_polyline(points, Color(0.90, 0.76, 0.56, 0.50), 2.0, true)
+			for i in range(points.size() - 1):
+				var a: Vector2 = points[i]
+				var b: Vector2 = points[i + 1]
+				# Broken pale stones follow segment direction and never cross the road edge.
+				var tangent := (b - a).normalized()
+				var count := int(a.distance_to(b) / 92.0)
+				for mark in range(1, count):
+					var center := a.lerp(b, float(mark) / float(count))
+					draw_line(center - tangent * 6.0, center + tangent * 6.0, Color(0.95, 0.83, 0.63, 0.40), 2.0, true)
+			# Roadside planting rhythm frames the lane without obscuring tower pads.
+			for p in [Vector2(145, 92), Vector2(420, 115), Vector2(632, 150), Vector2(830, 112),
+				Vector2(76, 500), Vector2(240, 550), Vector2(560, 575), Vector2(1030, 170), Vector2(1068, 560)]:
+				draw_circle(p + Vector2(0, 5), 18.0, Color(0.12, 0.17, 0.12, 0.50))
+				draw_circle(p, 14.0, Color(0.25, 0.37, 0.21, 0.96))
+				draw_circle(p + Vector2(-4, -5), 8.0, Color(0.37, 0.48, 0.27, 0.92))
+		else:
+			draw_polyline(points, Color(0.30, 0.18, 0.10, 0.88), 78.0, true)
+			draw_polyline(points, Color(0.70, 0.46, 0.25, 0.96), 68.0, true)
+			draw_polyline(points, Color(0.91, 0.71, 0.44, 0.96), 58.0, true)
+			draw_polyline(points, Color(0.98, 0.82, 0.57, 0.34), 2.0, true)
+			for point in points:
+				draw_circle(point, 29.0, Color(0.91, 0.71, 0.44, 0.96))
+
+class SandboxGround:
+	extends Node2D
+
+	func _draw() -> void:
+		draw_rect(Rect2(0, 0, 1152, 648), Color("526947"), true)
+		# Broad meadow panels create calmer negative space and clear construction plots.
+		for meadow in [Rect2(32, 42, 1088, 562)]:
+			draw_rect(meadow, Color("637851"), true)
+		# Field seams and sparse grass strokes stay deliberately low contrast.
+		for x in range(62, 1120, 64):
+			draw_line(Vector2(x, 48), Vector2(x + 10, 600), Color(0.80, 0.82, 0.59, 0.07), 1.0)
+		for y in range(72, 600, 58):
+			draw_line(Vector2(48, y), Vector2(1100, y - 5), Color(0.18, 0.27, 0.16, 0.08), 1.0)
+		# Three uncluttered build clearings, inset from the roadway shoulder.
+		for rect in [Rect2(92, 258, 178, 132), Rect2(330, 548, 322, 72), Rect2(765, 275, 230, 137)]:
+			draw_rect(rect, Color("71845a"), true)
+			draw_rect(rect, Color(0.84, 0.82, 0.57, 0.55), false, 2.0)
+			for x in range(int(rect.position.x) + 18, int(rect.end.x) - 8, 36):
+				draw_line(Vector2(x, rect.position.y + 8), Vector2(x + 5, rect.end.y - 8), Color(0.88, 0.88, 0.63, 0.16), 1.0)
+		# Arrival landmark: a small stone keep frames the end of the route.
+		draw_rect(Rect2(1018, 328, 91, 93), Color("4d493b"), true)
+		draw_rect(Rect2(1030, 340, 67, 70), Color("8b8267"), true)
+		draw_rect(Rect2(1044, 354, 39, 42), Color("403d35"), true)
+		for x in [1018, 1040, 1063, 1086]:
+			draw_rect(Rect2(x, 317, 12, 18), Color("68614c"), true)
+		# Low broken stone ridges and scrub anchor the perimeter.
+		for p in [Vector2(108, 115), Vector2(386, 90), Vector2(610, 100), Vector2(884, 95), Vector2(1032, 145),
+			Vector2(94, 478), Vector2(250, 575), Vector2(670, 580), Vector2(1080, 555)]:
+			draw_circle(p + Vector2(0, 8), 24, Color(0.20, 0.26, 0.18, 0.42))
+			draw_circle(p, 18, Color("46563d"))
+			draw_circle(p + Vector2(-5, -5), 10, Color("78865d"))
 
 func _ready() -> void:
 	y_sort_enabled = true  # มอนวาดเรียงตามแนวระดับ (ตัวล่างจอบนตัวบนจอ - แก้ทับซ้อนดูลอย)
@@ -271,9 +288,15 @@ func _ready() -> void:
 	_build_lives_label()
 	_path_layer = PathOverlay.new()
 	_path_layer.points = PackedVector2Array(_road)
+	_path_layer.polished = false
 	_path_layer.position = Vector2.ZERO
 	_path_layer.z_index = 0
 	add_child(_path_layer)
+	var ground := SandboxGround.new()
+	ground.name = "SandboxGround"
+	ground.z_index = -1
+	ground.visible = false
+	add_child(ground)
 	# ฮีโร่ Kubi เริ่มเฝ้าประตูปราสาท และต้องออกไปสู้เพื่อหาเงินสร้างป้อม
 	_hero = HeroScript.new()
 	_hero.position = _road[_road.size() - 1]
@@ -281,8 +304,6 @@ func _ready() -> void:
 	# ชั้นวาดวงทอง (T5.1 fix): ประกาศใน SpotsOverlay การันตีวาดเหนือพื้นหลัง (สาเหตุรายแก้ไม่จบ: วงถูก Background ทับ)
 	_spots_layer = SpotsOverlay.new()
 	_spots_layer.z_index = 30
-	_spots_layer.spots = _spots
-	_spots_layer.busy = _towers   # อ้างอิงสด — สร้างป้อมที่ลานไหน วงลานนั้นเงียบ
 	_spots_layer.gate = _road[0]
 	_spots_layer.castle = _road[_road.size() - 1]
 	add_child(_spots_layer)
@@ -307,7 +328,7 @@ func _process(delta: float) -> void:
 	elif position != Vector2.ZERO:
 		position = Vector2.ZERO
 	if _spots_layer:
-		_spots_layer.queue_redraw()   # วงทองลานป้อมเต้นกระพริบทุกเฟรม (T5.1)
+		_spots_layer.queue_redraw()
 		if _placement_mode:
 			_placement_position = get_global_mouse_position()
 			_spots_layer.cursor_position = _placement_position
@@ -878,23 +899,30 @@ func _start_map(idx: int) -> void:
 	var road_tmp: Array[Vector2] = []
 	for p in cfg["path"]:
 		road_tmp.append(p)
-	var spots_tmp: Array[Vector2] = []
-	for s in cfg["spots"]:
-		spots_tmp.append(s)
 	_road = road_tmp
-	_spots = spots_tmp
+	_sandbox_map = bool(cfg.get("sandbox", false))
+	if _controls_label != null:
+		_controls_label.position = Vector2(920, 78) if _sandbox_map else Vector2(16, 108)
+		_controls_label.text = "1-4 ฐาน · B วางอิสระ · คลิกเลือกป้อม" if _sandbox_map else "1-4: ฐาน/ป้อม · B+คลิก: วางอิสระ · เมนูป้อม: กด 4 สลับโหมดเล็ง · ค่ายทหาร: ปุ่ม 3 สั่งจุดยืน"
+	_path_layer.polished = _sandbox_map
+	_path_layer.queue_redraw()
 	var bg := get_node_or_null("Background")
 	if bg != null and bg is Sprite2D:
-		bg.texture = cfg["tex"]
-		# พื้นหลัง gen อาจเล็ก (256x144) — ยืดเต็มจอ 1152 เสมอ (map A = ×1 อยู่แล้ว)
-		var tex: Texture2D = cfg["tex"]
-		var s := 1152.0 / float(tex.get_width())
-		bg.scale = Vector2(s, s)
+		bg.visible = not _sandbox_map
+		if not _sandbox_map:
+			bg.texture = cfg["tex"]
+			# พื้นหลัง gen อาจเล็ก (256x144) — ยืดเต็มจอ 1152 เสมอ (map A = ×1 อยู่แล้ว)
+			var tex: Texture2D = cfg["tex"]
+			var s := 1152.0 / float(tex.get_width())
+			bg.scale = Vector2(s, s)
+	var ground := get_node_or_null("SandboxGround")
+	if ground != null:
+		ground.visible = _sandbox_map
 	_path_layer.points = PackedVector2Array(_road)
-	_spots_layer.spots = _spots
 	_spots_layer.gate = _road[0]
 	_spots_layer.castle = _road[_road.size() - 1]
 	_spots_layer.queue_redraw()
+	queue_redraw()
 	_hero.home = _road[_road.size() - 1]
 	_hero.position = _road[_road.size() - 1]
 	_prev_best = int(_best.get("m%d" % _map_idx, 0))
@@ -966,27 +994,16 @@ func _unhandled_input(event: InputEvent) -> void:
 		if clicked_tower != null:
 			_open_tower_menu(clicked_tower)
 			return
-		var hit := -1
-		for p in candidates:
-			for i in range(_spots.size()):
-				# T5: ลานที่มีป้อมแล้วก็คลิกได้ -> เมนูอัปเกรด/ขาย (เดิมกรองเฉพาะลานว่าง)
-				if p.distance_to(_spots[i]) <= SPOT_HIT_R:
-					hit = i
-					break
-			if hit >= 0:
-				break
-		if hit >= 0:
-			_open_menu(hit)
-		elif _placement_mode:
+		if _placement_mode:
 			for p in candidates:
 				if _valid_tower_position(p):
-					_open_menu(-1, p)
+				_open_menu(p)
 					_placement_mode = false
 					break
 		elif _menu != null:
 			_close_menu()
 	elif event is InputEventKey and event.pressed and not event.echo:
-		# B เปิดโหมดวางอิสระ; 1-4 เปิดฐานเดิม
+		# B เปิดโหมดวางอิสระ; 1-4 ใช้เลือกชนิดป้อมในเมนูเท่านั้น
 		var code: int = event.keycode
 		if code == KEY_B and _menu == null:
 			_placement_mode = not _placement_mode
@@ -995,12 +1012,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		elif _state == "prep" and code == KEY_N:
 			# ทางลัดเรียกคลื่นก่อน = เหมือนกดปุ่มมุมขวาบน (ได้โบนัสตามวินาทีคงเหลือ)
 			_on_wave_btn()
-		elif _menu == null:
-			if code >= KEY_1 and code <= KEY_4:
-				var idx := code - KEY_1
-				print("OPEN_MENU spot=", idx, " (key)")  # DEBUG (console)
-				_open_menu(idx)
-		else:
+		elif _menu != null:
 			if _menu_mode == "build":
 				if code == KEY_1:
 					if _menu_spot >= 0:
@@ -1319,7 +1331,9 @@ func _distance_to_path(at: Vector2) -> float:
 func _valid_tower_position(at: Vector2) -> bool:
 	if at.x < 52.0 or at.x > 1100.0 or at.y < 48.0 or at.y > 600.0:
 		return false
-	if _distance_to_path(at) < 62.0:
+	if _distance_to_path(at) < (76.0 if _sandbox_map else 62.0):
+		return false
+	if _sandbox_map and not _inside_sandbox_clearing(at):
 		return false
 	for spot in _spots:
 		if at.distance_to(spot) < 70.0:
@@ -1331,6 +1345,9 @@ func _valid_tower_position(at: Vector2) -> bool:
 		if is_instance_valid(tower) and at.distance_to(tower.position) < 72.0:
 			return false
 	return true
+
+func _inside_sandbox_clearing(at: Vector2) -> bool:
+	return Rect2(92, 258, 178, 132).has_point(at) or Rect2(330, 548, 322, 72).has_point(at) or Rect2(765, 275, 230, 137).has_point(at)
 
 func _update_lives() -> void:
 	if _lives_label:
@@ -1386,15 +1403,15 @@ func _build_lives_label() -> void:
 	_wave_label.label_settings = ws
 	_wave_label.position = Vector2(16, 80)
 	_hud.add_child(_wave_label)
-	var controls := Label.new()
-	controls.text = "1-4: ฐาน/ป้อม · B+คลิก: วางอิสระ · เมนูป้อม: กด 4 สลับโหมดเล็ง · ค่ายทหาร: ปุ่ม 3 สั่งจุดยืน"
-	controls.add_theme_font_size_override("font_size", 13)
-	controls.add_theme_color_override("font_color", Color(0.95, 0.93, 0.86))
-	controls.add_theme_color_override("font_shadow_color", Color(0.08, 0.06, 0.04, 0.95))
-	controls.add_theme_constant_override("shadow_offset_x", 1)
-	controls.add_theme_constant_override("shadow_offset_y", 1)
-	controls.position = Vector2(16, 108)
-	_hud.add_child(controls)
+	_controls_label = Label.new()
+	_controls_label.text = "1-4: ฐาน/ป้อม · B+คลิก: วางอิสระ · เมนูป้อม: กด 4 สลับโหมดเล็ง · ค่ายทหาร: ปุ่ม 3 สั่งจุดยืน"
+	_controls_label.add_theme_font_size_override("font_size", 13)
+	_controls_label.add_theme_color_override("font_color", Color(0.95, 0.93, 0.86))
+	_controls_label.add_theme_color_override("font_shadow_color", Color(0.08, 0.06, 0.04, 0.95))
+	_controls_label.add_theme_constant_override("shadow_offset_x", 1)
+	_controls_label.add_theme_constant_override("shadow_offset_y", 1)
+	_controls_label.position = Vector2(16, 108)
+	_hud.add_child(_controls_label)
 	# Phase D: แถวไอคอนพรีวิวคลื่นถัดไป (ใต้แถววิธีเล่น)
 	_preview_box = HBoxContainer.new()
 	_preview_box.position = Vector2(16, 130)

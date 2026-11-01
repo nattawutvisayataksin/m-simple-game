@@ -67,6 +67,7 @@ func _to_title() -> void:
 		{"rect": Rect2(W * 0.5 - 220, 402, 440, 42), "label": "วิธีเล่น", "target": SCR.HOWTO},
 		{"rect": Rect2(W * 0.5 - 220, 450, 440, 42), "label": "คู่มือค่าต่างๆ ของเกม", "target": SCR.GUIDE},
 		{"rect": Rect2(W * 0.5 - 220, 498, 440, 42), "label": "รถและอู่อัปเกรด", "target": SCR.OVER},
+		{"rect": Rect2(W * 0.5 - 220, 546, 440, 42), "label": "กะฝึกขับ (สอนรับ/ส่ง/ดริฟท์ ไม่นับเวลา)", "target": 7},
 	]
 
 func _click(t: int) -> void:
@@ -74,6 +75,9 @@ func _click(t: int) -> void:
 		sfx.play("click")
 	if t == 6:   # เริ่มกะกลางคืน
 		_start_play(true)
+		return
+	if t == 7:   # กะฝึกขับ
+		_start_play(false, true)
 		return
 	if t == SCR.PLAY:
 		_start_play()
@@ -117,7 +121,7 @@ func _build_stat_buttons() -> void:
 			bts.append({"rect": Rect2(804, y, 250, 38), "label": ("อัปเกรด Lv%d (%d บาท)" % [lv + 1, cost]) if afford else ("ต้องการ %d บาท" % cost), "target": 10 + i})
 	buttons = bts
 
-func _start_play(night_run := false) -> void:
+func _start_play(night_run := false, tutor_run := false) -> void:
 	if play_node != null:
 		play_node.queue_free()
 	play_node = Node2D.new()
@@ -125,6 +129,7 @@ func _start_play(night_run := false) -> void:
 	play_node.sfx = sfx
 	play_node.best = best   # ยัดอู่ (car_pick + upgrades) ก่อน _ready สร้างรถ
 	play_node.night = night_run
+	play_node.tutor = tutor_run
 	add_child(play_node)
 	play_node.back_to_menu.connect(_to_title)
 	if sfx != null:
@@ -197,6 +202,7 @@ func _draw_howto() -> void:
 		["หยุดรถ (ช้ากว่า 70) ในวงหมุดเขียว = ลูกค้าขึ้นรถ", false],
 		["มี 3 ป้ายเกิดพร้อมกัน — กดจอดวงไหนก็รับวงนั้น เลือกเส้นทางกำไรดีสุด", true],
 		["กะกลางคืน (หน้าแรก): ค่าโดยสาร x1.5 · โกเลมเกิด 2 เท่า — ตามืดใช้แสงไฟหน้ารถ", false],
+		["กะฝึกขับ (ปุ่มท้าย): ตามแถบสอนล่างจอ 3 ขั้น รับ/ส่ง/ดริฟท์ — ไม่นับเวลา ไม่ติดบัญชี", false],
 		["หยุดในวงหมุดฟ้าก่อนเวลาหมด = ส่งสำเร็จ + ค่าโดยสาร", false],
 		["", false],
 		["ได้ทิปดีสุด: ส่งแล้วเหลือเวลา 50% ขึ้นไป = ค่าโดยสาร x2", true],

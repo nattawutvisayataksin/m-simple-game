@@ -56,6 +56,9 @@ var over := false
 var over_info := {}
 var best := {}                 # สถานะอู่จากเซฟ (main ยัดก่อน add_child): {car_pick, upgrades}
 var night := false             # กะกลางคืน: ค่าโดยสาร x1.5 · โกเลมเกิด 2 เท่า
+var tutor := false             # กะฝึกขับ: ไม่นับเวลา ไม่แตะเซฟ สอน 3 ขั้น (รับ/ส่ง/ดริฟท์)
+var tut_step := 0              # 0 รับลูกค้า · 1 ส่งลูกค้า · 2 ดริฟท์ 1.5 วิ · 3 จบ
+var tut_drift := 0.0           # เวลาดริฟท์สะสมของขั้น 3
 var missions := []             # ภารกิจ 3 อย่างของกะ: {id, goal, reward, done}
 var vip_ok := 0                # ส่ง VIP สำเร็จ
 var drift_secs := 0.0          # รวมเวลาดริฟท์
@@ -105,14 +108,18 @@ func _start() -> void:
 	drift_secs = 0.0
 	nearmiss_n = 0
 	ramp_n = 0
-	# ภารกิจ 3 อย่างต่อกะ: สุ่มไม่ซ้ำ
+	# ภารกิจ 3 อย่างต่อกะ: สุ่มไม่ซ้ำ (กะฝึกไม่มีภารกิจ — โฟกัสบทสอน)
 	missions = []
-	var mpool: Array = MISSION_POOL.duplicate()
-	for i in 3:
-		var mi := randi() % mpool.size()
-		var src: Dictionary = mpool[mi]
-		mpool.remove_at(mi)
-		missions.append({"id": src["id"], "goal": src["goal"], "reward": src["reward"], "done": false})
+	if tutor:
+		tut_step = 0
+		tut_drift = 0.0
+	else:
+		var mpool: Array = MISSION_POOL.duplicate()
+		for i in 3:
+			var mi := randi() % mpool.size()
+			var src: Dictionary = mpool[mi]
+			mpool.remove_at(mi)
+			missions.append({"id": src["id"], "goal": src["goal"], "reward": src["reward"], "done": false})
 	golem_timer = 5.0
 	if car != null:
 		car.queue_free()
@@ -145,7 +152,16 @@ func _process(dt: float) -> void:
 			playing = false
 			back_to_menu.emit()
 		return
-	time_left -= dt
+	if tutor:
+		# กะฝึก: เวลาคง 2:00 ตลอด (ไม่หมดกะ) · ESC กลับเมนูได้ทุกเมื่อ
+		if Input.is_key_pressed(KEY_ESCAPE) or Input.is_key_pressed(KEY_M):
+			playing = false
+			back_to_menu.emit()
+			return
+		_update_tutor(dt)
+		_anim_t += dt
+	else:
+		time_left -= dt
 	_anim_t += dt
 	# camera shake: หนุนจอสนุกหมุน 1 วิเท่านั้น — ระบายแรงตามเวลาที่เหลือ
 	if shake_t > 0.0:
@@ -436,6 +452,34 @@ func _mtext(m: Dictionary) -> String:
 		"ramp": return "ใช้แรมพ์ %d/%d" % [int(v), int(g)]
 	return ""
 
+func _update_tutor(dt: float) -> void:
+	# กะฝึกขับ 3 ขั้น: รับ → ส่ง → ดริฟท์ 1.5 วิ แล้วปล่อยลงสนามจริงด้วยตัวเอง
+	match tut_step:
+		0:
+			if trip_active and not trip.is_empty():
+				tut_step = 1
+				add_tip(car.position + Vector2(0.0, -50.0), "ได้ธุระ! ตอนนี้พาลูกค้าไปหมุดฟ้า", Color(0.4, 0.9, 1.0))
+		1:
+			if rides_ok >= 1:
+				tut_step = 2
+				add_tip(car.position + Vector2(0.0, -50.0), "ส่งสำเร็จ! ขั้นสุดท้ายนะใหนวิ่งเร็วแล้วดริฟท์", Color(0.4, 0.9, 1.0))
+			elif trip.is_empty():
+				tut_step = 0   # ลูกหนี → ฝึกรับใหม่ (กะฝึกไม่ตัดบัญชี)
+		2:
+			if car.drifting:
+				tut_drift += dt
+				if tut_drift >= 1.5:
+					tut_step = 3
+					add_tip(car.position + Vector2(0.0, -50.0), "ผ่านกะฝึก! ESC กลับเมนูแล้วเริ่มเล่นจริงได้เลย", Color(0.35, 0.95, 0.5))
+					_sfx("win")
+
+func _tut_text() -> String:
+	match tut_step:
+		0: return "ขั้น 1/3 รับ: ตามลูกศรไปหมุดเขียว แล้วจอดช้ากว่า 70 ให้ลูกค้าขึ้นรถ"
+		1: return "ขั้น 2/3 ส่ง: ตามลูกศรไปหมุดฟ้า จอดช้ากว่า 70 ให้ลูกค้าลง"
+		2: return "ขั้น 3/3 ดริฟท์: วิ่งเร็วแล้วกด Space ค้าง + ซ้าย/ขวา ให้ควันยาง 1.5 วิ"
+	return "จบกะฝึก! กด ESC กลับเมนูหลักแล้วเริ่มเล่นจริง · ป้าย/เงินทำงานเหมือนเล่นจริง"
+
 func _finish() -> void:
 	over = true
 	# ภารกิจ: ที่ครบจบตอนหมดเวลา = โบนัสเข้ากะเดียวกัน (record ก่อนเซฟ)
@@ -674,7 +718,10 @@ func _draw_arrow(pos: Vector2, ang: float, color: Color) -> void:
 func _draw_hud() -> void:
 	# top bar
 	draw_rect(Rect2(0, 0, W, 34), Color(0.08, 0.08, 0.12, 0.85))
-	draw_string(ThemeDB.fallback_font, Vector2(14, 23), "เวลา %.1f" % time_left, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(1.0, 0.85, 0.3) if time_left < 20.0 else Color(0.95, 0.95, 0.9))
+	if tutor:
+		draw_string(ThemeDB.fallback_font, Vector2(14, 23), "กะฝึกขับ %d/3" % (tut_step + 1), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.4, 0.9, 1.0))
+	else:
+		draw_string(ThemeDB.fallback_font, Vector2(14, 23), "เวลา %.1f" % time_left, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(1.0, 0.85, 0.3) if time_left < 20.0 else Color(0.95, 0.95, 0.9))
 	draw_string(ThemeDB.fallback_font, Vector2(180, 23), "เงิน %d" % cash, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.2, 0.95, 0.4))
 	var st: String = "รับได้ %d · พลาด %d · %s Lv%d" % [rides_ok, rides_fail, str(CAR_NAMES.get(car.car_id, "Kubi Cab")), int((best.get("upgrades", {}) as Dictionary).get(car.car_id, 0))]
 	draw_string(ThemeDB.fallback_font, Vector2(340, 23), st, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 16, Color(0.9, 0.9, 0.95))
@@ -691,6 +738,11 @@ func _draw_hud() -> void:
 			var row_y := 86.0 + 30.0 * float(mi2)
 			draw_string(ThemeDB.fallback_font, Vector2(14, row_y), _mtext(m) + (" ✓" if md else ""), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, Color(0.35, 0.95, 0.5) if md else Color(0.92, 0.92, 0.9))
 			draw_string(ThemeDB.fallback_font, Vector2(200, row_y), "+%d" % int(m["reward"]), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, Color(1.0, 0.85, 0.3) if md else Color(0.6, 0.7, 0.75))
+	# แถบบทสอนกะฝึก (ล่างกลาง เหนือแถบควบคุม ไม่ทับกัน)
+	if tutor:
+		draw_rect(Rect2(W * 0.5 - 300.0, H - 66.0, 600.0, 30.0), Color(0.08, 0.08, 0.12, 0.85))
+		draw_rect(Rect2(W * 0.5 - 300.0, H - 66.0, 4.0, 30.0), Color(0.3, 0.75, 1.0) if tut_step < 3 else Color(0.35, 0.95, 0.5))
+		draw_string(ThemeDB.fallback_font, Vector2(W * 0.5 - 286.0, H - 46.0), _tut_text(), HORIZONTAL_ALIGNMENT_LEFT, -1.0, 14, Color(0.95, 0.95, 0.85) if tut_step < 3 else Color(0.35, 0.95, 0.5))
 	# trip info panel
 	draw_rect(Rect2(700, 4, 200, 26).grow(1.5), Color(0.12, 0.12, 0.16))
 	if trip_active and not trip.is_empty():
