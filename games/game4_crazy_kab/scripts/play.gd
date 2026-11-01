@@ -298,14 +298,17 @@ func _finish() -> void:
 # ---------- drawing ----------
 
 func _draw() -> void:
-	# grass base
+	# grass base + grass patches (deterministic)
 	draw_rect(Rect2(0, 0, W, H), Color(0.24, 0.5, 0.28))
-	# city blocks between roads (simple deterministic rows)
-	var block_color := Color(0.5, 0.44, 0.4)
-	for bx in [Rect2(250, 10, 240, 40), Rect2(700, 10, 180, 40), Rect2(250, 610, 240, 30), Rect2(700, 610, 180, 30)]:
-		draw_rect(bx, block_color)
+	for i in 26:
+		var px := 40.0 + float(i * 97 % 1072)
+		var py := 40.0 + float(i * 53 % 568)
+		draw_rect(Rect2(px, py, 14 + float(i % 3) * 6.0, 8.0 + float(i % 2) * 5.0), Color(0.20, 0.44, 0.24, 0.8))
+	_draw_sidewalks()
+	_draw_buildings()
 	# roads
 	_draw_roads()
+	_draw_crosswalks()
 	# ramp
 	draw_rect(RAMP_ZONE, Color(0.85, 0.9, 0.95))
 	draw_rect(RAMP_ZONE.grow(-4.0), Color(0.55, 0.6, 0.7))
@@ -321,14 +324,6 @@ func _draw() -> void:
 			c = Color(0.35, 0.75, 1.0)
 		draw_circle(p, 12.0, c)
 		draw_circle(p, 7.0, Color(0.08, 0.08, 0.08))
-	# trip arrow: pickup or drop
-	if not trip.is_empty() and car != null:
-		var target: Vector2 = trip["drop"] if trip_active else trip["p"]
-		var rel := target - car.position
-		if rel.length() > PICK_RADIUS:
-			var ang := rel.angle()
-			var arrow_pos := car.position + Vector2.RIGHT.rotated(ang) * 52.0
-			_draw_arrow(arrow_pos, ang, Color(0.98, 0.85, 0.25))
 	# ผู้โดยสารรอขึ้นรถที่หมุดรับ (ยืนเหนือหมุดเล็กน้อย)
 	if not trip.is_empty() and not trip_active:
 		draw_texture_rect(PASS_TEX, Rect2(trip["p"] + Vector2(-11, -38), (Vector2(22, 22))), false)
@@ -367,6 +362,55 @@ func _draw() -> void:
 	_draw_hud()
 	if over:
 		_draw_over()
+
+func _draw_sidewalks() -> void:
+	var sc := Color(0.55, 0.52, 0.48)
+	for hy in ROADS_H_Y:
+		draw_rect(Rect2(0, float(hy) - 54.0, W, 6), sc)
+		draw_rect(Rect2(0, float(hy) + 48.0, W, 6), sc)
+	for vx in ROADS_V_X:
+		draw_rect(Rect2(float(vx) - 54.0, 0, 6, H), sc)
+		draw_rect(Rect2(float(vx) + 48.0, 0, 6, H), sc)
+
+func _draw_buildings() -> void:
+	# ตึกกระจายตามภูมิลำเนา (สูตรตายตัว no RNG → ไม่กระพริบ)
+	var rows := [[26, 41], [178, 224], [362, 408], [548, 630]]
+	var cols := [[16, 106], [236, 512], [642, 918], [1042, 1136]]
+	var pal := [
+		Color(0.45, 0.37, 0.35), Color(0.36, 0.40, 0.46), Color(0.46, 0.40, 0.30),
+		Color(0.34, 0.42, 0.38), Color(0.47, 0.37, 0.30),
+	]
+	var bi := 0
+	for ry: Array in rows:
+		for cx: Array in cols:
+			for parts in 2:
+				var x0 := float(cx[0]) + (float(cx[1]) - float(cx[0])) * 0.58 * float(parts)
+				var x1 := float(cx[1]) - (float(cx[1]) - float(cx[0])) * 0.34 * float(parts)
+				var y_t := float(ry[0])
+				var y_b := float(ry[0]) + (float(ry[1]) - float(ry[0])) * (0.60 if parts == 1 else 0.96)
+				var rect := Rect2(x0, y_t, x1 - x0, y_b - y_t)
+				draw_rect(rect, pal[bi % pal.size()])
+				draw_rect(Rect2(rect.position, Vector2(rect.size.x, 4.0)), Color(0, 0, 0, 0.25))
+				# หน้าต่างไฟ
+				var nc := int(rect.size.x / 24.0)
+				var nr := int(rect.size.y / 20.0)
+				for wx in nc:
+					for wy in nr:
+						var lit: bool = (wx * 13 + wy * 7 + bi * 5) % 4 != 0
+						var wc := Color(1.0, 0.88, 0.5, 0.9) if lit else Color(0.13, 0.15, 0.19)
+						draw_rect(Rect2(rect.position.x + 8.0 + float(wx) * 22.0, rect.position.y + 8.0 + float(wy) * 18.0, 7.0, 9.0), wc)
+				bi += 1
+		bi += 1
+
+func _draw_crosswalks() -> void:
+	for vx in ROADS_V_X:
+		for hy in ROADS_H_Y:
+			for dx in [-64.0, 60.0]:
+				var xx: float = float(vx) + float(dx)
+				if xx < 10.0 or xx > W - 12.0:
+					continue
+				for k in 4:
+					draw_rect(Rect2(xx, float(hy) - 40.0 + float(k) * 21.0, 7.0, 12.0), Color(0.95, 0.95, 0.95, 0.8))
 
 func _draw_roads() -> void:
 	for y in ROADS_H_Y:
