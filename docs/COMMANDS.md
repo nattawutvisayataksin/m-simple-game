@@ -111,7 +111,7 @@ games/<game4>/
   tools/                    # test_*.gd (SceneTree) + shot_debug.gd
   assets/sprites|audio/
 docs/<game4>/
-  GDD.md · ARCHITECTURE.md · PLAYER_GUIDE.md · ROADMAP_12H.md · ASSETS.md
+  GDD.md · ARCHITECTURE.md · PLAYER_GUIDE.md · ASSETS.md
 ```
 
 - play.bat แนบ root ของเกม (กด F5 ใน editor ก็ได้)

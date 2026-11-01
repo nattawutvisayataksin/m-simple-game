@@ -7,13 +7,19 @@ Repo นี้เก็บ **เกมฝึกพัฒนา 4 เกม (แ�
 | # | เกม | ไฟล์โปรเจกต์ | สรุปสั้นโครงเกม | วิธีเล่น |
 |---|---|---|---|---|
 | 1 | **Kubi Coin Dash** 🪙 | `games/game1_coin_rush/` | Platformer 8 ด่าน: วิ่ง/กระโดด, เก็บเหรียญ, ศัตรู 4 ชนิด + มินิบอส (ด่าน 8), ธีมฉาก 3 แบบใหม่ (ท่อระบาย/ท้องฟ้า/ปราสาท) + เพลงรายธีม, สกินฮีโร่ 5 สีเลือกในเมนู · คูบี้ กระโดดเก็บเหรียญ | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game1_coin_rush` |
-| 2 | **หอคอยคู่ฟ้า (Kub Kingdom Rush)** 🏰 | `games/game2_tower_defense/` | Tower defense: มอนเดินเส้นเดียว ซื้อ/อัปเกรด/ขายป้อม · กลิ้ง 10 คลื่น + ฮีโร่ Kubi · ปุ่ม 1-4 ลานป้อม | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game2_tower_defense` |
+| 2 | **หอคอยคู่ฟ้า (Kub Kingdom Rush)** 🏰 | `games/game2_tower_defense/` | Tower defense: มอนเดินเส้นเดียว ซื้อ/อัปเกรด/ขายป้อม · **คลื่น 2 รอบ** (กองรัว 100 ตัว → ทุกชนิด + บอส KUBIT 3) + เลือกฮีโร่ (Kubi / อัศวินดาบแสง) | ดับเบิลคลิก `play.bat` หรือ `godot --path games/game2_tower_defense` |
 | 3 | **Kubi Grand Prix ราชวงศ์ทอง** 🚗 | `games/game3_car/` | แข่งรถ 3D ในเมือง Kubi · WASD ขับ/เบรก/เลี้ยว · เก็บเหรียญและผ่านประตูให้ครบ 3 รอบ | ดับเบิลคลิก `games/game3_car/play.bat` หรือ `godot --path games/game3_car` |
 | 4 | **แท็กซี่คู่ฟ้า (Kubi Crazy Cab)** 🚕 | `games/game4_crazy_kab/` | แท็กซี่อาร์เคด top-down แนว Crazy Taxi: นาฬิกาเกม 120 วิ รับ-ส่งลูกค้าตามหมุด · ทิปส่งเร็ว/ดริฟท์/เฉียด/แรมพ์ · ปลดล็อกรถ 3 คัน · คู่มือค่าเกมในเมนู | ดับเบิลคลิก `games/game4_crazy_kab/play.bat` หรือ `godot --path games/game4_crazy_kab` |
 
-> สถานะเกม 2: **ปิดโปรเจกต์** ที่ T5.2 (คำวินิจฉัยผู้อำนวยการ + บทเรียนเก็บไว้เต็ม ๆ ใน GDD เกม 2)
+> สถานะเกม 2: **อัปเดตตามคำขอผู้เล่น (2026-11-01)** — คลื่น 2 รอบ + เลือกฮีโร่; งานค้างหลังเล่นจริงใน [PLAYTEST_NOTES.md](docs/game2_tower_defense/PLAYTEST_NOTES.md)
+> สถานะเกม 1: เล่นได้ครบ 8 ด่าน (สูท 147 assertions PASS) — ยังไม่ได้เล่นจริงล่าสุด
 > สถานะเกม 3: **T1.1 WIP** — เกมรถ 3D พร้อมระบบหลัก กำลังต่อยอดภาพเมือง Kubi (`docs/game3_car/GDD.md`)
 > สถานะเกม 4: **เกมเล่นได้เต็ม (G19)** — เมนู 7 จอ (รวมอู่อัปเกรด + กะฝึกขับ 3 ขั้นมีจอสรุป) · **ฟิสิกส์รถจูนใหม่ เกาะถนน + เบรกลอย + จอสะอาด** · อัปเกรดรถถาวร Lv0-3 + เลือกรถประจำกะ · ป้ายลูกค้า 3 วงเลือกรับได้ · กะกลางคืน (เงิน x1.5/โกเลม 2 เท่า) · ภารกิจต่อกะ 3 อย่าง + โบนัส · เพลงราตรี + จิ้งหรีด · สไปรต์ PixelLab 9 ภาพ + เมืองแต่ง · เสียงสังเคราะห์ 16 ไฟล์ + juice · เซฟ v2 · เทส 4 ชุด PASS (`docs/game4_crazy_kab/`)
+
+## ประเมินองการเล่นจริงล่าสุด (ผู้อำนวยการเกม, 2026-11-01)
+
+> **"ทั้ง 4 เกมยังไม่สนุกพอเลย" — สาเหตุหลักที่ยืนยัน: ควบคุม/ฟิสิกส์ไม่สร้างความรู้สึกที่ดีต่อผู้เล่น**
+> รอบงานถัดไปจึงให้เริ่มจากจูน "ฟีลการควบคุม" (ปุ่มตอบสนอง น้ำหนัก ฟิสิกส์) ก่อนเพิ่มฟีเจอร์หรือ asset ใหม่ใด ๆ — เก็บเป็นตัวชี้ปกครองงานต่อของทุกเกม
 
 ## โครงสร้าง repo
 
@@ -26,11 +32,11 @@ m-sample-game/
 │  └─ game4_crazy_kab/      # เกม 4 (แท็กซี่คู่ฟ้า; โครงเดียวกันกับเกม 2)
 ├─ shared/                  # เครื่องมือพิกเซล/ภาพใช้ร่วมทุกเกม (gen_pixen, pixellab_anim, upscale_nearest, ...)
 ├─ docs/
-│  ├─ game1_coin_rush/      # GDD · ART_DIRECTION · ARCHITECTURE · ASSETS
-│  ├─ game2_tower_defense/  # GDD · ARCHITECTURE · ASSETS
-│  ├─ game3_car/            # GDD · ROADMAP · PLAYER_GUIDE · ASSETS
-│  ├─ game4_crazy_kab/      # GDD · ARCHITECTURE · ART_DIRECTION · ROADMAP_12H · PLAYER_GUIDE · ASSETS (แท็กซี่)
-│  ├─ ASSET_MANIFEST.md     # สมุดบัญชี asset+โควตา key (รัวมทั้ง 2 เกม, พยานบันทึกทั้งหมด)
+│  ├─ game1_coin_rush/      # GDD · ARCHITECTURE · ART_DIRECTION · ASSETS · PLAY
+│  ├─ game2_tower_defense/  # GDD · ARCHITECTURE · ASSETS · PLAYER_GUIDE · HANDOFF · PLAYTEST_NOTES
+│  ├─ game3_car/            # GDD · ARCHITECTURE · ART_DIRECTION · ASSETS · HANDOFF
+│  ├─ game4_crazy_kab/      # GDD · ARCHITECTURE · ART_DIRECTION · PLAYER_GUIDE · ASSETS (แท็กซี่)
+│  ├─ ASSET_MANIFEST.md     # สมุดบัญชี asset + โควตา key + บทเรียน gen (รวมทุกเกม)
 │  ├─ MACHINE_PATHS.md      # สมุด path รายเครื่อง + ระเบียบ "ห้ามฝัง path ตามเครื่อง"
 │  └─ MCP_SETUP.md          # MCP ทั้งหมด + ตำแหน่งตั้งค่า + บทเรียน 401/422/timeout
 ├─ HOME_SETUP.md            # คู่มือเตรียมเครื่องใหม่ (ติดตั้ง → clone → เปิดเกม → MCP)
@@ -68,7 +74,7 @@ foreach ($t in @('test_t3','test_t4','test_keys','test_t5')) {
 
 ## เอกสาร (ไฟล์เรียกชุดนี้ที่ไหน)
 
-- เกม 1: [`docs/game1_coin_rush/GDD.md`](docs/game1_coin_rush/GDD.md) · [ARCHITECTURE.md](docs/game1_coin_rush/ARCHITECTURE.md) · [ASSETS.md](docs/game1_coin_rush/ASSETS.md) · [ART_DIRECTION.md](docs/game1_coin_rush/ART_DIRECTION.md)
+- เกม 1: [`docs/game1_coin_rush/GDD.md`](docs/game1_coin_rush/GDD.md) · [ARCHITECTURE.md](docs/game1_coin_rush/ARCHITECTURE.md) · [ASSETS.md](docs/game1_coin_rush/ASSETS.md) · [ART_DIRECTION.md](docs/game1_coin_rush/ART_DIRECTION.md) · [PLAY.md](docs/game1_coin_rush/PLAY.md)
 - เกม 2: [`docs/game2_tower_defense/GDD.md`](docs/game2_tower_defense/GDD.md) · [ARCHITECTURE.md](docs/game2_tower_defense/ARCHITECTURE.md) · [ASSETS.md](docs/game2_tower_defense/ASSETS.md)
 - รวมทั้งระเบียบ: [`docs/ASSET_MANIFEST.md`](docs/ASSET_MANIFEST.md) (โควตา key/การบัญชี asset/บทเรียน) · [`docs/MCP_SETUP.md`](docs/MCP_SETUP.md) · `HOME_SETUP.md`
 

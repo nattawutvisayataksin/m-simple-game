@@ -80,7 +80,7 @@ func _process(delta: float) -> bool:
 				# ยังไม่ถึง: รอบเดิมรอบหน้า (state prep คงระบุ)
 				pass
 		2:
-			# คลื่น 2 ตามปกติ: ฆ่าจบ -> กลับ prep (idx 1) -> ข้ามไปคลื่น 10 -> ฆ่าหมด -> ต้อง WON
+			# คลื่น 2 ตามปกติ: ฆ่าจบ -> กลับ prep (idx 1) -> ข้ามไปคลื่นสุดท้าย -> ฆ่าหมด -> ต้อง WON
 			_main._gap_t = 0.0
 			_kill_all()
 			if _main._state == "prep" and _main._wave_idx == 1:
